@@ -1,5 +1,5 @@
-import { asc, eq, inArray, max } from "drizzle-orm";
-import { questions, tests } from "../db/schema.ts";
+import { and, asc, eq, inArray, isNull, max } from "drizzle-orm";
+import { attempts, questions, tests } from "../db/schema.ts";
 import type { db } from "../db/index";
 import type { QuestionInput, SaveInput, SavedMetadata } from "../lib/mock-validation";
 
@@ -27,7 +27,7 @@ function sameMetadata(saved: typeof tests.$inferSelect, incoming: SavedMetadata)
 export function createMockStore(database: typeof db) {
   return {
     async get(testId: string) {
-      const [mock] = await database.select().from(tests).where(eq(tests.id, testId));
+      const [mock] = await database.select().from(tests).where(and(eq(tests.id, testId), isNull(tests.deletedAt)));
       if (!mock) return null;
       const items = await database.select().from(questions).where(eq(questions.testId, testId)).orderBy(asc(questions.position));
       return { ...mock, questions: items };
@@ -43,7 +43,7 @@ export function createMockStore(database: typeof db) {
         }
         // Serializes appends and coordinates them with retries and deletion.
         const [mock] = await tx.select().from(tests).where(eq(tests.id, input.testId)).for("update");
-        if (!mock) throw new MockStoreError("not-found", "This mock no longer exists. Your draft has been kept.");
+        if (!mock || mock.deletedAt) throw new MockStoreError("not-found", "This mock no longer exists. Your draft has been kept.");
         if (input.mode === "create" && !sameMetadata(mock, input.metadata)) {
           throw new MockStoreError("conflict", "An earlier save already created this mock with different information. Open it to review; your draft has been kept.");
         }
@@ -74,8 +74,14 @@ export function createMockStore(database: typeof db) {
     },
 
     async remove(testId: string) {
-      // Existing FK cascades remove questions and attempts in the same statement.
-      await database.delete(tests).where(eq(tests.id, testId));
+      await database.transaction(async (tx) => {
+        const [mock] = await tx.select({ id: tests.id }).from(tests)
+          .where(and(eq(tests.id, testId), isNull(tests.deletedAt))).for("update");
+        if (!mock) return;
+        // Keep completed attempts and the questions needed by older answer snapshots.
+        await tx.update(tests).set({ deletedAt: new Date().toISOString() }).where(eq(tests.id, testId));
+        await tx.delete(attempts).where(and(eq(attempts.testId, testId), isNull(attempts.submittedAt)));
+      });
     },
   };
 }

@@ -2,6 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { connection } from "next/server";
 import { EmptyState } from "@/components/empty-state";
+import { ClearHistory } from "@/components/clear-history";
 import { attemptStore } from "@/server/attempts";
 import { isUser } from "@/lib/users";
 import { gradeFromPercentage } from "@/lib/grades";
@@ -24,6 +25,7 @@ export default async function HistoryPage({ params }: PageProps<"/u/[user]/histo
         <p className="eyebrow">LOOKING BACK</p>
         <h1 className="mt-3 text-3xl font-semibold tracking-tight sm:text-4xl">History</h1>
         <p className="mt-3 text-sm leading-6 text-muted">A dedicated place for your past attempts.</p>
+        {history.length > 0 && <ClearHistory user={user} />}
       </div>
       
       {active.length > 0 && <section className="mb-8 space-y-3" aria-label="In progress">

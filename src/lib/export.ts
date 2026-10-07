@@ -1,4 +1,5 @@
-import type { AnswerRecord } from "./scoring";
+import { calculatePercentile, type AnswerRecord } from "./scoring.ts";
+import { gradeFromPercentage } from "./grades.ts";
 
 export type ExportableResult = {
   mockTitle: string;
@@ -28,6 +29,60 @@ export type ExportableResult = {
 };
 
 const OPTION_LABELS = ["A", "B", "C", "D"];
+
+type ResultExportInput = {
+  attempt: {
+    takenBy: string; submittedAt: string | null; timeTakenSeconds: number | null;
+    score: string | null; correctCount: number | null; wrongCount: number | null;
+    skippedCount: number | null; answers: AnswerRecord[];
+  };
+  mock: { title: string; durationMinutes: number; marksCorrect: string };
+  questions: { id: string; position: number; questionText: string; options: string[]; correctIndex: number }[];
+  allScores: number[];
+};
+
+const dateFormatter = new Intl.DateTimeFormat("en-IN", {
+  day: "numeric", month: "short", year: "numeric", hour: "numeric", minute: "numeric", second: "numeric", timeZone: "Asia/Kolkata",
+});
+
+export function toExportableResult({ attempt, mock, questions, allScores }: ResultExportInput): ExportableResult {
+  if (!attempt.submittedAt) throw new Error("Only completed attempts can be exported.");
+  const score = Number(attempt.score);
+  const maxScore = questions.length * Number(mock.marksCorrect);
+  const scorePercent = maxScore > 0 ? score / maxScore * 100 : 0;
+  const correctCount = attempt.correctCount ?? 0;
+  const wrongCount = attempt.wrongCount ?? 0;
+  const attempted = correctCount + wrongCount;
+  const totalTimeMs = attempt.answers.reduce((sum, answer) => sum + answer.timeSpentMs, 0);
+  const answers = new Map(attempt.answers.map((answer) => [answer.questionId, answer]));
+
+  return {
+    mockTitle: mock.title, user: attempt.takenBy,
+    dateStr: `${dateFormatter.format(new Date(attempt.submittedAt))} IST`,
+    durationMinutes: mock.durationMinutes, timeTakenSeconds: attempt.timeTakenSeconds ?? 0,
+    score, maxScore, scorePercent, grade: gradeFromPercentage(scorePercent),
+    percentile: calculatePercentile(score, allScores), attempted, correctCount, wrongCount,
+    skippedCount: attempt.skippedCount ?? 0, totalQuestions: questions.length,
+    accuracy: attempted > 0 ? correctCount / attempted * 100 : 0,
+    avgTimeMsPerAttempted: attempted > 0 ? totalTimeMs / attempted : 0,
+    questions: questions.map((question) => {
+      const answer = answers.get(question.id);
+      if (!answer) throw new Error("This attempt's saved answers are incomplete.");
+      return { ...question, answer };
+    }),
+  };
+}
+
+export function generateMockHistoryTxt(mockTitle: string, user: string, results: ExportableResult[]): string {
+  return [
+    `MOCK HISTORY: ${mockTitle}`,
+    `User: ${user}`,
+    `Completed attempts: ${results.length}`,
+    "Order: oldest to newest",
+    "",
+    ...results.map((result, index) => `========== ATTEMPT ${index + 1} OF ${results.length} ==========\n\n${generateResultTxt(result)}`),
+  ].join("\n\n");
+}
 
 function formatTime(seconds: number): string {
   const m = Math.floor(seconds / 60);
@@ -67,6 +122,7 @@ export function generateResultTxt(r: ExportableResult): string {
     else if (q.answer.selectedIndex === q.correctIndex) result = "CORRECT";
     else result = "WRONG";
     lines.push(`Correct answer: ${correctLetter} | Your answer: ${userLetter} | Result: ${result} | Time: ${Math.round(q.answer.timeSpentMs / 1000)}s`);
+    lines.push(`Marked for review: ${q.answer.markedForReview ? "Yes" : "No"}`);
     lines.push("");
   }
 

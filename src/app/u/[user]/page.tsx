@@ -1,4 +1,4 @@
-import { arrayContains, desc } from "drizzle-orm";
+import { and, arrayContains, desc, isNull } from "drizzle-orm";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { connection } from "next/server";
@@ -29,7 +29,7 @@ export default async function MocksPage({ params }: PageProps<"/u/[user]">) {
       createdAt: tests.createdAt,
     })
     .from(tests)
-    .where(arrayContains(tests.forUsers, [user]))
+    .where(and(arrayContains(tests.forUsers, [user]), isNull(tests.deletedAt)))
     .orderBy(desc(tests.createdAt), desc(tests.id));
 
   return (

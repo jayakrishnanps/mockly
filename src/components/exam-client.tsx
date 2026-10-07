@@ -4,7 +4,6 @@ import { useMemo, useState, useSyncExternalStore } from "react";
 import { useExam, type ExamProgress } from "@/components/use-exam";
 import { questionState, type QuestionState } from "@/lib/attempt-state";
 import { QuestionContent } from "@/components/question-content";
-import { OPTION_LABELS } from "@/lib/parser";
 
 type ExamQuestion = {
   id: string;
@@ -22,11 +21,11 @@ export function ExamClient(props: ExamClientProps) {
 }
 
 const STATE_COLORS: Record<QuestionState, string> = {
-  "not-visited": "bg-gray-200 text-gray-600",
-  "not-answered": "bg-red-500 text-white",
-  "answered": "bg-green-600 text-white",
-  "marked": "bg-purple-600 text-white",
-  "answered-marked": "bg-purple-600 text-white ring-2 ring-green-400 ring-offset-1",
+  "not-visited": "border border-dashed border-line bg-background text-muted",
+  "not-answered": "border border-stone-300 bg-white text-foreground",
+  "answered": "border border-accent bg-accent text-white",
+  "marked": "border border-amber-300 bg-amber-50 text-amber-900",
+  "answered-marked": "border-2 border-amber-400 bg-accent text-white",
 };
 
 const STATE_LABELS: Record<QuestionState, string> = {
@@ -91,16 +90,16 @@ function ExamWorkspace(props: ExamClientProps) {
           <p className="mt-2 text-sm text-muted">Review your progress before submitting. Submission is final.</p>
           <dl className="mt-5 grid grid-cols-2 gap-3 text-sm">
             <div><dt className="text-muted">Total</dt><dd className="font-semibold">{questions.length}</dd></div>
-            <div><dt className="text-muted">Answered</dt><dd className="font-semibold text-green-700">{counts.answered + counts.answeredMarked}</dd></div>
-            <div><dt className="text-muted">Unanswered</dt><dd className="font-semibold text-red-600">{counts.notAnswered + counts.marked}</dd></div>
+            <div><dt className="text-muted">Answered</dt><dd className="font-semibold text-accent">{counts.answered + counts.answeredMarked}</dd></div>
+            <div><dt className="text-muted">Unanswered</dt><dd className="font-semibold">{counts.notAnswered + counts.marked}</dd></div>
             <div><dt className="text-muted">Not visited</dt><dd className="font-semibold">{counts.notVisited}</dd></div>
-            <div><dt className="text-muted">Marked for review</dt><dd className="font-semibold text-purple-600">{counts.marked + counts.answeredMarked}</dd></div>
+            <div><dt className="text-muted">Marked for review</dt><dd className="font-semibold text-amber-800">{counts.marked + counts.answeredMarked}</dd></div>
             <div><dt className="text-muted">Time left</dt><dd className="font-semibold">{timeStr}</dd></div>
           </dl>
           {saveError && <p role="alert" className="mt-4 text-sm text-red-700">{saveError}</p>}
           <div className="mt-6 flex gap-3">
             <button autoFocus disabled={submitting} onClick={() => setShowConfirm(false)} className="flex-1 rounded-lg border border-line px-4 py-2.5 text-sm font-medium hover:bg-gray-50">Go back</button>
-            <button onClick={() => handleSubmit()} disabled={submitting} className="flex-1 rounded-lg bg-red-600 px-4 py-2.5 text-sm font-medium text-white hover:bg-red-700 disabled:opacity-50">
+            <button onClick={() => handleSubmit()} disabled={submitting} className="min-h-11 flex-1 rounded-lg bg-accent px-4 py-2.5 text-sm font-medium text-white hover:bg-accent/90 disabled:opacity-50">
               {submitting ? "Submitting…" : "Submit Test"}
             </button>
           </div>
@@ -110,20 +109,20 @@ function ExamWorkspace(props: ExamClientProps) {
   }
 
   return (
-    <div className="flex min-h-svh min-w-0 flex-col bg-gray-50 pb-[calc(10rem+env(safe-area-inset-bottom))] lg:pb-0">
+    <div className="flex min-h-svh min-w-0 flex-col bg-background pb-[calc(9rem+env(safe-area-inset-bottom))] lg:pb-0">
       {/* Top bar */}
       <header className="sticky top-0 z-20 border-b border-line bg-white pt-[env(safe-area-inset-top)]">
         <div className="mx-auto flex min-h-14 max-w-7xl flex-col gap-2 px-4 py-2 sm:flex-row sm:items-center sm:justify-between sm:gap-3">
-          <div className="flex min-w-0 items-center gap-4">
+          <div className="flex min-w-0 items-center justify-between gap-4">
             <h1 className="truncate text-sm font-semibold">{mockTitle}</h1>
-            <span className="hidden shrink-0 rounded-full bg-accent-soft px-2.5 py-0.5 text-xs font-medium text-accent sm:inline">{user}</span>
+            <span className="shrink-0 rounded-full bg-accent-soft px-2.5 py-1 text-xs font-medium text-accent">{user}</span>
           </div>
           <div className="flex shrink-0 items-center justify-between gap-3">
-            <span className="text-xs text-muted sm:inline">{current + 1}/{questions.length}</span>
-            <div className={`rounded-lg px-3 py-1.5 font-mono text-sm font-bold ${isUrgent ? "bg-red-100 text-red-700" : "bg-gray-100 text-foreground"}`} role="timer" aria-label="Time remaining">
+            <span className="text-xs tabular-nums text-muted">{current + 1} of {questions.length}</span>
+            <div className={`rounded-lg px-3 py-2 font-mono text-base font-semibold tabular-nums ${isUrgent ? "bg-red-100 text-red-700" : "bg-background text-foreground"}`} role="timer" aria-label="Time remaining">
               {timeStr}
             </div>
-            <button disabled={submitting} onClick={() => setShowConfirm(true)} className="min-h-11 rounded-lg bg-accent px-4 text-sm font-medium text-white hover:bg-accent/90 disabled:opacity-50">
+            <button disabled={submitting} onClick={() => { setShowPalette(false); setShowConfirm(true); }} className="min-h-11 rounded-lg bg-accent px-4 text-sm font-medium text-white transition-colors hover:bg-accent/90 disabled:opacity-50">
               {submitting ? "Submitting…" : "Submit test"}
             </button>
           </div>
@@ -136,11 +135,11 @@ function ExamWorkspace(props: ExamClientProps) {
 
       <div className="mx-auto flex w-full max-w-7xl flex-1 flex-col lg:flex-row">
         {/* Question area */}
-        <div className="min-w-0 flex-1 p-4 sm:p-6 lg:p-8">
-          <div className="rounded-2xl border border-line bg-white p-5 sm:p-7">
+        <div className="min-w-0 flex-1 p-3 sm:p-6 lg:p-8">
+          <div className="surface rounded-2xl border border-line bg-white p-4 sm:p-7">
             <div className="mb-5 flex flex-wrap items-center justify-between gap-2">
               <h2 className="text-sm font-semibold">Question {q.position}</h2>
-              {a.markedForReview && <span className="rounded-full bg-purple-100 px-2.5 py-0.5 text-xs font-medium text-purple-700">Marked for review</span>}
+              {a.markedForReview && <span className="rounded-full border border-amber-200 bg-amber-50 px-2.5 py-1 text-xs font-medium text-amber-900">Marked for review</span>}
             </div>
             <QuestionContent text={q.questionText} />
 
@@ -150,20 +149,17 @@ function ExamWorkspace(props: ExamClientProps) {
                 return (
                   <label
                     key={index}
-                    className={`flex cursor-pointer items-start gap-3 rounded-xl border p-4 transition-colors ${selected ? "border-accent bg-accent-soft/50" : "border-line hover:border-accent/30"}`}
+                    className={`flex min-h-14 cursor-pointer items-start gap-3 rounded-xl border px-3 py-2.5 transition-colors sm:p-4 ${selected ? "border-accent bg-accent-soft" : "border-line hover:border-accent/40 hover:bg-background/50"}`}
                   >
                     <input
                       type="radio"
                       name={`q-${q.id}`}
                       checked={selected}
                       onChange={() => selectOption(index)}
-                      className="mt-1 accent-accent"
+                      className="mt-3 size-4 shrink-0 accent-accent"
                     />
                     <div className="min-w-0 flex-1">
-                      <span className="text-xs font-semibold">{OPTION_LABELS[index]}</span>
-                      <div className="mt-1">
-                        <QuestionContent text={option} />
-                      </div>
+                      <QuestionContent text={option} />
                     </div>
                   </label>
                 );
@@ -171,18 +167,18 @@ function ExamWorkspace(props: ExamClientProps) {
             </fieldset>
 
             {/* Action buttons */}
-            <div className="mt-6 flex flex-wrap gap-3">
+            <div className="mt-5 flex flex-wrap gap-2 border-t border-line pt-4 sm:gap-3">
               <button onClick={goPrevious} disabled={controlsDisabled || current === 0} className="hidden min-h-11 rounded-lg border border-line px-4 py-2.5 text-sm font-medium hover:bg-gray-50 disabled:opacity-30 lg:block">
                 ← Previous
               </button>
-              <button onClick={clearResponse} disabled={controlsDisabled} className="min-h-11 rounded-lg border border-line px-4 py-2.5 text-sm font-medium hover:bg-gray-50 disabled:opacity-30">
+              <button onClick={clearResponse} disabled={controlsDisabled || a.selectedIndex === null} className="min-h-11 rounded-lg px-3 py-2.5 text-sm font-medium text-muted transition-colors hover:bg-background hover:text-foreground disabled:opacity-30">
                 Clear response
               </button>
-              <button onClick={markAndNext} disabled={controlsDisabled} className="min-h-11 rounded-lg border border-purple-200 bg-purple-50 px-4 py-2.5 text-sm font-medium text-purple-700 hover:bg-purple-100 disabled:opacity-30">
+              <button onClick={markAndNext} disabled={controlsDisabled} className="hidden min-h-11 rounded-lg border border-amber-200 bg-amber-50 px-4 py-2.5 text-sm font-medium text-amber-900 transition-colors hover:bg-amber-100 disabled:opacity-30 lg:block">
                 {isLastQuestion ? "Mark for review" : "Mark & Next"}
               </button>
-              <button onClick={isLastQuestion ? () => setShowConfirm(true) : saveAndNext} disabled={controlsDisabled} className="hidden min-h-11 rounded-lg bg-accent px-4 py-2.5 text-sm font-medium text-white hover:bg-accent/90 disabled:opacity-30 lg:block">
-                {isLastQuestion ? "Review & submit" : a.selectedIndex === null ? "Skip / Next →" : "Save & Next →"}
+              <button onClick={saveAndNext} disabled={controlsDisabled || isLastQuestion} className="hidden min-h-11 rounded-lg bg-accent px-4 py-2.5 text-sm font-medium text-white hover:bg-accent/90 disabled:opacity-30 lg:block">
+                {isLastQuestion ? "Last question" : a.selectedIndex === null ? "Skip / Next →" : "Save & Next →"}
               </button>
             </div>
           </div>
@@ -222,8 +218,11 @@ function ExamWorkspace(props: ExamClientProps) {
       {/* Keep primary actions reachable even after scrolling a long question. */}
       <nav aria-label="Mobile exam controls" className="fixed inset-x-0 bottom-0 z-30 border-t border-line bg-white px-3 pt-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] shadow-lg lg:hidden">
         {showPalette && (
-          <section id="mobile-question-palette" aria-label="Jump to a question" className="absolute inset-x-0 bottom-full max-h-[45dvh] overflow-y-auto overscroll-contain border-t border-line bg-white p-4 shadow-lg">
-            <h2 className="mb-3 text-sm font-semibold">Jump to a question</h2>
+          <section id="mobile-question-palette" aria-label="Jump to a question" className="absolute inset-x-0 bottom-full max-h-[45dvh] overflow-y-auto overscroll-contain rounded-t-2xl border-t border-line bg-white p-4 shadow-lg">
+            <div className="mb-3 flex items-center justify-between gap-3">
+              <h2 className="text-sm font-semibold">Jump to a question</h2>
+              <button onClick={() => setShowPalette(false)} className="min-h-11 rounded-lg px-3 text-sm font-medium text-muted hover:bg-background">Close</button>
+            </div>
             <div className="grid grid-cols-5 gap-2 sm:grid-cols-8">
             {questions.map((_, i) => {
               const state = questionState(answers[i]);
@@ -247,10 +246,10 @@ function ExamWorkspace(props: ExamClientProps) {
           </section>
         )}
         <div className="mx-auto grid max-w-2xl grid-cols-2 gap-2">
-          <button onClick={goPrevious} disabled={controlsDisabled || current === 0} className="min-h-11 rounded-lg border border-line px-3 text-sm font-medium disabled:opacity-40">← Previous</button>
-          <button onClick={isLastQuestion ? () => setShowConfirm(true) : saveAndNext} disabled={controlsDisabled} className="min-h-11 rounded-lg border border-accent/30 bg-accent-soft px-3 text-sm font-medium text-accent disabled:opacity-40">{isLastQuestion ? "Review & submit" : a.selectedIndex === null ? "Skip / Next →" : "Save & Next →"}</button>
-          <button aria-expanded={showPalette} aria-controls="mobile-question-palette" onClick={() => setShowPalette(!showPalette)} className="min-h-11 rounded-lg border border-line px-3 text-sm font-medium">{showPalette ? "Close questions" : `Questions · ${current + 1}/${questions.length}`}</button>
-          <button onClick={() => { setShowPalette(false); setShowConfirm(true); }} disabled={submitting} className="min-h-11 rounded-lg bg-accent px-3 text-sm font-semibold text-white hover:bg-accent/90 disabled:opacity-50">{submitting ? "Submitting…" : "Submit test"}</button>
+          <button onClick={goPrevious} disabled={controlsDisabled || current === 0} className="min-h-11 rounded-lg border border-line px-3 text-sm font-medium transition-colors hover:bg-background disabled:opacity-40">← Previous</button>
+          <button onClick={saveAndNext} disabled={controlsDisabled || isLastQuestion} className="min-h-11 rounded-lg bg-accent px-3 text-sm font-medium text-white transition-colors hover:bg-accent/90 disabled:opacity-40">{isLastQuestion ? "Last question" : a.selectedIndex === null ? "Skip / Next →" : "Save & Next →"}</button>
+          <button aria-expanded={showPalette} aria-controls="mobile-question-palette" onClick={() => setShowPalette(!showPalette)} className="min-h-11 rounded-lg border border-line px-3 text-sm font-medium transition-colors hover:bg-background">{showPalette ? "Close questions" : `Questions · ${current + 1}/${questions.length}`}</button>
+          <button onClick={() => { setShowPalette(false); markAndNext(); }} disabled={controlsDisabled} className="min-h-11 rounded-lg border border-amber-200 bg-amber-50 px-3 text-sm font-medium text-amber-900 transition-colors hover:bg-amber-100 disabled:opacity-40">{isLastQuestion ? "Mark for review" : "Mark & Next"}</button>
         </div>
       </nav>
     </div>

@@ -60,9 +60,6 @@ export default async function ResultPage({ params }: PageProps<"/result/[attempt
           <h1 className="mt-3 break-words text-3xl font-semibold tracking-tight sm:text-4xl">{mock.title}</h1>
           <p className="mt-2 text-sm text-muted">Completed by {attempt.takenBy} on {dateFormatter.format(new Date(attempt.submittedAt!))}</p>
         </div>
-        <a href={`/result/${attemptId}/export`} download={`${mock.title.replace(/[^a-z0-9]/gi, "_").toLowerCase()}_result.txt`} className="rounded-lg bg-accent px-5 py-2.5 text-sm font-medium text-white hover:bg-accent/90">
-          Download .txt
-        </a>
       </div>
 
       <div className="mt-10 grid gap-5 sm:grid-cols-2 lg:grid-cols-4">

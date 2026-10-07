@@ -1,3 +1,4 @@
+import { randomInt } from "node:crypto";
 import { and, asc, desc, eq, isNotNull, isNull } from "drizzle-orm";
 import { attempts, questions, tests } from "../db/schema.ts";
 import type { db as DbType } from "../db/index";
@@ -97,6 +98,7 @@ export function createAttemptStore(database: Database, now: () => number = Date.
     const data = await database.transaction(async (tx) => {
       const { attempt, mock } = await owned(tx, attemptId, user);
       if (attempt.submittedAt) return null;
+      if (mock.deletedAt) throw new AttemptError("not-found", "This mock has been deleted.");
       if (!mock.forUsers.includes(user)) throw new AttemptError("forbidden", "This mock is not assigned to you.");
       const snapshot = await readSnapshot(tx, attempt, mock);
       const timestamp = now();
@@ -123,7 +125,7 @@ export function createAttemptStore(database: Database, now: () => number = Date.
       return database.transaction(async (tx) => {
         // Coordinates duplicate starts with Studio's append/delete operations.
         const [mock] = await tx.select().from(tests).where(eq(tests.id, testId)).for("update");
-        if (!mock) throw new AttemptError("not-found", "This mock does not exist.");
+        if (!mock || mock.deletedAt) throw new AttemptError("not-found", "This mock does not exist.");
         if (!mock.forUsers.includes(user)) throw new AttemptError("forbidden", "This mock is not assigned to you.");
         const [active] = await tx.select({ id: attempts.id }).from(attempts)
           .where(and(eq(attempts.testId, testId), eq(attempts.takenBy, user), isNull(attempts.submittedAt)))
@@ -134,10 +136,29 @@ export function createAttemptStore(database: Database, now: () => number = Date.
         if (rows.length * Math.max(Number(mock.marksCorrect), Number(mock.marksWrong)) > 9999.99) {
           throw new AttemptError("invalid", "This marking scheme exceeds the existing score column's supported range.");
         }
+        const [previous] = await tx.select({ answers: attempts.answers }).from(attempts)
+          .where(and(eq(attempts.testId, testId), eq(attempts.takenBy, user), isNotNull(attempts.submittedAt)))
+          .orderBy(desc(attempts.submittedAt), desc(attempts.id)).limit(1);
+        const previousAnswers = previous?.answers;
+        const previousOrder = isRecord(previousAnswers) && Array.isArray(previousAnswers.questions) && previousAnswers.questions.every(isSnapshotQuestion)
+          ? previousAnswers.questions.map((q) => q.id)
+          : validateAnswers(previousAnswers)?.map((answer) => answer.questionId) ?? rows.map((q) => q.id);
+
+        // Shuffle once, then persist this order for navigation, recovery and results.
+        const ordered = [...rows];
+        for (let index = ordered.length - 1; index > 0; index--) {
+          const swapIndex = randomInt(index + 1);
+          [ordered[index], ordered[swapIndex]] = [ordered[swapIndex], ordered[index]];
+        }
+        // A small mock can randomly repeat its last order; avoid that where possible.
+        if (ordered.length > 1 && ordered.length === previousOrder.length && ordered.every((q, index) => q.id === previousOrder[index])) {
+          const swapIndex = randomInt(1, ordered.length);
+          [ordered[0], ordered[swapIndex]] = [ordered[swapIndex], ordered[0]];
+        }
         const snapshot: AttemptSnapshot = {
           version: 1, revision: 0, durationMinutes: mock.durationMinutes, marksCorrect: mock.marksCorrect, marksWrong: mock.marksWrong,
-          questions: rows.map(({ id, position, questionText, options, correctIndex }) => ({ id, position, questionText, options, correctIndex })),
-          answers: rows.map((q) => ({ questionId: q.id, selectedIndex: null, timeSpentMs: 0, markedForReview: false, visited: false })),
+          questions: ordered.map(({ id, questionText, options, correctIndex }, index) => ({ id, position: index + 1, questionText, options, correctIndex })),
+          answers: ordered.map((q) => ({ questionId: q.id, selectedIndex: null, timeSpentMs: 0, markedForReview: false, visited: false })),
         };
         const [created] = await tx.insert(attempts).values({ testId, takenBy: user, startedAt: new Date(now()).toISOString(), answers: snapshot }).returning({ id: attempts.id });
         return { attemptId: created.id, resumed: false };
@@ -150,6 +171,7 @@ export function createAttemptStore(database: Database, now: () => number = Date.
       return database.transaction(async (tx) => {
         const { attempt, mock } = await owned(tx, attemptId, user);
         if (attempt.submittedAt) return { submitted: true, revision };
+        if (mock.deletedAt) throw new AttemptError("not-found", "This mock has been deleted.");
         if (!mock.forUsers.includes(user)) throw new AttemptError("forbidden", "This mock is not assigned to you.");
         const snapshot = await readSnapshot(tx, attempt, mock);
         const elapsedMs = Math.max(0, now() - Date.parse(attempt.startedAt));
@@ -168,6 +190,8 @@ export function createAttemptStore(database: Database, now: () => number = Date.
       return database.transaction(async (tx) => {
         const { attempt, mock } = await owned(tx, attemptId, user);
         if (attempt.submittedAt) return { attemptId, testId: attempt.testId };
+        if (mock.deletedAt) throw new AttemptError("not-found", "This mock has been deleted.");
+        if (!mock.forUsers.includes(user)) throw new AttemptError("forbidden", "This mock is not assigned to you.");
         const snapshot = await readSnapshot(tx, attempt, mock);
         const timestamp = now();
         const elapsedMs = Math.max(0, timestamp - Date.parse(attempt.startedAt));
@@ -210,10 +234,41 @@ export function createAttemptStore(database: Database, now: () => number = Date.
       }));
     },
 
+    async clearUserHistory(user: User) {
+      if (!isUser(user)) throw new AttemptError("invalid", "Invalid history request.");
+      await database.delete(attempts)
+        .where(and(eq(attempts.takenBy, user), isNotNull(attempts.submittedAt)));
+    },
+
+    async getMockExportData(testId: string, user: User) {
+      if (!isUuid(testId) || !isUser(user)) throw new AttemptError("invalid", "Invalid export request.");
+      return database.transaction(async (tx) => {
+        const [mock] = await tx.select().from(tests)
+          .where(and(eq(tests.id, testId), isNull(tests.deletedAt)));
+        if (!mock || !mock.forUsers.includes(user)) return null;
+        const submitted = await tx.select().from(attempts)
+          .where(and(eq(attempts.testId, testId), eq(attempts.takenBy, user), isNotNull(attempts.submittedAt)))
+          .orderBy(asc(attempts.submittedAt), asc(attempts.id));
+        if (!submitted.length) return null;
+        const entries = [];
+        for (const attempt of submitted) {
+          const snapshot = await readSnapshot(tx, attempt, mock);
+          entries.push({
+            attempt: { ...attempt, answers: snapshot.answers },
+            questions: snapshot.questions, durationMinutes: snapshot.durationMinutes,
+            marksCorrect: snapshot.marksCorrect, marksWrong: snapshot.marksWrong,
+          });
+        }
+        const scores = await tx.select({ score: attempts.score }).from(attempts)
+          .where(and(eq(attempts.testId, testId), isNotNull(attempts.submittedAt)));
+        return { mock, attempts: entries, allScores: scores.map((row) => Number(row.score)) };
+      }, { isolationLevel: "repeatable read", readOnly: true });
+    },
+
     async getActiveAttempts(user: User) {
       return database.select({ id: attempts.id, testId: attempts.testId, startedAt: attempts.startedAt, mockTitle: tests.title })
         .from(attempts).innerJoin(tests, eq(attempts.testId, tests.id))
-        .where(and(eq(attempts.takenBy, user), isNull(attempts.submittedAt))).orderBy(desc(attempts.startedAt));
+        .where(and(eq(attempts.takenBy, user), isNull(attempts.submittedAt), isNull(tests.deletedAt))).orderBy(desc(attempts.startedAt));
     },
 
     async getMockStats(testId: string, user: User) {

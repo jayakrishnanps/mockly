@@ -1,3 +1,5 @@
+import type { User } from "@/lib/users";
+
 type Stats = {
   totalAttempts: number;
   bestScore: number;
@@ -7,7 +9,7 @@ type Stats = {
   avgTime: number;
 };
 
-export function UserStats({ stats }: { stats: Stats | null }) {
+export function UserStats({ stats, testId, user }: { stats: Stats | null; testId: string; user: User }) {
   if (!stats) return <p className="mt-8 text-sm text-muted">No completed attempts yet.</p>;
 
   return (
@@ -41,6 +43,13 @@ export function UserStats({ stats }: { stats: Stats | null }) {
           </dd>
         </div>
       </dl>
+      <div className="mt-5 border-t border-line pt-3">
+        <a href={`/test/${testId}/export?user=${user}`} download className="inline-flex min-h-11 items-center rounded-lg py-2 text-sm font-medium text-accent underline decoration-accent/30 underline-offset-4 hover:decoration-accent">
+          Download all attempts (.txt)
+        </a>
+        <p className="text-xs leading-5 text-muted">All {stats.totalAttempts} completed {stats.totalAttempts === 1 ? "attempt" : "attempts"} on this mock, including questions, answers and time spent.</p>
+      </div>
     </div>
   );
 }
+

@@ -12,6 +12,7 @@ export const tests = pgTable("tests", {
 	marksCorrect: numeric("marks_correct", { precision: 5, scale:  2 }).default('2').notNull(),
 	marksWrong: numeric("marks_wrong", { precision: 5, scale:  2 }).default('0.5').notNull(),
 	createdAt: timestamp("created_at", { withTimezone: true, mode: 'string' }).defaultNow().notNull(),
+	deletedAt: timestamp("deleted_at", { withTimezone: true, mode: 'string' }),
 }, (table) => [
 	check("tests_for_users_check", sql`(cardinality(for_users) > 0) AND (for_users <@ ARRAY['JK'::text, 'HE'::text])`),
 	check("tests_duration_minutes_check", sql`duration_minutes > 0`),

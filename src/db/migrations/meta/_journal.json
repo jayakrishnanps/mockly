@@ -8,6 +8,13 @@
       "when": 1791264750765,
       "tag": "0000_damp_vindicator",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1791353396642,
+      "tag": "0001_preserve_mock_history",
+      "breakpoints": true
     }
   ]
 }

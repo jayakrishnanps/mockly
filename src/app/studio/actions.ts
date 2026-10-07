@@ -41,5 +41,7 @@ export async function deleteMock(id: unknown): Promise<{ ok: true } | { ok: fals
     return { ok: false, error: "The mock could not be deleted. Please try again." };
   }
   refreshMocks(id);
+  revalidatePath("/u/JK/history");
+  revalidatePath("/u/HE/history");
   return { ok: true };
 }
