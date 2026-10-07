@@ -1,0 +1,71 @@
+@import "tailwindcss";
+
+:root {
+  --background: #f5f6f3;
+  --foreground: #202b25;
+  --muted: #626e66;
+  --accent: #29583f;
+  --accent-soft: #eaf1e9;
+  --line: #dde4db;
+  color-scheme: light;
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-muted: var(--muted);
+  --color-accent: var(--accent);
+  --color-accent-soft: var(--accent-soft);
+  --color-line: var(--line);
+  --font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Arial, Helvetica, sans-serif;
+  --font-mono: Consolas, "Courier New", monospace;
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+  font-family: var(--font-sans);
+  line-height: 1.5;
+}
+
+button:not(:disabled), summary { cursor: pointer; }
+button:disabled { cursor: not-allowed; }
+button, a, input, textarea { -webkit-tap-highlight-color: transparent; }
+input, textarea { accent-color: var(--accent); }
+input:not([type="checkbox"]):not([type="radio"]), textarea {
+  transition: border-color 150ms ease, box-shadow 150ms ease;
+}
+input:focus-visible, textarea:focus-visible {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-soft);
+}
+
+.surface { box-shadow: 0 2px 8px rgb(24 49 33 / 3%); }
+.interactive-card { transition: border-color 150ms ease, box-shadow 150ms ease; }
+.interactive-card:hover { box-shadow: 0 5px 18px rgb(24 49 33 / 7%); }
+
+@media (max-width: 639px) {
+  /* Keep form fields readable without triggering focus zoom on phones. */
+  input:not([type="checkbox"]):not([type="radio"]), textarea { font-size: 16px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { transition-duration: 0s !important; }
+}
+
+:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 4px;
+}
+
+::selection {
+  background: #d9e8d7;
+}
+
+@utility eyebrow {
+  color: var(--muted);
+  font-size: 0.625rem;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  line-height: 1.5;
+}

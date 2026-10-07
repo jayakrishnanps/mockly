@@ -1,0 +1,32 @@
+import { QuestionContent } from "@/components/question-content";
+import { OPTION_LABELS } from "@/lib/parser";
+import type { QuestionInput } from "@/lib/mock-validation";
+
+type QuestionPreviewProps = {
+  question: Omit<QuestionInput, "id">;
+  number: number;
+};
+
+/** The same wording, maths and answer layout for browser drafts and saved mocks. */
+export function QuestionPreview({ question, number }: QuestionPreviewProps) {
+  return (
+    <>
+      <QuestionContent text={question.questionText} />
+      <ol className="mt-5 grid gap-3 sm:grid-cols-2" aria-label={`Options for question ${number}`}>
+        {question.options.map((option, index) => {
+          const correct = index === question.correctIndex;
+
+          return (
+            <li key={index} className={`min-w-0 rounded-xl border p-4 ${correct ? "border-accent/30 bg-accent-soft/60" : "border-line"}`}>
+              <div className="mb-2 flex items-center justify-between gap-2 text-xs font-semibold">
+                <span>{OPTION_LABELS[index]}</span>
+                {correct && <span className="text-accent">Correct answer</span>}
+              </div>
+              <QuestionContent text={option} />
+            </li>
+          );
+        })}
+      </ol>
+    </>
+  );
+}
