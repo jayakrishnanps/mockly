@@ -9,7 +9,7 @@ export default async function UserLayout({ children, params }: LayoutProps<"/u/[
   return (
     <>
       <DashboardHeader user={user} />
-      <main className="mx-auto w-full max-w-5xl flex-1 px-5 py-10 sm:px-8 sm:py-14">
+      <main className="mx-auto w-full max-w-5xl flex-1 px-4 py-7 sm:px-8 sm:py-10">
         {children}
       </main>
     </>

@@ -16,52 +16,49 @@ export default function Home() {
 
   return (
     <div className="flex min-h-svh flex-col">
-      <header className="mx-auto flex w-full max-w-6xl items-center justify-between px-6 py-7 sm:px-10">
+      <header className="mx-auto flex w-full max-w-5xl items-center justify-between gap-4 px-4 py-4 sm:px-8">
         <Brand />
-        <span className="rounded-full border border-line bg-white px-3 py-1.5 text-[11px] font-medium text-muted">Personal practice</span>
+        <span className="text-xs text-muted">Personal practice</span>
       </header>
 
-      <main className="mx-auto flex w-full max-w-xl flex-1 flex-col justify-center px-6 py-16 sm:py-24">
-        <p className="eyebrow">SSC MOCK TESTS</p>
-        <h1 className="mt-4 text-4xl font-semibold tracking-tight sm:text-5xl">
-          Who are you?
-        </h1>
-        <p className="mt-4 text-base leading-7 text-muted">
-          Choose your practice space. Pick up where you left off.
-        </p>
-
-        <div className="mt-10 grid grid-cols-2 gap-4 sm:gap-5">
-          {USERS.map((user, index) => (
-            <Link
-              key={user}
-              href={`/u/${user}`}
-              onClick={() => rememberUser(user)}
-              aria-label={`Continue as ${user}`}
-              className="surface interactive-card group rounded-2xl border border-line bg-white p-5 hover:border-accent sm:p-8"
-            >
-              <span
-                className={`flex size-12 items-center justify-center rounded-xl text-sm font-semibold ${index === 0 ? "bg-accent-soft text-accent" : "bg-[#f1eadf] text-[#776044]"}`}
-                aria-hidden="true"
-              >
-                {user}
-              </span>
-              <span className="mt-8 block text-3xl font-semibold tracking-tight">
-                {user}
-              </span>
-              <span className="mt-3 flex items-center justify-between text-sm text-muted group-hover:text-accent">
-                Continue <span aria-hidden="true" className="flex size-8 items-center justify-center rounded-full bg-background group-hover:bg-accent-soft">↗</span>
-              </span>
-            </Link>
-          ))}
+      <main className="mx-auto grid w-full max-w-5xl flex-1 content-center gap-8 px-5 py-12 sm:px-8 sm:py-20 md:grid-cols-2 md:items-center md:gap-16">
+        <div>
+          <p className="text-sm font-medium text-accent">SSC practice</p>
+          <h1 className="mt-3 text-4xl font-semibold tracking-tight sm:text-5xl">
+            Who are you?
+          </h1>
+          <p className="mt-4 max-w-xs text-base leading-7 text-muted">
+            Choose your name to open your mocks and past attempts.
+          </p>
         </div>
+        <div>
+          <div className="space-y-3">
+            {USERS.map((user) => (
+              <Link
+                key={user}
+                href={`/u/${user}`}
+                onClick={() => rememberUser(user)}
+                aria-label={`Continue as ${user}`}
+                className="group flex min-h-28 items-center justify-between gap-6 rounded-xl border border-line px-4 py-6 transition-colors hover:border-accent hover:bg-accent-soft sm:px-5"
+              >
+                <span className="text-3xl font-semibold tracking-tight">
+                  {user}
+                </span>
+                <span className="flex items-center gap-5 text-sm text-muted group-hover:text-accent">
+                  Continue <span aria-hidden="true">→</span>
+                </span>
+              </Link>
+            ))}
+          </div>
 
-        <p className="mt-7 text-center text-xs leading-6 text-muted">
-          Remembered on this device. Switch any time.
-        </p>
+          <p className="mt-4 px-4 text-xs leading-6 text-muted sm:px-5">
+            Remembered on this device. Switch any time.
+          </p>
+        </div>
       </main>
 
-      <footer className="px-6 py-7 text-center text-xs tracking-wide text-muted">
-        Practise. Review. Improve.
+      <footer className="mx-auto w-full max-w-5xl px-5 py-5 text-xs text-muted sm:px-8">
+        Mock tests · Answer reviews · Practice history
       </footer>
     </div>
   );

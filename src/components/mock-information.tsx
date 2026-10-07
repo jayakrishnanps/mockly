@@ -3,7 +3,7 @@
 import type { MetadataErrors, MockMetadata } from "@/lib/mock-validation";
 import { USERS } from "@/lib/users";
 
-const inputClass = "mt-2 block w-full rounded-lg border border-line bg-background/50 px-3 py-2.5 text-sm";
+const inputClass = "mt-2 block min-h-11 w-full rounded-md border border-line bg-white px-3 py-2.5 text-base sm:text-sm";
 
 export function MockInformation({ value, errors, onChange }: {
   value: MockMetadata; errors: MetadataErrors; onChange: (value: MockMetadata) => void;
@@ -12,7 +12,7 @@ export function MockInformation({ value, errors, onChange }: {
     return errors[field] ? <p id={`error-${field}`} className="mt-2 text-xs text-red-800">{errors[field]}</p> : null;
   }
   return (
-    <section aria-labelledby="mock-info-title" className="rounded-2xl border border-line bg-white p-5 sm:p-7">
+    <section aria-labelledby="mock-info-title" className="border-b border-line pb-8">
       <h2 id="mock-info-title" className="text-lg font-semibold tracking-tight">Mock information</h2>
       <div className="mt-5 space-y-5">
         <div>
@@ -27,8 +27,8 @@ export function MockInformation({ value, errors, onChange }: {
         </div>
         <fieldset aria-describedby={errors.forUsers ? "error-forUsers" : undefined}>
           <legend className="text-sm font-medium">Assigned to</legend>
-          <div className="mt-3 flex gap-6">
-            {USERS.map((user) => <label key={user} className="flex cursor-pointer items-center gap-2 text-sm">
+          <div className="mt-1 flex gap-6">
+            {USERS.map((user) => <label key={user} className="flex min-h-11 cursor-pointer items-center gap-2.5 pr-3 text-sm">
               <input type="checkbox" checked={value.forUsers.includes(user)} onChange={(e) => onChange({ ...value, forUsers: e.target.checked ? [...value.forUsers, user] : value.forUsers.filter((item) => item !== user) })} className="size-4 accent-accent" />{user}
             </label>)}
           </div>

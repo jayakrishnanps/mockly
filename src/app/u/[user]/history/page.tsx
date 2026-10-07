@@ -21,23 +21,22 @@ export default async function HistoryPage({ params }: PageProps<"/u/[user]/histo
 
   return (
     <>
-      <div className="mb-9">
-        <p className="eyebrow">LOOKING BACK</p>
-        <h1 className="mt-3 text-3xl font-semibold tracking-tight sm:text-4xl">History</h1>
-        <p className="mt-3 text-sm leading-6 text-muted">A dedicated place for your past attempts.</p>
+      <div className="mb-7">
+        <h1 className="text-3xl font-semibold tracking-tight">History</h1>
+        <p className="mt-2 text-sm leading-6 text-muted">Your completed attempts and answer reviews.</p>
         {history.length > 0 && <ClearHistory user={user} />}
       </div>
       
       {active.length > 0 && <section className="mb-8 space-y-3" aria-label="In progress">
         <h2 className="text-lg font-semibold">In progress</h2>
-        {active.map((attempt) => <Link key={attempt.id} href={`/exam/${attempt.id}`} className="block rounded-xl border border-line bg-white p-4 text-sm">{attempt.mockTitle} <span className="text-accent">· Resume</span></Link>)}
+        {active.map((attempt) => <Link key={attempt.id} href={`/exam/${attempt.id}`} className="flex min-h-14 items-center justify-between gap-4 border-l-2 border-accent bg-accent-soft px-4 py-3 text-sm"><span className="min-w-0 break-words font-medium">{attempt.mockTitle}</span><span className="shrink-0 font-medium text-accent">Resume →</span></Link>)}
       </section>}
       {history.length === 0 ? (
         <EmptyState title="No history yet.">
           Once you complete mock tests, your practice history will appear here.
         </EmptyState>
       ) : (
-        <ul className="space-y-4" aria-label="Completed attempts">
+        <ul className="divide-y divide-line border-y border-line bg-white" aria-label="Completed attempts">
           {history.map((record) => {
             const scorePercent = Number(record.marksCorrect) > 0 && record.totalQuestions > 0 
               ? (Number(record.score) / (record.totalQuestions * Number(record.marksCorrect))) * 100 
@@ -46,30 +45,29 @@ export default async function HistoryPage({ params }: PageProps<"/u/[user]/histo
             
             return (
               <li key={record.id} className="min-w-0">
-                <Link href={`/result/${record.id}`} className="flex flex-col gap-4 rounded-2xl border border-line bg-white p-5 transition-colors hover:border-accent/50 sm:flex-row sm:items-center sm:justify-between sm:p-6">
+                <Link href={`/result/${record.id}`} className="grid grid-cols-[minmax(0,1fr)_auto] items-start gap-4 px-4 py-5 transition-colors hover:bg-accent-soft/50 sm:items-center sm:gap-6 sm:px-6">
                   <div className="min-w-0 flex-1">
-                    <h2 className="truncate text-lg font-semibold tracking-tight">{record.mockTitle}</h2>
-                    <div className="mt-2 flex flex-wrap items-center gap-3 text-xs text-muted">
+                    <h2 className="break-words text-lg font-semibold tracking-tight">{record.mockTitle}</h2>
+                    <div className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-2 text-xs tabular-nums text-muted">
                       <time dateTime={new Date(record.submittedAt!).toISOString()}>
                         {dateFormatter.format(new Date(record.submittedAt!))}
                       </time>
-                      <span className="hidden h-1 w-1 rounded-full bg-line sm:block" aria-hidden="true" />
                       <span>{Math.floor((record.timeTakenSeconds || 0) / 60)}m {(record.timeTakenSeconds || 0) % 60}s</span>
-                      <span className="hidden h-1 w-1 rounded-full bg-line sm:block" aria-hidden="true" />
                       <span>{record.totalQuestions} questions</span>
                       <span>{scorePercent.toFixed(1)}% score</span>
                       <span>{((record.correctCount ?? 0) + (record.wrongCount ?? 0)) ? ((record.correctCount ?? 0) / ((record.correctCount ?? 0) + (record.wrongCount ?? 0)) * 100).toFixed(1) : "0"}% accuracy</span>
                     </div>
                   </div>
-                  <div className="flex shrink-0 items-center gap-6 sm:text-right">
+                  <div className="flex flex-col gap-3 text-right tabular-nums sm:flex-row sm:items-baseline sm:gap-6">
                     <div>
-                      <div className="text-sm font-bold">{record.score}</div>
-                      <div className="text-[10px] uppercase tracking-wider text-muted">Score</div>
+                      <div className="text-xl font-semibold">{record.score}</div>
+                      <div className="text-xs text-muted">Score</div>
                     </div>
                     <div>
-                      <div className={`flex min-h-10 min-w-10 px-3 items-center justify-center rounded-lg text-sm font-bold ${grade === 'S' || grade.startsWith('A') ? 'bg-green-100 text-green-800' : grade.startsWith('B') ? 'bg-blue-100 text-blue-800' : grade.startsWith('C') ? 'bg-yellow-100 text-yellow-800' : 'bg-red-100 text-red-800'}`}>
+                      <div className={`text-xl font-semibold ${grade === 'S' || grade.startsWith('A') ? 'text-green-800' : grade.startsWith('B') ? 'text-blue-800' : grade.startsWith('C') ? 'text-yellow-800' : 'text-red-800'}`}>
                         {grade}
                       </div>
+                      <div className="text-xs text-muted">Grade</div>
                     </div>
                   </div>
                 </Link>

@@ -85,10 +85,10 @@ function ExamWorkspace(props: ExamClientProps) {
   if (showConfirm) {
     return (
       <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
-        <section role="dialog" aria-modal="true" aria-labelledby="submit-heading" onKeyDown={(event) => { if (event.key === "Escape" && !submitting) setShowConfirm(false); }} className="max-h-[calc(100dvh-2rem)] w-full max-w-md overflow-y-auto rounded-2xl bg-white p-6 sm:p-8">
-          <h2 id="submit-heading" className="text-xl font-semibold">Submit Test?</h2>
+        <section role="dialog" aria-modal="true" aria-labelledby="submit-heading" onKeyDown={(event) => { if (event.key === "Escape" && !submitting) setShowConfirm(false); }} className="max-h-[calc(100dvh-2rem)] w-full max-w-md overflow-y-auto rounded-lg bg-white p-6 sm:p-8">
+          <h2 id="submit-heading" className="text-xl font-semibold">Submit test?</h2>
           <p className="mt-2 text-sm text-muted">Review your progress before submitting. Submission is final.</p>
-          <dl className="mt-5 grid grid-cols-2 gap-3 text-sm">
+          <dl className="mt-5 grid grid-cols-2 gap-x-4 gap-y-5 border-y border-line py-5 text-sm">
             <div><dt className="text-muted">Total</dt><dd className="font-semibold">{questions.length}</dd></div>
             <div><dt className="text-muted">Answered</dt><dd className="font-semibold text-accent">{counts.answered + counts.answeredMarked}</dd></div>
             <div><dt className="text-muted">Unanswered</dt><dd className="font-semibold">{counts.notAnswered + counts.marked}</dd></div>
@@ -100,7 +100,7 @@ function ExamWorkspace(props: ExamClientProps) {
           <div className="mt-6 flex gap-3">
             <button autoFocus disabled={submitting} onClick={() => setShowConfirm(false)} className="flex-1 rounded-lg border border-line px-4 py-2.5 text-sm font-medium hover:bg-gray-50">Go back</button>
             <button onClick={() => handleSubmit()} disabled={submitting} className="min-h-11 flex-1 rounded-lg bg-accent px-4 py-2.5 text-sm font-medium text-white hover:bg-accent/90 disabled:opacity-50">
-              {submitting ? "Submitting…" : "Submit Test"}
+              {submitting ? "Submitting…" : "Submit test"}
             </button>
           </div>
         </section>
@@ -109,17 +109,17 @@ function ExamWorkspace(props: ExamClientProps) {
   }
 
   return (
-    <div className="flex min-h-svh min-w-0 flex-col bg-background pb-[calc(9rem+env(safe-area-inset-bottom))] lg:pb-0">
+    <div className="flex min-h-svh min-w-0 flex-col bg-white pb-[calc(8rem+env(safe-area-inset-bottom))] lg:pb-0">
       {/* Top bar */}
       <header className="sticky top-0 z-20 border-b border-line bg-white pt-[env(safe-area-inset-top)]">
-        <div className="mx-auto flex min-h-14 max-w-7xl flex-col gap-2 px-4 py-2 sm:flex-row sm:items-center sm:justify-between sm:gap-3">
+        <div className="mx-auto flex min-h-16 max-w-7xl flex-col gap-1 px-4 py-2 sm:flex-row sm:items-center sm:justify-between sm:gap-6 sm:px-6 lg:px-8">
           <div className="flex min-w-0 items-center justify-between gap-4">
             <h1 className="truncate text-sm font-semibold">{mockTitle}</h1>
-            <span className="shrink-0 rounded-full bg-accent-soft px-2.5 py-1 text-xs font-medium text-accent">{user}</span>
+            <span className="shrink-0 border-l border-line pl-3 text-xs font-medium text-muted">{user}</span>
           </div>
           <div className="flex shrink-0 items-center justify-between gap-3">
             <span className="text-xs tabular-nums text-muted">{current + 1} of {questions.length}</span>
-            <div className={`rounded-lg px-3 py-2 font-mono text-base font-semibold tabular-nums ${isUrgent ? "bg-red-100 text-red-700" : "bg-background text-foreground"}`} role="timer" aria-label="Time remaining">
+            <div className={`px-2 py-2 font-mono text-lg font-semibold tabular-nums ${isUrgent ? "text-red-700" : "text-foreground"}`} role="timer" aria-label="Time remaining">
               {timeStr}
             </div>
             <button disabled={submitting} onClick={() => { setShowPalette(false); setShowConfirm(true); }} className="min-h-11 rounded-lg bg-accent px-4 text-sm font-medium text-white transition-colors hover:bg-accent/90 disabled:opacity-50">
@@ -135,21 +135,21 @@ function ExamWorkspace(props: ExamClientProps) {
 
       <div className="mx-auto flex w-full max-w-7xl flex-1 flex-col lg:flex-row">
         {/* Question area */}
-        <div className="min-w-0 flex-1 p-3 sm:p-6 lg:p-8">
-          <div className="surface rounded-2xl border border-line bg-white p-4 sm:p-7">
-            <div className="mb-5 flex flex-wrap items-center justify-between gap-2">
+        <div className="min-w-0 flex-1 px-4 py-6 sm:px-6 sm:py-8 lg:p-8">
+          <div className="mx-auto max-w-3xl">
+            <div className="mb-5 flex flex-wrap items-center justify-between gap-2 border-b border-line pb-3">
               <h2 className="text-sm font-semibold">Question {q.position}</h2>
-              {a.markedForReview && <span className="rounded-full border border-amber-200 bg-amber-50 px-2.5 py-1 text-xs font-medium text-amber-900">Marked for review</span>}
+              {a.markedForReview && <span className="text-xs font-medium text-amber-800">Marked for review</span>}
             </div>
             <QuestionContent text={q.questionText} />
 
-            <fieldset disabled={submitting || timeLeft === 0} className="mt-6 space-y-3" aria-label={`Options for question ${q.position}`}>
+            <fieldset disabled={submitting || timeLeft === 0} className="mt-6 space-y-2" aria-label={`Options for question ${q.position}`}>
               {q.options.map((option, index) => {
                 const selected = a.selectedIndex === index;
                 return (
                   <label
                     key={index}
-                    className={`flex min-h-14 cursor-pointer items-start gap-3 rounded-xl border px-3 py-2.5 transition-colors sm:p-4 ${selected ? "border-accent bg-accent-soft" : "border-line hover:border-accent/40 hover:bg-background/50"}`}
+                    className={`flex min-h-14 cursor-pointer items-start gap-3 rounded-md border px-3 py-2 transition-colors sm:px-4 sm:py-2.5 ${selected ? "border-accent bg-accent-soft" : "border-line hover:border-accent/40 hover:bg-background/50"}`}
                   >
                     <input
                       type="radio"
@@ -174,7 +174,7 @@ function ExamWorkspace(props: ExamClientProps) {
               <button onClick={clearResponse} disabled={controlsDisabled || a.selectedIndex === null} className="min-h-11 rounded-lg px-3 py-2.5 text-sm font-medium text-muted transition-colors hover:bg-background hover:text-foreground disabled:opacity-30">
                 Clear response
               </button>
-              <button onClick={markAndNext} disabled={controlsDisabled} className="hidden min-h-11 rounded-lg border border-amber-200 bg-amber-50 px-4 py-2.5 text-sm font-medium text-amber-900 transition-colors hover:bg-amber-100 disabled:opacity-30 lg:block">
+              <button onClick={markAndNext} disabled={controlsDisabled} className="hidden min-h-11 rounded-lg border border-line px-4 py-2.5 text-sm font-medium text-foreground transition-colors hover:bg-background disabled:opacity-30 lg:block">
                 {isLastQuestion ? "Mark for review" : "Mark & Next"}
               </button>
               <button onClick={saveAndNext} disabled={controlsDisabled || isLastQuestion} className="hidden min-h-11 rounded-lg bg-accent px-4 py-2.5 text-sm font-medium text-white hover:bg-accent/90 disabled:opacity-30 lg:block">
@@ -186,7 +186,7 @@ function ExamWorkspace(props: ExamClientProps) {
 
         {/* Desktop palette */}
         <aside className="hidden w-64 shrink-0 border-l border-line bg-white p-5 lg:block" aria-label="Question palette">
-          <h3 className="mb-4 text-xs font-semibold text-muted">QUESTION PALETTE</h3>
+          <h3 className="mb-4 text-sm font-semibold">Questions</h3>
           <div className="grid grid-cols-5 gap-2">
             {questions.map((_, i) => {
               const state = questionState(answers[i]);
@@ -197,7 +197,7 @@ function ExamWorkspace(props: ExamClientProps) {
                   onClick={() => navigateTo(i)}
                   aria-label={`Question ${i + 1}, ${STATE_LABELS[state]}`}
                   aria-current={i === current ? "true" : undefined}
-                  className={`flex size-10 items-center justify-center rounded-lg text-xs font-medium transition-colors ${STATE_COLORS[state]} ${i === current ? "ring-2 ring-accent ring-offset-1" : ""}`}
+                  className={`flex size-10 items-center justify-center rounded text-xs font-medium transition-colors ${STATE_COLORS[state]} ${i === current ? "ring-2 ring-accent ring-offset-1" : ""}`}
                 >
                   {i + 1}
                 </button>
@@ -216,9 +216,9 @@ function ExamWorkspace(props: ExamClientProps) {
       </div>
 
       {/* Keep primary actions reachable even after scrolling a long question. */}
-      <nav aria-label="Mobile exam controls" className="fixed inset-x-0 bottom-0 z-30 border-t border-line bg-white px-3 pt-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] shadow-lg lg:hidden">
+      <nav aria-label="Mobile exam controls" className="fixed inset-x-0 bottom-0 z-30 border-t border-line bg-white px-3 pt-2 pb-[max(0.5rem,env(safe-area-inset-bottom))] lg:hidden">
         {showPalette && (
-          <section id="mobile-question-palette" aria-label="Jump to a question" className="absolute inset-x-0 bottom-full max-h-[45dvh] overflow-y-auto overscroll-contain rounded-t-2xl border-t border-line bg-white p-4 shadow-lg">
+          <section id="mobile-question-palette" aria-label="Jump to a question" className="absolute inset-x-0 bottom-full max-h-[45dvh] overflow-y-auto overscroll-contain border-t border-line bg-white p-4 shadow-lg">
             <div className="mb-3 flex items-center justify-between gap-3">
               <h2 className="text-sm font-semibold">Jump to a question</h2>
               <button onClick={() => setShowPalette(false)} className="min-h-11 rounded-lg px-3 text-sm font-medium text-muted hover:bg-background">Close</button>
@@ -248,8 +248,8 @@ function ExamWorkspace(props: ExamClientProps) {
         <div className="mx-auto grid max-w-2xl grid-cols-2 gap-2">
           <button onClick={goPrevious} disabled={controlsDisabled || current === 0} className="min-h-11 rounded-lg border border-line px-3 text-sm font-medium transition-colors hover:bg-background disabled:opacity-40">← Previous</button>
           <button onClick={saveAndNext} disabled={controlsDisabled || isLastQuestion} className="min-h-11 rounded-lg bg-accent px-3 text-sm font-medium text-white transition-colors hover:bg-accent/90 disabled:opacity-40">{isLastQuestion ? "Last question" : a.selectedIndex === null ? "Skip / Next →" : "Save & Next →"}</button>
-          <button aria-expanded={showPalette} aria-controls="mobile-question-palette" onClick={() => setShowPalette(!showPalette)} className="min-h-11 rounded-lg border border-line px-3 text-sm font-medium transition-colors hover:bg-background">{showPalette ? "Close questions" : `Questions · ${current + 1}/${questions.length}`}</button>
-          <button onClick={() => { setShowPalette(false); markAndNext(); }} disabled={controlsDisabled} className="min-h-11 rounded-lg border border-amber-200 bg-amber-50 px-3 text-sm font-medium text-amber-900 transition-colors hover:bg-amber-100 disabled:opacity-40">{isLastQuestion ? "Mark for review" : "Mark & Next"}</button>
+          <button aria-expanded={showPalette} aria-controls="mobile-question-palette" onClick={() => setShowPalette(!showPalette)} className="min-h-11 rounded-lg px-3 text-sm font-medium text-muted transition-colors hover:bg-background hover:text-foreground">{showPalette ? "Close questions" : `Questions · ${current + 1}/${questions.length}`}</button>
+          <button onClick={() => { setShowPalette(false); markAndNext(); }} disabled={controlsDisabled} className="min-h-11 rounded-lg px-3 text-sm font-medium text-muted transition-colors hover:bg-background hover:text-foreground disabled:opacity-40">{isLastQuestion ? "Mark for review" : "Mark & Next"}</button>
         </div>
       </nav>
     </div>

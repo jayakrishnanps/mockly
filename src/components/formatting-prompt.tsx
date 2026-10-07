@@ -17,20 +17,19 @@ export function FormattingPrompt() {
       requestAnimationFrame(() => { text.current?.focus(); text.current?.select(); });
     }
   }
-  return <section aria-labelledby="formatting-prompt-title" className="rounded-2xl border border-accent/20 bg-accent-soft/40 p-5 sm:p-7">
+  return <section aria-labelledby="formatting-prompt-title" className="border-l-2 border-accent/40 pl-4 sm:pl-5">
     <div className="flex flex-wrap items-start justify-between gap-4">
       <div className="max-w-xl">
-        <p className="eyebrow">BEFORE YOU PASTE</p>
-        <h2 id="formatting-prompt-title" className="mt-2 text-lg font-semibold tracking-tight">Get your questions ready</h2>
-        <p className="mt-2 text-sm leading-6 text-muted">Copy the formatting instructions for your question set. They cover options, answer keys and mathematical notation. Paste the formatted questions below when ready.</p>
+        <h2 id="formatting-prompt-title" className="text-sm font-semibold">Need to format your questions?</h2>
+        <p className="mt-1 text-sm leading-6 text-muted">Copy the instructions for options, answer keys and maths, then paste your formatted questions below.</p>
       </div>
-      <button type="button" onClick={copy} className="min-h-11 shrink-0 rounded-lg border border-accent/30 bg-white px-4 py-2.5 text-sm font-medium text-accent hover:bg-accent-soft">Copy instructions</button>
+      <button type="button" onClick={copy} className="min-h-11 shrink-0 rounded-md border border-line bg-white px-4 py-2.5 text-sm font-medium text-accent hover:border-accent hover:bg-accent-soft">Copy instructions</button>
     </div>
-    <p role="status" className="mt-3 text-xs leading-5 text-accent">{message}</p>
-    <button type="button" aria-expanded={expanded} aria-controls="formatting-prompt-text" onClick={() => setExpanded(!expanded)} className="mt-2 min-h-9 rounded-sm text-xs font-medium text-muted underline underline-offset-4">{expanded ? "Hide instructions" : "Read instructions"}</button>
+    <p role="status" className="text-xs leading-5 text-accent empty:hidden">{message}</p>
+    <button type="button" aria-expanded={expanded} aria-controls="formatting-prompt-text" onClick={() => setExpanded(!expanded)} className="min-h-11 rounded-sm text-sm text-muted underline underline-offset-4">{expanded ? "Hide instructions" : "Read instructions"}</button>
     <div id="formatting-prompt-text" hidden={!expanded} className="mt-4">
       <label htmlFor="question-formatting-instructions" className="sr-only">Question formatting instructions</label>
-      <textarea id="question-formatting-instructions" ref={text} readOnly value={FORMATTING_PROMPT} rows={14} className="w-full rounded-xl border border-line bg-white p-4 text-sm leading-6" />
+      <textarea id="question-formatting-instructions" ref={text} readOnly value={FORMATTING_PROMPT} rows={14} className="w-full rounded-md border border-line bg-white p-3 text-base leading-7 sm:p-4 sm:text-sm" />
     </div>
   </section>;
 }

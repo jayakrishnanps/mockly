@@ -31,6 +31,8 @@ body {
 button:not(:disabled), summary { cursor: pointer; }
 button:disabled { cursor: not-allowed; }
 button, a, input, textarea { -webkit-tap-highlight-color: transparent; }
+button, a, summary { touch-action: manipulation; }
+dd { font-variant-numeric: tabular-nums; }
 input, textarea { accent-color: var(--accent); }
 input:not([type="checkbox"]):not([type="radio"]), textarea {
   transition: border-color 150ms ease, box-shadow 150ms ease;
@@ -39,10 +41,6 @@ input:focus-visible, textarea:focus-visible {
   border-color: var(--accent);
   box-shadow: 0 0 0 3px var(--accent-soft);
 }
-
-.surface { box-shadow: 0 2px 8px rgb(24 49 33 / 3%); }
-.interactive-card { transition: border-color 150ms ease, box-shadow 150ms ease; }
-.interactive-card:hover { box-shadow: 0 5px 18px rgb(24 49 33 / 7%); }
 
 @media (max-width: 639px) {
   /* Keep form fields readable without triggering focus zoom on phones. */

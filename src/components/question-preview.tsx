@@ -12,13 +12,13 @@ export function QuestionPreview({ question, number }: QuestionPreviewProps) {
   return (
     <>
       <QuestionContent text={question.questionText} />
-      <ol className="mt-5 grid gap-3 sm:grid-cols-2" aria-label={`Options for question ${number}`}>
+      <ol className="mt-4 divide-y divide-line border-y border-line" aria-label={`Options for question ${number}`}>
         {question.options.map((option, index) => {
           const correct = index === question.correctIndex;
 
           return (
-            <li key={index} className={`min-w-0 rounded-xl border p-4 ${correct ? "border-accent/30 bg-accent-soft/60" : "border-line"}`}>
-              <div className="mb-2 flex items-center justify-between gap-2 text-xs font-semibold">
+            <li key={index} className={`min-w-0 px-3 py-3 sm:px-4 ${correct ? "bg-accent-soft/60" : ""}`}>
+              <div className="mb-1 flex items-center justify-between gap-2 text-xs font-semibold">
                 <span>{OPTION_LABELS[index]}</span>
                 {correct && <span className="text-accent">Correct answer</span>}
               </div>

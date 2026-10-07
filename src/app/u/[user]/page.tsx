@@ -34,10 +34,9 @@ export default async function MocksPage({ params }: PageProps<"/u/[user]">) {
 
   return (
     <>
-      <div className="mb-9">
-        <p className="eyebrow">{user}’S PRACTICE SPACE</p>
-        <h1 className="mt-3 text-3xl font-semibold tracking-tight sm:text-4xl">Your mocks</h1>
-        <p className="mt-3 text-sm leading-6 text-muted">A little more prepared, one mock at a time.</p>
+      <div className="mb-7">
+        <h1 className="text-3xl font-semibold tracking-tight">Your mocks</h1>
+        <p className="mt-2 text-sm leading-6 text-muted">Choose a mock to start or continue an attempt.</p>
       </div>
 
       {mocks.length === 0 ? (
@@ -45,21 +44,19 @@ export default async function MocksPage({ params }: PageProps<"/u/[user]">) {
           Mocks assigned to {user} will appear here.
         </EmptyState>
       ) : (
-        <ul className="grid gap-5 sm:grid-cols-2" aria-label="Assigned mocks">
+        <ul className="divide-y divide-line border-y border-line bg-white" aria-label="Assigned mocks">
           {mocks.map((mock) => (
             <li key={mock.id} className="min-w-0">
-              <Link href={`/test/${mock.id}`} className="flex h-full flex-col rounded-2xl border border-line bg-white p-6 transition-colors hover:border-accent/50">
-                <div className="mb-5 flex items-center justify-between gap-3">
-                  <span className="eyebrow">MOCK TEST</span>
-                  <span className="shrink-0 rounded-full bg-accent-soft px-3 py-1 text-xs font-medium text-accent">
-                    {mock.durationMinutes} min
-                  </span>
+              <Link href={`/test/${mock.id}`} className="group flex items-center gap-4 px-4 py-5 transition-colors hover:bg-accent-soft/50 sm:px-6 sm:py-6">
+                <div className="min-w-0 flex-1">
+                  <h2 className="break-words text-lg font-semibold tracking-tight group-hover:text-accent">{mock.title}</h2>
+                  {mock.details && <p className="mt-1 line-clamp-2 break-words text-sm leading-6 text-muted">{mock.details}</p>}
+                  <div className="mt-3 flex flex-wrap gap-x-4 gap-y-1 text-xs text-muted">
+                    <span className="font-medium tabular-nums text-foreground">{mock.durationMinutes} minutes</span>
+                    <span>Created <time dateTime={new Date(mock.createdAt).toISOString()}>{dateFormatter.format(new Date(mock.createdAt))}</time></span>
+                  </div>
                 </div>
-                <h2 className="break-words text-lg font-semibold tracking-tight">{mock.title}</h2>
-                {mock.details && <p className="mt-2 line-clamp-3 break-words text-sm leading-6 text-muted">{mock.details}</p>}
-                <div className="mt-auto pt-6 text-xs text-muted">
-                  Created <time dateTime={new Date(mock.createdAt).toISOString()}>{dateFormatter.format(new Date(mock.createdAt))}</time>
-                </div>
+                <span aria-hidden="true" className="shrink-0 text-lg text-accent">→</span>
               </Link>
             </li>
           ))}
