@@ -262,7 +262,7 @@ export function createAttemptStore(database: Database, now: () => number = Date.
         const scores = await tx.select({ score: attempts.score }).from(attempts)
           .where(and(eq(attempts.testId, testId), isNotNull(attempts.submittedAt)));
         return { mock, attempts: entries, allScores: scores.map((row) => Number(row.score)) };
-      }, { isolationLevel: "repeatable read", readOnly: true });
+      }, { isolationLevel: "repeatable read", accessMode: "read only" });
     },
 
     async getActiveAttempts(user: User) {
