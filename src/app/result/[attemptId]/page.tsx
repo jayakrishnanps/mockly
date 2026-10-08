@@ -86,7 +86,7 @@ export default async function ResultPage({ params }: PageProps<"/result/[attempt
               <div className="mt-1.5 text-2xl font-semibold tracking-tight tabular-nums">
                 {percentile !== null ? `${percentile.toFixed(1)}%` : "—"}
               </div>
-              <p className="mt-1 text-xs leading-5 text-muted">{percentile !== null ? "Other attempts on this mock scoring strictly lower; ties excluded" : "Not enough attempts"}</p>
+              <p className="mt-1 text-xs leading-5 text-muted">{mock.questionLimit !== null ? "Not compared across random question sets" : percentile !== null ? "Other attempts on this mock scoring strictly lower; ties excluded" : "Not enough attempts"}</p>
             </div>
           </div>
         </div>

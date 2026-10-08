@@ -12,6 +12,7 @@ export type ExportableResult = {
   scorePercent: number;
   grade: string;
   percentile: number | null;
+  randomSelection?: boolean;
   attempted: number;
   correctCount: number;
   wrongCount: number;
@@ -36,7 +37,7 @@ type ResultExportInput = {
     score: string | null; correctCount: number | null; wrongCount: number | null;
     skippedCount: number | null; answers: AnswerRecord[];
   };
-  mock: { title: string; durationMinutes: number; marksCorrect: string };
+  mock: { title: string; durationMinutes: number; marksCorrect: string; questionLimit?: number | null };
   questions: { id: string; position: number; questionText: string; options: string[]; correctIndex: number }[];
   allScores: number[];
 };
@@ -61,7 +62,7 @@ export function toExportableResult({ attempt, mock, questions, allScores }: Resu
     dateStr: `${dateFormatter.format(new Date(attempt.submittedAt))} IST`,
     durationMinutes: mock.durationMinutes, timeTakenSeconds: attempt.timeTakenSeconds ?? 0,
     score, maxScore, scorePercent, grade: gradeFromPercentage(scorePercent),
-    percentile: calculatePercentile(score, allScores), attempted, correctCount, wrongCount,
+    percentile: calculatePercentile(score, allScores), randomSelection: mock.questionLimit != null, attempted, correctCount, wrongCount,
     skippedCount: attempt.skippedCount ?? 0, totalQuestions: questions.length,
     accuracy: attempted > 0 ? correctCount / attempted * 100 : 0,
     avgTimeMsPerAttempted: attempted > 0 ? totalTimeMs / attempted : 0,
@@ -98,7 +99,7 @@ export function generateResultTxt(r: ExportableResult): string {
   lines.push("");
   lines.push(`Score: ${r.score} / ${r.maxScore} (${r.scorePercent.toFixed(2)}%)`);
   lines.push(`Grade: ${r.grade}`);
-  lines.push(`Mockly attempt percentile (other same-mock attempts scoring strictly lower): ${r.percentile !== null ? r.percentile.toFixed(1) : "Not enough attempts"}`);
+  lines.push(`Mockly attempt percentile (other same-mock attempts scoring strictly lower): ${r.randomSelection ? "Not compared across random question sets" : r.percentile !== null ? r.percentile.toFixed(1) : "Not enough attempts"}`);
   lines.push(`Attempted: ${r.attempted} / ${r.totalQuestions}`);
   lines.push(`Correct: ${r.correctCount}`);
   lines.push(`Wrong: ${r.wrongCount}`);

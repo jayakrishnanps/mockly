@@ -7,6 +7,7 @@ type Stats = {
   avgScore: number;
   bestAccuracy: number;
   avgTime: number;
+  scoreIsPercent?: boolean;
 };
 
 export function UserStats({ stats, testId, user }: { stats: Stats | null; testId: string; user: User }) {
@@ -22,15 +23,15 @@ export function UserStats({ stats, testId, user }: { stats: Stats | null; testId
         </div>
         <div>
           <dt className="text-xs text-muted">Best score</dt>
-          <dd className="mt-1 text-sm font-semibold text-accent">{stats.bestScore.toFixed(2)}</dd>
+          <dd className="mt-1 text-sm font-semibold text-accent">{stats.bestScore.toFixed(2)}{stats.scoreIsPercent ? "%" : ""}</dd>
         </div>
         <div>
           <dt className="text-xs text-muted">Latest score</dt>
-          <dd className="mt-1 text-sm font-semibold">{stats.latestScore.toFixed(2)}</dd>
+          <dd className="mt-1 text-sm font-semibold">{stats.latestScore.toFixed(2)}{stats.scoreIsPercent ? "%" : ""}</dd>
         </div>
         <div>
           <dt className="text-xs text-muted">Average score</dt>
-          <dd className="mt-1 text-sm font-semibold">{stats.avgScore.toFixed(2)}</dd>
+          <dd className="mt-1 text-sm font-semibold">{stats.avgScore.toFixed(2)}{stats.scoreIsPercent ? "%" : ""}</dd>
         </div>
         <div>
           <dt className="text-xs text-muted">Best accuracy</dt>
@@ -43,6 +44,7 @@ export function UserStats({ stats, testId, user }: { stats: Stats | null; testId
           </dd>
         </div>
       </dl>
+      {stats.scoreIsPercent && <p className="mt-3 text-xs leading-5 text-muted">Scores are shown as percentages because attempts can use different numbers of questions.</p>}
       <div className="mt-4">
         <a href={`/test/${testId}/export?user=${user}`} download className="inline-flex min-h-11 items-center rounded-lg py-2 text-sm font-medium text-accent underline decoration-accent/30 underline-offset-4 hover:decoration-accent">
           Download all attempts (.txt)

@@ -6,6 +6,7 @@ import { scoreAttempt, type AnswerRecord } from "../lib/scoring.ts";
 import { validateAnswers } from "../lib/attempt-state.ts";
 import { isRecord, isUuid } from "../lib/mock-validation.ts";
 import { isUser, type User } from "../lib/users.ts";
+import { resolveQuestionCount, selectQuestions } from "../lib/question-selection.ts";
 
 type Database = typeof DbType;
 type Transaction = Parameters<Parameters<Database["transaction"]>[0]>[0];
@@ -120,7 +121,7 @@ export function createAttemptStore(database: Database, now: () => number = Date.
   }
 
   return {
-    async startOrResume(testId: string, user: User) {
+    async startOrResume(testId: string, user: User, requestedCount?: unknown) {
       if (!isUuid(testId) || !isUser(user)) throw new AttemptError("invalid", "Invalid start request.");
       return database.transaction(async (tx) => {
         // Coordinates duplicate starts with Studio's append/delete operations.
@@ -133,7 +134,9 @@ export function createAttemptStore(database: Database, now: () => number = Date.
         if (active) return { attemptId: active.id, resumed: true };
         const rows = await tx.select().from(questions).where(eq(questions.testId, testId)).orderBy(asc(questions.position));
         if (!rows.length) throw new AttemptError("conflict", "This mock has no questions yet.");
-        if (rows.length * Math.max(Number(mock.marksCorrect), Number(mock.marksWrong)) > 9999.99) {
+        const selection = resolveQuestionCount(rows.length, mock.questionLimit, requestedCount);
+        if (!selection.ok) throw new AttemptError("invalid", selection.error);
+        if (selection.count * Math.max(Number(mock.marksCorrect), Number(mock.marksWrong)) > 9999.99) {
           throw new AttemptError("invalid", "This marking scheme exceeds the existing score column's supported range.");
         }
         const [previous] = await tx.select({ answers: attempts.answers }).from(attempts)
@@ -144,17 +147,8 @@ export function createAttemptStore(database: Database, now: () => number = Date.
           ? previousAnswers.questions.map((q) => q.id)
           : validateAnswers(previousAnswers)?.map((answer) => answer.questionId) ?? rows.map((q) => q.id);
 
-        // Shuffle once, then persist this order for navigation, recovery and results.
-        const ordered = [...rows];
-        for (let index = ordered.length - 1; index > 0; index--) {
-          const swapIndex = randomInt(index + 1);
-          [ordered[index], ordered[swapIndex]] = [ordered[swapIndex], ordered[index]];
-        }
-        // A small mock can randomly repeat its last order; avoid that where possible.
-        if (ordered.length > 1 && ordered.length === previousOrder.length && ordered.every((q, index) => q.id === previousOrder[index])) {
-          const swapIndex = randomInt(1, ordered.length);
-          [ordered[0], ordered[swapIndex]] = [ordered[swapIndex], ordered[0]];
-        }
+        // Select once, then persist the exact set and order for recovery and results.
+        const ordered = selectQuestions(rows, selection.count, previousOrder, randomInt);
         const snapshot: AttemptSnapshot = {
           version: 1, revision: 0, durationMinutes: mock.durationMinutes, marksCorrect: mock.marksCorrect, marksWrong: mock.marksWrong,
           questions: ordered.map(({ id, questionText, options, correctIndex }, index) => ({ id, position: index + 1, questionText, options, correctIndex })),
@@ -210,8 +204,8 @@ export function createAttemptStore(database: Database, now: () => number = Date.
         const { attempt, mock } = await owned(tx, attemptId, user);
         if (!attempt.submittedAt) return null;
         const snapshot = await readSnapshot(tx, attempt, mock);
-        const scores = await tx.select({ score: attempts.score }).from(attempts)
-          .where(and(eq(attempts.testId, mock.id), isNotNull(attempts.submittedAt)));
+        const scores = mock.questionLimit === null ? await tx.select({ score: attempts.score }).from(attempts)
+          .where(and(eq(attempts.testId, mock.id), isNotNull(attempts.submittedAt))) : [];
         return {
           attempt: { ...attempt, answers: snapshot.answers },
           mock: { ...mock, marksCorrect: snapshot.marksCorrect, marksWrong: snapshot.marksWrong, durationMinutes: snapshot.durationMinutes },
@@ -259,8 +253,8 @@ export function createAttemptStore(database: Database, now: () => number = Date.
             marksCorrect: snapshot.marksCorrect, marksWrong: snapshot.marksWrong,
           });
         }
-        const scores = await tx.select({ score: attempts.score }).from(attempts)
-          .where(and(eq(attempts.testId, testId), isNotNull(attempts.submittedAt)));
+        const scores = mock.questionLimit === null ? await tx.select({ score: attempts.score }).from(attempts)
+          .where(and(eq(attempts.testId, testId), isNotNull(attempts.submittedAt))) : [];
         return { mock, attempts: entries, allScores: scores.map((row) => Number(row.score)) };
       }, { isolationLevel: "repeatable read", accessMode: "read only" });
     },
@@ -272,12 +266,23 @@ export function createAttemptStore(database: Database, now: () => number = Date.
     },
 
     async getMockStats(testId: string, user: User) {
+      const [mock] = await database.select({ questionLimit: tests.questionLimit, marksCorrect: tests.marksCorrect })
+        .from(tests).where(eq(tests.id, testId));
+      if (!mock) return null;
       const submitted = await database.select().from(attempts)
         .where(and(eq(attempts.testId, testId), eq(attempts.takenBy, user), isNotNull(attempts.submittedAt)))
         .orderBy(desc(attempts.submittedAt), desc(attempts.id));
       if (!submitted.length) return null;
-      const scores = submitted.map((row) => Number(row.score));
+      const scoreIsPercent = mock.questionLimit !== null;
+      const scores = submitted.map((row) => {
+        if (!scoreIsPercent) return Number(row.score);
+        const count = (row.correctCount ?? 0) + (row.wrongCount ?? 0) + (row.skippedCount ?? 0);
+        const marksCorrect = isRecord(row.answers) && typeof row.answers.marksCorrect === "string"
+          ? Number(row.answers.marksCorrect) : Number(mock.marksCorrect);
+        return count > 0 && marksCorrect > 0 ? Number(row.score) / (count * marksCorrect) * 100 : 0;
+      });
       return {
+        scoreIsPercent,
         totalAttempts: submitted.length, bestScore: Math.max(...scores), latestScore: scores[0],
         avgScore: scores.reduce((a, b) => a + b, 0) / scores.length,
         bestAccuracy: Math.max(...submitted.map((row) => {

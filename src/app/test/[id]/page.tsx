@@ -37,14 +37,15 @@ export default async function MockPage({ params }: PageProps<"/test/[id]">) {
       
       <div className="flex flex-col items-stretch justify-between gap-5 sm:flex-row sm:items-start sm:gap-8">
         <h1 className="min-w-0 flex-1 break-words text-2xl font-semibold tracking-tight sm:text-3xl">{mock.title}</h1>
-        <StartButton testId={mock.id} user={assigned ? user : null} activeAttemptId={active.find((attempt) => attempt.testId === id)?.id} />
+        <StartButton testId={mock.id} user={assigned ? user : null} activeAttemptId={active.find((attempt) => attempt.testId === id)?.id}
+          questionSelection={mock.questionLimit === null ? undefined : { available: mock.questions.length, defaultCount: mock.questionLimit }} durationMinutes={mock.durationMinutes} />
       </div>
       
       {mock.details && <p className="mt-4 whitespace-pre-wrap break-words text-sm leading-7 text-muted">{mock.details}</p>}
       <dl className="mt-6 grid grid-cols-2 gap-x-6 gap-y-5 border-y border-line py-5 sm:grid-cols-3 sm:py-6">
         {[
           ["Assigned to", mock.forUsers.join(" & ")],
-          ["Questions", String(mock.questions.length)],
+          [mock.questionLimit === null ? "Questions" : "Available questions", String(mock.questions.length)],
           ["Duration", `${mock.durationMinutes} minutes`],
           ["Correct answer", `+${Number(mock.marksCorrect)}`],
           ["Wrong answer", Number(mock.marksWrong) === 0 ? "0" : `−${Number(mock.marksWrong)}`],
@@ -57,11 +58,11 @@ export default async function MockPage({ params }: PageProps<"/test/[id]">) {
       {assigned && <UserStats stats={stats} testId={mock.id} user={user} />}
 
       <div className="mb-4 mt-9 flex flex-wrap items-center justify-between gap-3">
-        <div><h2 className="text-lg font-semibold tracking-tight">Questions</h2><p className="mt-1 text-sm text-muted">Preview the questions before you begin.</p></div>
+        <div><h2 className="text-lg font-semibold tracking-tight">Questions</h2><p className="mt-1 text-sm text-muted">{mock.questionLimit === null ? "Preview the questions before you begin." : "Each new attempt draws a random selection from this mock’s saved questions. Preview shows the first 25."}</p></div>
         <Link href={`/studio?test=${mock.id}`} className="inline-flex min-h-11 items-center rounded-md border border-line px-4 py-2.5 text-sm font-medium transition-colors hover:border-accent hover:text-accent">Add questions</Link>
       </div>
       <ol aria-label="Saved questions" className="divide-y divide-line border-y border-line bg-white">
-        {mock.questions.map((question) => <li key={question.id}>
+        {(mock.questionLimit === null ? mock.questions : mock.questions.slice(0, 25)).map((question) => <li key={question.id}>
           <article aria-label={`Question ${question.position}`} className="min-w-0 px-4 py-5 sm:px-6 sm:py-6">
             <h3 className="mb-3 text-xs font-semibold text-muted">Question {question.position}</h3>
             <QuestionContent text={question.questionText} />

@@ -22,6 +22,7 @@ export function DashboardHeader({ user }: { user: User }) {
   const links = [
     { href: `/u/${user}`, label: "Mocks" },
     { href: `/u/${user}/history`, label: "History" },
+    ...(user === "JK" ? [{ href: "/u/JK/bank", label: "Question bank" }] : []),
   ];
 
   return (
@@ -53,8 +54,8 @@ export function DashboardHeader({ user }: { user: User }) {
             <Link
               key={href}
               href={href}
-              aria-current={pathname === href ? "page" : undefined}
-              className={`min-h-11 border-b-2 px-1 py-3 text-sm font-medium transition-colors ${pathname === href ? "border-accent text-accent" : "border-transparent text-muted hover:text-foreground"}`}
+              aria-current={pathname === href || (label === "Question bank" && pathname.startsWith(`${href}/`)) ? "page" : undefined}
+              className={`min-h-11 border-b-2 px-1 py-3 text-sm font-medium transition-colors ${pathname === href || (label === "Question bank" && pathname.startsWith(`${href}/`)) ? "border-accent text-accent" : "border-transparent text-muted hover:text-foreground"}`}
             >
               {label}
             </Link>

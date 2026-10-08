@@ -12,10 +12,10 @@ export type StartResult =
   | { ok: true; attemptId: string; resumed: boolean }
   | { ok: false; error: string };
 
-export async function startAttempt(testId: unknown, user: unknown): Promise<StartResult> {
+export async function startAttempt(testId: unknown, user: unknown, questionCount?: unknown): Promise<StartResult> {
   if (!isUuid(testId) || !isUser(user) || await getRememberedUserFromCookies() !== user) return { ok: false, error: "Choose your identity before starting." };
   try {
-    const result = await attemptStore.startOrResume(testId, user);
+    const result = await attemptStore.startOrResume(testId, user, questionCount);
     return { ok: true, attemptId: result.attemptId, resumed: result.resumed };
   } catch (error) {
     if (error instanceof AttemptError) return { ok: false, error: error.message };

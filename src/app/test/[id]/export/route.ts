@@ -15,7 +15,7 @@ export async function GET(request: Request, { params }: { params: Promise<{ id: 
 
   const results = data.attempts.map((entry) => toExportableResult({
     attempt: entry.attempt,
-    mock: { title: data.mock.title, durationMinutes: entry.durationMinutes, marksCorrect: entry.marksCorrect },
+    mock: { title: data.mock.title, durationMinutes: entry.durationMinutes, marksCorrect: entry.marksCorrect, questionLimit: data.mock.questionLimit },
     questions: entry.questions,
     allScores: data.allScores,
   }));
