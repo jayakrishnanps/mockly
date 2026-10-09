@@ -7,7 +7,28 @@
   --accent: #29583f;
   --accent-soft: #eaf1e9;
   --line: #dde4db;
+  --selection: #d9e8d7;
   color-scheme: light;
+}
+
+:root[data-user-theme="JK"] {
+  --background: #f6f5fc;
+  --foreground: #26243a;
+  --muted: #69677b;
+  --accent: #534acf;
+  --accent-soft: #eeecfb;
+  --line: #e2dfef;
+  --selection: #ddd9fa;
+}
+
+:root[data-user-theme="HE"] {
+  --background: #fbf5fe;
+  --foreground: #302339;
+  --muted: #75677e;
+  --accent: #ad42f5;
+  --accent-soft: #f4e7fe;
+  --line: #ebddf2;
+  --selection: #ead2fc;
 }
 
 @theme inline {
@@ -57,7 +78,7 @@ input:focus-visible, textarea:focus-visible {
 }
 
 ::selection {
-  background: #d9e8d7;
+  background: var(--selection);
 }
 
 @utility eyebrow {
