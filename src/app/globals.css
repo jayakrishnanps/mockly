@@ -5,6 +5,7 @@
   --foreground: #202b25;
   --muted: #626e66;
   --accent: #29583f;
+  --accent-strong: var(--accent);
   --accent-soft: #eaf1e9;
   --line: #dde4db;
   --selection: #d9e8d7;
@@ -12,30 +13,33 @@
 }
 
 :root[data-user-theme="JK"] {
-  --background: #f6f5fc;
-  --foreground: #26243a;
-  --muted: #69677b;
-  --accent: #534acf;
-  --accent-soft: #eeecfb;
-  --line: #e2dfef;
-  --selection: #ddd9fa;
+  --background: #fff2f1;
+  --foreground: #352323;
+  --muted: #755e5b;
+  --accent: #fc0303;
+  --accent-strong: #bd0202;
+  --accent-soft: #ffe2df;
+  --line: #efc9c4;
+  --selection: #ffccc8;
 }
 
 :root[data-user-theme="HE"] {
-  --background: #fbf5fe;
+  --background: #f8efff;
   --foreground: #302339;
   --muted: #75677e;
   --accent: #ad42f5;
-  --accent-soft: #f4e7fe;
-  --line: #ebddf2;
-  --selection: #ead2fc;
+  --accent-strong: #7e22b5;
+  --accent-soft: #f0dcfc;
+  --line: #e0c5ee;
+  --selection: #e9cbfa;
 }
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --color-muted: var(--muted);
-  --color-accent: var(--accent);
+  /* A deeper shade keeps links and white button labels readable. */
+  --color-accent: var(--accent-strong);
   --color-accent-soft: var(--accent-soft);
   --color-line: var(--line);
   --font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Arial, Helvetica, sans-serif;
@@ -47,6 +51,22 @@ body {
   color: var(--foreground);
   font-family: var(--font-sans);
   line-height: 1.5;
+}
+
+:root[data-user-theme] header {
+  background: var(--accent-soft);
+  box-shadow: inset 0 2px var(--accent);
+}
+
+.brand-logo[data-brand-user="JK"],
+.brand-logo[data-brand-user="HE"],
+:root[data-user-theme] .brand-logo[data-brand-user="default"] {
+  display: none;
+}
+
+:root[data-user-theme="JK"] .brand-logo[data-brand-user="JK"],
+:root[data-user-theme="HE"] .brand-logo[data-brand-user="HE"] {
+  display: block;
 }
 
 button:not(:disabled), summary { cursor: pointer; }
