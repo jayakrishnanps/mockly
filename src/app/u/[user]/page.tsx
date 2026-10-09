@@ -45,7 +45,7 @@ export default async function MocksPage({ params }: PageProps<"/u/[user]">) {
           Mocks assigned to {user} will appear here.
         </EmptyState>
       ) : (
-        <MockList mocks={mocks.map((mock) => ({
+        <MockList searchable={user === "JK"} mocks={mocks.map((mock) => ({
           ...mock,
           createdAt: new Date(mock.createdAt).toISOString(),
           createdDate: mockCreatedDate(mock.createdAt),

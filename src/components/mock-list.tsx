@@ -15,14 +15,14 @@ type MockListItem = {
   createdLabel: string;
 };
 
-export function MockList({ mocks }: { mocks: MockListItem[] }) {
+export function MockList({ mocks, searchable }: { mocks: MockListItem[]; searchable: boolean }) {
   const [title, setTitle] = useState("");
   const [date, setDate] = useState("");
-  const filtered = mocks.filter((mock) => matchesMockFilter(mock, title, date));
+  const filtered = searchable ? mocks.filter((mock) => matchesMockFilter(mock, title, date)) : mocks;
   const hasFilters = !!title || !!date;
 
   return <>
-    <div role="search" aria-label="Find a mock" className="mb-5">
+    {searchable && <div role="search" aria-label="Find a mock" className="mb-5">
       <div className="grid grid-cols-[minmax(0,1fr)_auto] items-end gap-3 sm:grid-cols-[minmax(0,1fr)_12rem_auto]">
         <div className="col-span-2 min-w-0 sm:col-span-1">
           <label htmlFor="mock-search" className="block text-xs font-medium text-muted">Search by title</label>
@@ -35,7 +35,7 @@ export function MockList({ mocks }: { mocks: MockListItem[] }) {
         <button type="button" disabled={!hasFilters} onClick={() => { setTitle(""); setDate(""); }} className="min-h-11 rounded-md px-3 py-2.5 text-sm text-accent hover:bg-accent-soft disabled:opacity-40">Clear</button>
       </div>
       <p role="status" aria-live="polite" aria-atomic="true" className="mt-3 text-xs text-muted">{hasFilters ? `${filtered.length} of ${mocks.length}` : mocks.length} {mocks.length === 1 ? "mock" : "mocks"}</p>
-    </div>
+    </div>}
     {filtered.length === 0 ? <EmptyState title="No matching mocks.">Try another title or creation date, or clear the filters.</EmptyState> :
       <ul className="divide-y divide-line border-y border-line bg-white" aria-label="Assigned mocks">
         {filtered.map((mock) => (
