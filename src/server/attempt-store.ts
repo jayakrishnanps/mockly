@@ -1,5 +1,5 @@
 import { randomInt } from "node:crypto";
-import { and, asc, desc, eq, isNotNull, isNull } from "drizzle-orm";
+import { and, asc, desc, eq, isNotNull, isNull, sql } from "drizzle-orm";
 import { attempts, questions, tests } from "../db/schema.ts";
 import type { db as DbType } from "../db/index";
 import { scoreAttempt, type AnswerRecord } from "../lib/scoring.ts";
@@ -266,19 +266,26 @@ export function createAttemptStore(database: Database, now: () => number = Date.
     },
 
     async getMockStats(testId: string, user: User) {
-      const [mock] = await database.select({ questionLimit: tests.questionLimit, marksCorrect: tests.marksCorrect })
-        .from(tests).where(eq(tests.id, testId));
-      if (!mock) return null;
-      const submitted = await database.select().from(attempts)
+      const submitted = await database.select({
+        score: attempts.score, correctCount: attempts.correctCount,
+        wrongCount: attempts.wrongCount, skippedCount: attempts.skippedCount,
+        timeTakenSeconds: attempts.timeTakenSeconds,
+        questionLimit: tests.questionLimit, marksCorrect: tests.marksCorrect,
+        // Read the saved marking value without transferring entire question snapshots.
+        snapshotMarksCorrect: sql<string | null>`case
+          when jsonb_typeof(${attempts.answers} -> 'marksCorrect') = 'string'
+          then ${attempts.answers} ->> 'marksCorrect'
+          else null
+        end`,
+      }).from(attempts).innerJoin(tests, eq(attempts.testId, tests.id))
         .where(and(eq(attempts.testId, testId), eq(attempts.takenBy, user), isNotNull(attempts.submittedAt)))
         .orderBy(desc(attempts.submittedAt), desc(attempts.id));
       if (!submitted.length) return null;
-      const scoreIsPercent = mock.questionLimit !== null;
+      const scoreIsPercent = submitted[0].questionLimit !== null;
       const scores = submitted.map((row) => {
         if (!scoreIsPercent) return Number(row.score);
         const count = (row.correctCount ?? 0) + (row.wrongCount ?? 0) + (row.skippedCount ?? 0);
-        const marksCorrect = isRecord(row.answers) && typeof row.answers.marksCorrect === "string"
-          ? Number(row.answers.marksCorrect) : Number(mock.marksCorrect);
+        const marksCorrect = Number(row.snapshotMarksCorrect ?? row.marksCorrect);
         return count > 0 && marksCorrect > 0 ? Number(row.score) / (count * marksCorrect) * 100 : 0;
       });
       return {
