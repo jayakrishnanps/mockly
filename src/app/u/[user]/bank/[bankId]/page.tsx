@@ -6,7 +6,7 @@ import { bankStore } from "@/server/banks";
 import { BankWorkspace } from "@/components/bank-workspace";
 import { BankMockForm } from "@/components/bank-mock-form";
 import { BankDeleteButton } from "@/components/bank-delete-button";
-import { QuestionPreview } from "@/components/question-preview";
+import { QuestionContent } from "@/components/question-content";
 import "katex/dist/katex.min.css";
 import "@/app/studio/studio.css";
 
@@ -40,7 +40,7 @@ export default async function BankPage({ params, searchParams }: PageProps<"/u/[
         <ol className="mt-4 divide-y divide-line border-y border-line bg-white">
           {bank.questions.map((question) => <li key={question.id} className="min-w-0 px-4 py-5 sm:p-6">
             <h3 className="mb-3 text-xs font-semibold text-muted">Question {question.position}</h3>
-            <QuestionPreview question={question} number={question.position} />
+            <QuestionContent text={question.questionText} />
           </li>)}
         </ol>}
       <nav aria-label="Saved question pages" className="mt-4 flex justify-between gap-4 text-sm text-accent">

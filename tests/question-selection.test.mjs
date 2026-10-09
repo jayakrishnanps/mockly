@@ -8,12 +8,13 @@ test("ordinary mocks keep all questions and reject a smaller requested set", () 
   assert.equal(resolveQuestionCount(60, null, 30).ok, false);
 });
 
-test("bank mocks default to the configured count, bounded by the available pool", () => {
+test("bank mocks use their configured count, bounded by the available pool", () => {
   assert.deepEqual(resolveQuestionCount(200, 30, undefined), { ok: true, count: 30 });
   assert.deepEqual(resolveQuestionCount(12, 30, undefined), { ok: true, count: 12 });
-  assert.deepEqual(resolveQuestionCount(200, 30, 45), { ok: true, count: 45 });
-  assert.deepEqual(resolveQuestionCount(200, 30, 1), { ok: true, count: 1 });
-  assert.deepEqual(resolveQuestionCount(200, 30, 200), { ok: true, count: 200 });
+  assert.deepEqual(resolveQuestionCount(200, 30, 30), { ok: true, count: 30 });
+  for (const count of [1, 10, 45, 200]) {
+    assert.equal(resolveQuestionCount(200, 30, count).ok, false);
+  }
 });
 
 test("question counts reject coercion, fractions, empty pools and out-of-range input", () => {

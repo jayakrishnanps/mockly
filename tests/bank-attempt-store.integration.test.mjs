@@ -8,7 +8,7 @@ import { eq, inArray } from "drizzle-orm";
 import * as schema from "../src/db/schema.ts";
 import { createAttemptStore } from "../src/server/attempt-store.ts";
 
-test("bank mock attempts select once and preserve score meaning across lengths", { skip: process.env.MOCKLY_INTEGRATION_TESTS !== "1" }, async (t) => {
+test("bank mock attempts use fixed counts and preserve historical snapshots", { skip: process.env.MOCKLY_INTEGRATION_TESTS !== "1" }, async (t) => {
   config({ path: ".env.local", quiet: true });
   const url = new URL(process.env.DATABASE_URL);
   url.searchParams.set("sslmode", "verify-full");
@@ -37,7 +37,7 @@ test("bank mock attempts select once and preserve score meaning across lengths",
   }
 
   let first;
-  await t.test("default count and concurrent starts produce one immutable selection", async () => {
+  await t.test("configured count and concurrent starts produce one immutable selection", async () => {
     const starts = await Promise.all([store.startOrResume(bankMockId, "JK"), store.startOrResume(bankMockId, "JK")]);
     assert.equal(starts[0].attemptId, starts[1].attemptId);
     first = await store.getExamData(starts[0].attemptId, "JK");
@@ -59,12 +59,14 @@ test("bank mock attempts select once and preserve score meaning across lengths",
     assert.equal(result.attempt.score, "60.00");
     assert.equal(result.questions.length, 30);
     assert.deepEqual(result.allScores, []);
-    await db.update(schema.tests).set({ marksCorrect: "4" }).where(eq(schema.tests.id, bankMockId));
-    const started = await store.startOrResume(bankMockId, "JK", 10);
+    // Simulate historical settings to check that old attempts retain their own count and marks.
+    await db.update(schema.tests).set({ marksCorrect: "4", questionLimit: 10 }).where(eq(schema.tests.id, bankMockId));
+    const started = await store.startOrResume(bankMockId, "JK");
     const shorter = await store.getExamData(started.attemptId, "JK");
     assert.equal(shorter.questions.length, 10);
     clock += 1000;
     await store.submitAttempt(shorter.attemptId, "JK", shorter.answers.map((answer, index) => ({ ...answer, selectedIndex: index < 5 ? 0 : null })), shorter.revision);
+    await db.update(schema.tests).set({ questionLimit: 30 }).where(eq(schema.tests.id, bankMockId));
     const stats = await store.getMockStats(bankMockId, "JK");
     assert.equal(stats.scoreIsPercent, true);
     assert.equal(stats.bestScore, 100);
@@ -76,12 +78,13 @@ test("bank mock attempts select once and preserve score meaning across lengths",
     assert.deepEqual(exported.allScores, []);
   });
 
-  await t.test("invalid counts are rejected at the store boundary and HE can choose a count", async () => {
-    for (const count of [0, 61, 1.5, "30", null]) {
+  await t.test("count overrides are rejected and HE uses the configured count", async () => {
+    for (const count of [0, 10, 45, 61, 1.5, "30", null]) {
       await assert.rejects(store.startOrResume(bankMockId, "JK", count), { code: "invalid" });
     }
-    const he = await store.startOrResume(bankMockId, "HE", 45);
-    assert.equal((await store.getExamData(he.attemptId, "HE")).questions.length, 45);
+    await assert.rejects(store.startOrResume(bankMockId, "HE", 45), { code: "invalid" });
+    const he = await store.startOrResume(bankMockId, "HE");
+    assert.equal((await store.getExamData(he.attemptId, "HE")).questions.length, 30);
     await assert.rejects(store.getExamData(he.attemptId, "JK"), { code: "forbidden" });
   });
 

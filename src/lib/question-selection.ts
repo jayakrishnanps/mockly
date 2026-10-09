@@ -2,22 +2,22 @@ export type QuestionCountResult =
   | { ok: true; count: number }
   | { ok: false; error: string };
 
-export function resolveQuestionCount(available: number, defaultCount: number | null, requested: unknown): QuestionCountResult {
+export function resolveQuestionCount(available: number, configuredCount: number | null, requested: unknown): QuestionCountResult {
   if (!Number.isSafeInteger(available) || available < 1) {
     return { ok: false, error: "This mock has no questions yet." };
   }
-  if (defaultCount === null) {
+  if (configuredCount === null) {
     if (requested !== undefined && requested !== available) {
       return { ok: false, error: "This mock uses all of its questions." };
     }
     return { ok: true, count: available };
   }
-  if (!Number.isSafeInteger(defaultCount) || defaultCount < 1) {
+  if (!Number.isSafeInteger(configuredCount) || configuredCount < 1) {
     return { ok: false, error: "This mock's question count is invalid." };
   }
-  const count = requested === undefined ? Math.min(defaultCount, available) : requested;
-  if (typeof count !== "number" || !Number.isSafeInteger(count) || count < 1 || count > available) {
-    return { ok: false, error: `Choose a whole number of questions from 1 to ${available}.` };
+  const count = Math.min(configuredCount, available);
+  if (requested !== undefined && requested !== count) {
+    return { ok: false, error: `This mock uses ${count} questions per attempt, as set when it was created.` };
   }
   return { ok: true, count };
 }

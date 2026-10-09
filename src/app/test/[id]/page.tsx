@@ -37,15 +37,14 @@ export default async function MockPage({ params }: PageProps<"/test/[id]">) {
       
       <div className="flex flex-col items-stretch justify-between gap-5 sm:flex-row sm:items-start sm:gap-8">
         <h1 className="min-w-0 flex-1 break-words text-2xl font-semibold tracking-tight sm:text-3xl">{mock.title}</h1>
-        <StartButton testId={mock.id} user={assigned ? user : null} activeAttemptId={active.find((attempt) => attempt.testId === id)?.id}
-          questionSelection={mock.questionLimit === null ? undefined : { available: mock.questions.length, defaultCount: mock.questionLimit }} durationMinutes={mock.durationMinutes} />
+        <StartButton testId={mock.id} user={assigned ? user : null} activeAttemptId={active.find((attempt) => attempt.testId === id)?.id} />
       </div>
       
       {mock.details && <p className="mt-4 whitespace-pre-wrap break-words text-sm leading-7 text-muted">{mock.details}</p>}
       <dl className="mt-6 grid grid-cols-2 gap-x-6 gap-y-5 border-y border-line py-5 sm:grid-cols-3 sm:py-6">
         {[
           ["Assigned to", mock.forUsers.join(" & ")],
-          [mock.questionLimit === null ? "Questions" : "Available questions", String(mock.questions.length)],
+          [mock.questionLimit === null ? "Questions" : "Questions per attempt", mock.questionLimit === null ? String(mock.questions.length) : `${Math.min(mock.questionLimit, mock.questions.length)} of ${mock.questions.length}`],
           ["Duration", `${mock.durationMinutes} minutes`],
           ["Correct answer", `+${Number(mock.marksCorrect)}`],
           ["Wrong answer", Number(mock.marksWrong) === 0 ? "0" : `−${Number(mock.marksWrong)}`],
