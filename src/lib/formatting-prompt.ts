@@ -4,6 +4,7 @@ Output only the formatted questions as plain text, without a preamble, Markdown 
 
 For each question:
 - Start a new line with Q followed by its sequential number and a period, then the question text.
+- If the question contains Roman-numbered statements, label them Statement I:, Statement II:, Statement III:, etc., rather than I., II. or (i). Preserve their wording and numbering, keep references such as "Only I" unchanged, and keep answer options labelled (A)–(D).
 - Put exactly four nonempty options on separate lines, labelled (A), (B), (C), and (D), in that order.
 - End with exactly one line: Ans: followed by the single correct option letter A, B, C, or D.
 - Leave one blank line between question blocks. Keep all question and option content before the answer line. Question and option text may span multiple lines.
