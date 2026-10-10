@@ -1,12 +1,12 @@
 import { randomInt } from "node:crypto";
 import { and, asc, desc, eq, isNotNull, isNull, sql } from "drizzle-orm";
-import { attempts, questions, tests } from "../db/schema.ts";
+import { attempts, bankQuestions, questions, tests } from "../db/schema.ts";
 import type { db as DbType } from "../db/index";
 import { scoreAttempt, type AnswerRecord } from "../lib/scoring.ts";
 import { validateAnswers } from "../lib/attempt-state.ts";
 import { isRecord, isUuid } from "../lib/mock-validation.ts";
 import { isUser, type User } from "../lib/users.ts";
-import { resolveQuestionCount, selectQuestions } from "../lib/question-selection.ts";
+import { resolveQuestionCount, selectQuestions, shuffleQuestionOptions } from "../lib/question-selection.ts";
 
 type Database = typeof DbType;
 type Transaction = Parameters<Parameters<Database["transaction"]>[0]>[0];
@@ -139,26 +139,23 @@ export function createAttemptStore(database: Database, now: () => number = Date.
           .where(and(eq(attempts.testId, testId), eq(attempts.takenBy, user), isNull(attempts.submittedAt)))
           .orderBy(desc(attempts.startedAt)).limit(1);
         if (active) return { attemptId: active.id, resumed: true };
-        const rows = await tx.select().from(questions).where(eq(questions.testId, testId)).orderBy(asc(questions.position));
+        const rows: SnapshotQuestion[] = mock.sourceBankId !== null
+          ? await tx.select().from(bankQuestions).where(eq(bankQuestions.bankId, mock.sourceBankId)).orderBy(asc(bankQuestions.position))
+          : await tx.select().from(questions).where(eq(questions.testId, testId)).orderBy(asc(questions.position));
         if (!rows.length) throw new AttemptError("conflict", "This mock has no questions yet.");
         const selection = resolveQuestionCount(rows.length, mock.questionLimit, requestedCount);
         if (!selection.ok) throw new AttemptError("invalid", selection.error);
         if (selection.count * Math.max(Number(mock.marksCorrect), Number(mock.marksWrong)) > 9999.99) {
           throw new AttemptError("invalid", "This marking scheme exceeds the existing score column's supported range.");
         }
-        const [previous] = await tx.select({ answers: attempts.answers }).from(attempts)
-          .where(and(eq(attempts.testId, testId), eq(attempts.takenBy, user), isNotNull(attempts.submittedAt)))
-          .orderBy(desc(attempts.submittedAt), desc(attempts.id)).limit(1);
-        const previousAnswers = previous?.answers;
-        const previousOrder = isRecord(previousAnswers) && Array.isArray(previousAnswers.questions) && previousAnswers.questions.every(isSnapshotQuestion)
-          ? previousAnswers.questions.map((q) => q.id)
-          : validateAnswers(previousAnswers)?.map((answer) => answer.questionId) ?? rows.map((q) => q.id);
-
-        // Select once, then persist the exact set and order for recovery and results.
-        const ordered = selectQuestions(rows, selection.count, previousOrder, randomInt);
+        // Select and shuffle once; recovery, scoring and results use this snapshot.
+        const ordered = selectQuestions(rows, selection.count, randomInt);
         const snapshot: AttemptSnapshot = {
           version: 1, revision: 0, durationMinutes: mock.durationMinutes, marksCorrect: mock.marksCorrect, marksWrong: mock.marksWrong,
-          questions: ordered.map(({ id, questionText, options, correctIndex }, index) => ({ id, position: index + 1, questionText, options, correctIndex })),
+          questions: ordered.map((question, index) => ({
+            id: question.id, position: index + 1, questionText: question.questionText,
+            ...shuffleQuestionOptions(question, randomInt),
+          })),
           answers: ordered.map((q) => ({ questionId: q.id, selectedIndex: null, timeSpentMs: 0, markedForReview: false, visited: false })),
         };
         const [created] = await tx.insert(attempts).values({ testId, takenBy: user, startedAt: new Date(now()).toISOString(), answers: snapshot }).returning({ id: attempts.id });

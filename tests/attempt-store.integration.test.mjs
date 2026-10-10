@@ -34,13 +34,15 @@ test("Neon Stage 4 lifecycle and immutable historical snapshots", { skip: proces
   });
   await t.test("clear response, revision conflicts and invalid payload rollback", async () => {
     clock += 5000;
-    const selected = progress.answers.map((a, i) => ({ ...a, selectedIndex: i === 0 ? 0 : null, visited: i === 0, timeSpentMs: i === 0 ? 1000 : 0 }));
+    const selected = progress.answers.map((a, i) => ({ ...a, selectedIndex: i === 0 ? progress.questions[i].options.indexOf("a") : null, visited: i === 0, timeSpentMs: i === 0 ? 1000 : 0 }));
     assert.deepEqual(await store.saveProgress(id, "JK", selected, 0), { submitted: false, revision: 1 });
     await assert.rejects(store.saveProgress(id, "JK", selected, 0), { code: "stale" });
     await assert.rejects(store.saveProgress(id, "JK", selected.slice(1), 1), { code: "invalid" });
     selected[0].selectedIndex = null;
     await store.saveProgress(id, "JK", selected, 1);
-    progress = await store.getExamData(id, "JK");
+    const reloaded = await store.getExamData(id, "JK");
+    assert.deepEqual(reloaded.questions, progress.questions);
+    progress = reloaded;
     assert.equal(progress.answers[0].selectedIndex, null);
     assert.equal(progress.revision, 2);
   });
@@ -49,12 +51,16 @@ test("Neon Stage 4 lifecycle and immutable historical snapshots", { skip: proces
     assert.equal((await store.getExamData(id, "JK")).questions.length, 3);
   });
   await t.test("manual and duplicate submissions are immutable and score server-side", async () => {
-    const answers = progress.answers.map((a, i) => ({ ...a, selectedIndex: i === 0 ? 0 : i === 1 ? 1 : null }));
+    const answers = progress.answers.map((a, i) => ({ ...a, selectedIndex: i === 0 ? progress.questions[i].options.indexOf("a") : i === 1 ? progress.questions[i].options.indexOf("b") : null }));
     await Promise.all([store.submitAttempt(id, "JK", answers, 2), store.submitAttempt(id, "JK", answers, 2)]);
     const result = await store.getResult(id, "JK");
     assert.equal(result.attempt.score, "1.50");
     assert.deepEqual([result.attempt.correctCount, result.attempt.wrongCount, result.attempt.skippedCount], [1, 1, 1]);
     assert.equal(result.questions.length, 3);
+    assert.deepEqual(result.questions.map(({ correctIndex, ...question }) => {
+      assert.equal(question.options[correctIndex], "a");
+      return question;
+    }), progress.questions);
     await store.saveProgress(id, "JK", [], 2);
     await store.submitAttempt(id, "JK", [], 2);
     assert.deepEqual(await store.getResult(id, "JK"), result);
@@ -68,10 +74,10 @@ test("Neon Stage 4 lifecycle and immutable historical snapshots", { skip: proces
     const data = await store.getExamData(second.attemptId, "JK");
     assert.equal(data.questions.length, 4);
     clock += 1000;
-    const saved = data.answers.map((a, i) => ({ ...a, selectedIndex: i === 0 ? 0 : null }));
+    const saved = data.answers.map((a, i) => ({ ...a, selectedIndex: i === 0 ? data.questions[i].options.indexOf("a") : null }));
     await store.saveProgress(second.attemptId, "JK", saved, 0);
     clock += 60000;
-    const late = data.answers.map(a => ({ ...a, selectedIndex: 0 }));
+    const late = data.answers.map((a, i) => ({ ...a, selectedIndex: data.questions[i].options.indexOf("a") }));
     await store.submitAttempt(second.attemptId, "JK", late, 1);
     const result = await store.getResult(second.attemptId, "JK");
     assert.equal(result.attempt.score, "2.00");
@@ -89,6 +95,8 @@ test("Neon Stage 4 lifecycle and immutable historical snapshots", { skip: proces
   await t.test("legacy answer arrays retain original question IDs", async () => {
     const legacyId = randomUUID();
     await db.insert(schema.attempts).values({ id: legacyId, testId, takenBy: "JK", answers: progress.answers, startedAt: new Date(clock).toISOString() });
-    assert.equal((await store.getExamData(legacyId, "JK")).questions.length, 3);
+    const legacy = await store.getExamData(legacyId, "JK");
+    assert.equal(legacy.questions.length, 3);
+    assert.deepEqual(legacy.questions.map((question) => question.options), rows.map((question) => question.options));
   });
 });

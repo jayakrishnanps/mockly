@@ -4,6 +4,7 @@ import { memo } from "react";
 import Markdown from "react-markdown";
 import remarkMath from "remark-math";
 import rehypeKatex from "rehype-katex";
+import { remarkStatementBreaks } from "@/lib/remark-statement-breaks";
 
 // Memoization keeps a large draft from re-rendering every formula on each keystroke.
 export const QuestionContent = memo(function QuestionContent({ text }: { text: string }) {
@@ -11,7 +12,7 @@ export const QuestionContent = memo(function QuestionContent({ text }: { text: s
     <div className="question-content min-w-0 text-base leading-8">
       <Markdown
         skipHtml
-        remarkPlugins={[remarkMath]}
+        remarkPlugins={[remarkMath, remarkStatementBreaks]}
         rehypePlugins={[[rehypeKatex, {
           trust: false,
           strict: "ignore",

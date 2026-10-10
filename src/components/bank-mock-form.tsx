@@ -70,7 +70,7 @@ function MockForm({ bankId, title, questionCount }: Props) {
 
   return <form onSubmit={submit} className="min-w-0">
     <fieldset disabled={pending} aria-busy={pending} className="min-w-0 space-y-6">
-      <p className="text-sm leading-6 text-muted">Create a mock for JK, HE, or both. Each attempt draws a fresh random selection from the {questionCount} questions currently saved here. Later changes to this bank will not change the mock.</p>
+      <p className="text-sm leading-6 text-muted">Create a mock for JK, HE, or both. New attempts draw a random selection from this bank’s current question pool ({questionCount} questions now), including questions added later. Attempts already started keep their saved questions.</p>
       <fieldset disabled={draft.testId !== null} className="min-w-0 space-y-6">
       <MockInformation value={draft.metadata} errors={fields} onChange={(metadata) => { commit({ ...draft, metadata }); setFields({}); }} />
       <div>

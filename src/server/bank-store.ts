@@ -1,6 +1,6 @@
-import { and, asc, count, desc, eq, gt, inArray, max } from "drizzle-orm";
+import { asc, count, desc, eq, inArray, max } from "drizzle-orm";
 import type { db } from "../db/index";
-import { bankQuestions, questionBanks, questions, tests } from "../db/schema.ts";
+import { bankQuestions, questionBanks, tests } from "../db/schema.ts";
 import { BANK_PAGE_SIZE } from "../lib/bank-validation.ts";
 import type { BankAppendInput, BankMockInput, BankTitleInput } from "../lib/bank-validation";
 import type { QuestionInput, SavedMetadata } from "../lib/mock-validation";
@@ -34,23 +34,22 @@ function sameMetadata(saved: typeof tests.$inferSelect, incoming: SavedMetadata)
 
 function savedMockResult(mock: typeof tests.$inferSelect, input: BankMockInput) {
   if (mock.deletedAt) throw new BankStoreError("not-found", "This mock was deleted. Start a new mock to create another one.");
-  if (!sameMetadata(mock, input.metadata) || mock.questionLimit !== input.questionLimit) {
+  if (!sameMetadata(mock, input.metadata) || mock.questionLimit !== input.questionLimit ||
+      (mock.sourceBankId !== null && mock.sourceBankId !== input.bankId)) {
     throw new BankStoreError("conflict", "This mock was already created with different information. Open it to review.");
   }
   return { id: mock.id, forUsers: mock.forUsers, alreadySaved: true };
 }
 
-/** Bank questions are copied into mocks so their lifetimes stay independent. */
+/** Linked mocks use the bank's current pool; attempts retain their own snapshots. */
 export function createBankStore(database: typeof db) {
   return {
-    async list(page = 1) {
-      const rows = await database.select({
+    async list() {
+      return database.select({
         id: questionBanks.id, title: questionBanks.title, createdAt: questionBanks.createdAt,
         questionCount: count(bankQuestions.id),
       }).from(questionBanks).leftJoin(bankQuestions, eq(bankQuestions.bankId, questionBanks.id))
-        .groupBy(questionBanks.id).orderBy(desc(questionBanks.createdAt), asc(questionBanks.id))
-        .limit(BANK_PAGE_SIZE + 1).offset(pageOffset(page));
-      return { items: rows.slice(0, BANK_PAGE_SIZE), hasNext: rows.length > BANK_PAGE_SIZE };
+        .groupBy(questionBanks.id).orderBy(desc(questionBanks.createdAt), asc(questionBanks.id));
     },
 
     async get(bankId: string, page = 1) {
@@ -118,7 +117,7 @@ export function createBankStore(database: typeof db) {
 
     async createMock(input: BankMockInput) {
       return database.transaction(async (tx) => {
-        // A retry must succeed even when the source bank has since changed or been removed.
+        // A retry returns the original mock while its source bank still exists.
         const [previous] = await tx.select().from(tests).where(eq(tests.id, input.testId)).for("update");
         if (previous) return savedMockResult(previous, input);
         const [bank] = await tx.select({ id: questionBanks.id }).from(questionBanks).where(eq(questionBanks.id, input.bankId)).for("update");
@@ -129,23 +128,12 @@ export function createBankStore(database: typeof db) {
         if (!Number.isInteger(input.questionLimit) || input.questionLimit < 1 || input.questionLimit > questionCount) {
           throw new BankStoreError("invalid", `Choose between 1 and ${questionCount} questions from this bank.`);
         }
-        const inserted = await tx.insert(tests).values({ id: input.testId, ...input.metadata, questionLimit: input.questionLimit })
+        const inserted = await tx.insert(tests).values({ id: input.testId, ...input.metadata, questionLimit: input.questionLimit, sourceBankId: bank.id })
           .onConflictDoNothing({ target: tests.id }).returning({ id: tests.id });
         if (!inserted.length) {
           const [mock] = await tx.select().from(tests).where(eq(tests.id, input.testId)).for("update");
           if (!mock) throw new BankStoreError("not-found", "This mock no longer exists.");
           return savedMockResult(mock, input);
-        }
-        // Page through the bank inside the transaction to avoid loading an unbounded bank into memory.
-        let lastPosition = 0;
-        for (let offset = 0; offset < questionCount; offset += 200) {
-          const batch = await tx.select({
-            position: bankQuestions.position,
-            questionText: bankQuestions.questionText, options: bankQuestions.options, correctIndex: bankQuestions.correctIndex,
-          }).from(bankQuestions).where(and(eq(bankQuestions.bankId, bank.id), gt(bankQuestions.position, lastPosition)))
-            .orderBy(asc(bankQuestions.position)).limit(200);
-          await tx.insert(questions).values(batch.map((question, index) => ({ ...question, testId: input.testId, position: offset + index + 1 })));
-          lastPosition = batch[batch.length - 1].position;
         }
         return { id: input.testId, forUsers: input.metadata.forUsers, alreadySaved: false };
       });

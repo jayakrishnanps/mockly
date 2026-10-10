@@ -25,6 +25,15 @@ export default async function MockPage({ params }: PageProps<"/test/[id]">) {
   const user = await getRememberedUserFromCookies();
   const assigned = user && mock.forUsers.includes(user);
   const [stats, active] = assigned ? await Promise.all([attemptStore.getMockStats(id, user), attemptStore.getActiveAttempts(user)]) : [null, []];
+  const addQuestionsHref = mock.sourceBankId
+    ? user === "JK" ? `/u/JK/bank/${mock.sourceBankId}` : null
+    : `/studio?test=${mock.id}`;
+  const previewDescription = mock.sourceBankId
+    ? "New attempts draw from the question bank’s current pool, including questions added later. Attempts already started keep their saved questions. Preview shows the first 25 current bank questions."
+    : mock.questionLimit === null
+      ? "Preview the questions before you begin."
+      : "Each new attempt draws a random selection from this mock’s saved questions. Preview shows the first 25.";
+  const previewQuestions = mock.sourceBankId || mock.questionLimit !== null ? mock.questions.slice(0, 25) : mock.questions;
 
   return <>
     <header className="border-b border-line bg-white">
@@ -44,7 +53,7 @@ export default async function MockPage({ params }: PageProps<"/test/[id]">) {
       <dl className="mt-6 grid grid-cols-2 gap-x-6 gap-y-5 border-y border-line py-5 sm:grid-cols-3 sm:py-6">
         {[
           ["Assigned to", mock.forUsers.join(" & ")],
-          [mock.questionLimit === null ? "Questions" : "Questions per attempt", mock.questionLimit === null ? String(mock.questions.length) : `${Math.min(mock.questionLimit, mock.questions.length)} of ${mock.questions.length}`],
+          [mock.questionLimit === null ? "Questions" : "Questions per attempt", mock.questionLimit === null ? String(mock.questionCount) : `${Math.min(mock.questionLimit, mock.questionCount)} of ${mock.questionCount}`],
           ["Duration", `${mock.durationMinutes} minutes`],
           ["Correct answer", `+${Number(mock.marksCorrect)}`],
           ["Wrong answer", Number(mock.marksWrong) === 0 ? "0" : `−${Number(mock.marksWrong)}`],
@@ -57,19 +66,19 @@ export default async function MockPage({ params }: PageProps<"/test/[id]">) {
       {assigned && <UserStats stats={stats} testId={mock.id} user={user} />}
 
       <div className="mb-4 mt-9 flex flex-wrap items-center justify-between gap-3">
-        <div><h2 className="text-lg font-semibold tracking-tight">Questions</h2><p className="mt-1 text-sm text-muted">{mock.questionLimit === null ? "Preview the questions before you begin." : "Each new attempt draws a random selection from this mock’s saved questions. Preview shows the first 25."}</p></div>
-        <Link href={`/studio?test=${mock.id}`} className="inline-flex min-h-11 items-center rounded-md border border-line px-4 py-2.5 text-sm font-medium transition-colors hover:border-accent hover:text-accent">Add questions</Link>
+        <div><h2 className="text-lg font-semibold tracking-tight">{mock.sourceBankId ? "Question bank preview" : "Questions"}</h2><p className="mt-1 text-sm text-muted">{previewDescription}</p></div>
+        {addQuestionsHref && <Link href={addQuestionsHref} className="inline-flex min-h-11 items-center rounded-md border border-line px-4 py-2.5 text-sm font-medium transition-colors hover:border-accent hover:text-accent">Add questions</Link>}
       </div>
-      <ol aria-label="Saved questions" className="divide-y divide-line border-y border-line bg-white">
-        {(mock.questionLimit === null ? mock.questions : mock.questions.slice(0, 25)).map((question) => <li key={question.id}>
+      <ol aria-label={mock.sourceBankId ? "Current bank questions" : "Saved questions"} className="divide-y divide-line border-y border-line bg-white">
+        {previewQuestions.map((question) => <li key={question.id}>
           <article aria-label={`Question ${question.position}`} className="min-w-0 px-4 py-5 sm:px-6 sm:py-6">
             <h3 className="mb-3 text-xs font-semibold text-muted">Question {question.position}</h3>
             <QuestionContent text={question.questionText} />
           </article>
         </li>)}
       </ol>
-      {!mock.questions.length && <p className="py-6 text-sm text-muted">No questions saved yet.</p>}
-      <DeleteMock id={mock.id} forUsers={mock.forUsers} />
+      {mock.questionCount === 0 && <p className="py-6 text-sm text-muted">No questions saved yet.</p>}
+      {assigned && <DeleteMock id={mock.id} user={user} />}
     </main>
   </>;
 }

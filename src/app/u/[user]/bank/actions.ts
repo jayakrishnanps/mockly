@@ -19,6 +19,7 @@ function failure(error: unknown): BankActionResult {
 function refreshBank(id: string) {
   revalidatePath("/u/JK/bank");
   revalidatePath(`/u/JK/bank/${id}`);
+  revalidatePath("/test/[id]", "page");
 }
 
 export async function createBank(input: unknown): Promise<BankActionResult> {
@@ -62,5 +63,12 @@ export async function deleteBank(id: unknown): Promise<BankActionResult> {
   try { await bankStore.remove(id.toLowerCase()); }
   catch (error) { return failure(error); }
   refreshBank(id);
+  revalidatePath("/u/JK");
+  revalidatePath("/u/HE");
+  revalidatePath("/u/JK/history");
+  revalidatePath("/u/HE/history");
+  revalidatePath("/exam/[attemptId]", "page");
+  revalidatePath("/result/[attemptId]", "page");
+  revalidatePath("/studio");
   return { ok: true, id };
 }

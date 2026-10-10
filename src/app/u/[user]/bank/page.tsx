@@ -1,21 +1,23 @@
-import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { getRememberedUserFromCookies } from "@/lib/server-user";
 import { bankStore } from "@/server/banks";
 import { BankCreateForm } from "@/components/bank-create-form";
+import { BankList } from "@/components/bank-list";
 import { EmptyState } from "@/components/empty-state";
+import { mockCreatedDate } from "@/lib/mock-filter";
 
 export const metadata = { title: "Question bank" };
 
-export default async function BanksPage({ params, searchParams }: PageProps<"/u/[user]/bank">) {
+const dateFormatter = new Intl.DateTimeFormat("en-IN", {
+  day: "numeric", month: "short", year: "numeric", timeZone: "Asia/Kolkata",
+});
+
+export default async function BanksPage({ params }: PageProps<"/u/[user]/bank">) {
   const { user } = await params;
   if (user !== "JK") notFound();
   const selected = await getRememberedUserFromCookies();
   if (selected !== "JK") redirect(selected ? `/u/${selected}` : "/");
-  const query = await searchParams;
-  const requestedPage = Number(query.page);
-  const page = Number.isSafeInteger(requestedPage) && requestedPage > 0 && requestedPage <= 1000000 ? requestedPage : 1;
-  const banks = await bankStore.list(page);
+  const banks = await bankStore.list();
 
   return <>
     <div className="mb-7">
@@ -24,19 +26,13 @@ export default async function BanksPage({ params, searchParams }: PageProps<"/u/
     </div>
     <BankCreateForm />
     <section className="mt-8" aria-label="Saved question banks">
-      {banks.items.length === 0 ? <EmptyState title="No question banks here yet.">Create a bank, then paste your questions in the usual format.</EmptyState> :
-        <ul className="divide-y divide-line border-y border-line bg-white">
-          {banks.items.map((bank) => <li key={bank.id}>
-            <Link href={`/u/JK/bank/${bank.id}`} className="flex min-h-20 items-center justify-between gap-4 px-4 py-5 hover:bg-accent-soft/50 sm:px-6">
-              <div className="min-w-0"><h2 className="break-words text-lg font-semibold">{bank.title}</h2><p className="mt-1 text-sm text-muted">{bank.questionCount} {bank.questionCount === 1 ? "question" : "questions"}</p></div>
-              <span aria-hidden="true" className="text-accent">→</span>
-            </Link>
-          </li>)}
-        </ul>}
-      <nav aria-label="Question bank pages" className="mt-4 flex justify-between gap-4 text-sm text-accent">
-        {page > 1 ? <Link className="inline-flex min-h-11 items-center" href={`/u/JK/bank?page=${page - 1}`}>← Previous</Link> : <span />}
-        {banks.hasNext && <Link className="inline-flex min-h-11 items-center" href={`/u/JK/bank?page=${page + 1}`}>Next →</Link>}
-      </nav>
+      {banks.length === 0 ? <EmptyState title="No question banks here yet.">Create a bank, then paste your questions in the usual format.</EmptyState> :
+        <BankList banks={banks.map((bank) => ({
+          ...bank,
+          createdAt: new Date(bank.createdAt).toISOString(),
+          createdDate: mockCreatedDate(bank.createdAt),
+          createdLabel: dateFormatter.format(new Date(bank.createdAt)),
+        }))} />}
     </section>
   </>;
 }

@@ -1,4 +1,3 @@
-import Link from "next/link";
 import Image from "next/image";
 
 const logos = {
@@ -9,7 +8,7 @@ const logos = {
 
 export function Brand() {
   return (
-    <Link href="/" className="inline-flex shrink-0 items-center gap-1.5 rounded-sm" aria-label="Mockly home">
+    <div className="inline-flex shrink-0 items-center gap-1.5">
       {Object.entries(logos).map(([user, src]) => (
         <Image
           key={user}
@@ -23,6 +22,6 @@ export function Brand() {
         />
       ))}
       <span className="text-xl font-semibold tracking-tight">mockly<span className="text-accent">.</span></span>
-    </Link>
+    </div>
   );
 }

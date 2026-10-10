@@ -1,7 +1,8 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 import { isUuid } from "@/lib/mock-validation";
+import { getRememberedUserFromCookies } from "@/lib/server-user";
 import { mockStore } from "@/server/mocks";
 import { Brand } from "@/components/brand";
 import { StudioWorkspace } from "@/components/studio-workspace";
@@ -17,6 +18,10 @@ export default async function StudioPage({ searchParams }: PageProps<"/studio">)
     if (!isUuid(query.test)) notFound();
     const mock = await mockStore.get(query.test.toLowerCase());
     if (!mock) notFound();
+    if (mock.sourceBankId) {
+      const user = await getRememberedUserFromCookies();
+      redirect(user === "JK" ? `/u/JK/bank/${mock.sourceBankId}` : `/test/${mock.id}`);
+    }
     target = { id: mock.id, title: mock.title, forUsers: mock.forUsers };
   }
   return (

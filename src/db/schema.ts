@@ -14,7 +14,14 @@ export const tests = pgTable("tests", {
 	createdAt: timestamp("created_at", { withTimezone: true, mode: 'string' }).defaultNow().notNull(),
 	deletedAt: timestamp("deleted_at", { withTimezone: true, mode: 'string' }),
 	questionLimit: integer("question_limit"),
+	sourceBankId: uuid("source_bank_id"),
 }, (table) => [
+	index("tests_source_bank_idx").on(table.sourceBankId),
+	foreignKey({
+		columns: [table.sourceBankId],
+		foreignColumns: [questionBanks.id],
+		name: "tests_source_bank_id_fkey",
+	}).onDelete("cascade"),
 	check("tests_for_users_check", sql`(cardinality(for_users) > 0) AND (for_users <@ ARRAY['JK'::text, 'HE'::text])`),
 	check("tests_duration_minutes_check", sql`duration_minutes > 0`),
 	check("tests_question_limit_check", sql`question_limit IS NULL OR question_limit > 0`),
