@@ -18,6 +18,13 @@ type AttemptSnapshot = {
   questions: SnapshotQuestion[]; answers: AnswerRecord[];
 };
 
+// Read the saved marking value without transferring entire question snapshots.
+const snapshotMarksCorrect = sql<string | null>`case
+  when jsonb_typeof(${attempts.answers} -> 'marksCorrect') = 'string'
+  then ${attempts.answers} ->> 'marksCorrect'
+  else null
+end`;
+
 export class AttemptError extends Error {
   code: "not-found" | "forbidden" | "conflict" | "expired" | "invalid" | "stale";
   constructor(code: AttemptError["code"], message: string) {
@@ -218,12 +225,12 @@ export function createAttemptStore(database: Database, now: () => number = Date.
       const rows = await database.select({
         id: attempts.id, testId: attempts.testId, submittedAt: attempts.submittedAt,
         timeTakenSeconds: attempts.timeTakenSeconds, score: attempts.score, correctCount: attempts.correctCount,
-        wrongCount: attempts.wrongCount, skippedCount: attempts.skippedCount, answers: attempts.answers,
+        wrongCount: attempts.wrongCount, skippedCount: attempts.skippedCount, snapshotMarksCorrect,
         mockTitle: tests.title, marksCorrect: tests.marksCorrect,
       }).from(attempts).innerJoin(tests, eq(attempts.testId, tests.id))
         .where(and(eq(attempts.takenBy, user), isNotNull(attempts.submittedAt))).orderBy(desc(attempts.submittedAt), desc(attempts.id));
-      return rows.map(({ answers, ...row }) => ({
-        ...row, marksCorrect: isRecord(answers) && typeof answers.marksCorrect === "string" ? answers.marksCorrect : row.marksCorrect,
+      return rows.map(({ snapshotMarksCorrect, ...row }) => ({
+        ...row, marksCorrect: snapshotMarksCorrect ?? row.marksCorrect,
         totalQuestions: (row.correctCount ?? 0) + (row.wrongCount ?? 0) + (row.skippedCount ?? 0),
       }));
     },
@@ -271,12 +278,7 @@ export function createAttemptStore(database: Database, now: () => number = Date.
         wrongCount: attempts.wrongCount, skippedCount: attempts.skippedCount,
         timeTakenSeconds: attempts.timeTakenSeconds,
         questionLimit: tests.questionLimit, marksCorrect: tests.marksCorrect,
-        // Read the saved marking value without transferring entire question snapshots.
-        snapshotMarksCorrect: sql<string | null>`case
-          when jsonb_typeof(${attempts.answers} -> 'marksCorrect') = 'string'
-          then ${attempts.answers} ->> 'marksCorrect'
-          else null
-        end`,
+        snapshotMarksCorrect,
       }).from(attempts).innerJoin(tests, eq(attempts.testId, tests.id))
         .where(and(eq(attempts.testId, testId), eq(attempts.takenBy, user), isNotNull(attempts.submittedAt)))
         .orderBy(desc(attempts.submittedAt), desc(attempts.id));
