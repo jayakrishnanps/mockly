@@ -13,13 +13,13 @@ export const metadata: Metadata = { title: "Studio" };
 
 export default async function StudioPage({ searchParams }: PageProps<"/studio">) {
   const query = await searchParams;
+  const user = await getRememberedUserFromCookies();
   let target = null;
   if (query.test !== undefined) {
     if (!isUuid(query.test)) notFound();
     const mock = await mockStore.get(query.test.toLowerCase());
     if (!mock) notFound();
     if (mock.sourceBankId) {
-      const user = await getRememberedUserFromCookies();
       redirect(user === "JK" ? `/u/JK/bank/${mock.sourceBankId}` : `/test/${mock.id}`);
     }
     target = { id: mock.id, title: mock.title, forUsers: mock.forUsers };
@@ -28,7 +28,7 @@ export default async function StudioPage({ searchParams }: PageProps<"/studio">)
     <>
       <header className="border-b border-line bg-white">
         <div className="mx-auto flex min-h-18 max-w-5xl items-center justify-between gap-3 px-4 sm:px-8">
-          <Brand />
+          <Brand user={user} />
           <Link href="/" className="inline-flex min-h-11 items-center rounded-sm py-2 text-sm text-muted hover:text-accent">← Mocks</Link>
         </div>
       </header>

@@ -29,7 +29,7 @@ export function DashboardHeader({ user }: { user: User }) {
     <header className="border-b border-line bg-white">
       <div className="mx-auto max-w-5xl px-4 sm:px-8">
         <div className="flex min-h-18 flex-wrap items-center justify-between gap-x-2 gap-y-1 py-2">
-          <Brand />
+          <Brand user={user} />
           <div className="flex items-center gap-1 sm:gap-4">
             <Link
               href="/studio"

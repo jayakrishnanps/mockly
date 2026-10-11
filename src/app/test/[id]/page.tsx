@@ -38,7 +38,7 @@ export default async function MockPage({ params }: PageProps<"/test/[id]">) {
   return <>
     <header className="border-b border-line bg-white">
       <div className="mx-auto flex min-h-18 max-w-5xl items-center justify-between gap-3 px-4 sm:px-8">
-        <Brand />
+        <Brand user={user} />
         <Link href="/" className="inline-flex min-h-11 shrink-0 items-center rounded-sm py-2 text-sm text-muted hover:text-accent">← Mocks</Link>
       </div>
     </header>

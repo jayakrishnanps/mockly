@@ -49,7 +49,7 @@ export default async function ResultPage({ params }: PageProps<"/result/[attempt
   return <>
     <header className="border-b border-line bg-white">
       <div className="mx-auto flex min-h-16 max-w-5xl items-center justify-between gap-3 px-4 sm:px-8">
-        <Brand />
+        <Brand user={user} />
         <Link href={`/u/${attempt.takenBy}/history`} className="flex min-h-11 items-center rounded-sm py-2 text-sm text-muted hover:text-accent">← History</Link>
       </div>
     </header>
