@@ -72,11 +72,13 @@ test("local recovery checks owner, revision, question set and malformed JSON", (
   assert.equal(readRecovery(raw, attemptId, "JK", 4, ids), null);
   assert.equal(readRecovery("{", attemptId, "JK", 3, ids), null);
 });
-test("text export keeps raw LaTeX, negatives, skipped answers and zero timing", () => {
+test("text export keeps raw LaTeX, negative scores and zero timing", () => {
   const text = generateResultTxt({ mockTitle: "Export", user: "JK", dateStr: "today", durationMinutes: 1, timeTakenSeconds: 0, score: -0.5, maxScore: 2, scorePercent: -25, grade: "Very Bad", percentile: null, attempted: 1, correctCount: 0, wrongCount: 1, skippedCount: 0, totalQuestions: 1, accuracy: 0, avgTimeMsPerAttempted: 0,
-    questions: [{ position: 1, questionText: String.raw`$\frac{3}{4}$`, options: ["a", "b", "c", "d"], correctIndex: 1, answer: answer(ids[0], 0) }] });
+    questions: [{ position: 1, questionText: String.raw`$\frac{3}{4}$`, options: ["a", "b", "c", "d"], correctIndex: 1, answer: { ...answer(ids[0], 0), timeSpentMs: 0 } }] });
   assert.ok(text.includes(String.raw`$\frac{3}{4}$`));
   assert.ok(text.includes("-25.00%"));
-  assert.ok(text.includes("Average time per attempted question: 0s"));
-  assert.ok(text.includes("Correct answer: B | Your answer: A | Result: WRONG"));
+  assert.ok(text.includes("Answered average: N/A (no positive answered-time baseline)"));
+  assert.ok(text.includes("Correct option: b"));
+  assert.ok(text.includes("WRONG | 0s | pace N/A"));
+  assert.ok(text.includes("Selected wrong option: a"));
 });

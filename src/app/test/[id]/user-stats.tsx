@@ -49,7 +49,7 @@ export function UserStats({ stats, testId, user }: { stats: Stats | null; testId
         <a href={`/test/${testId}/export?user=${user}`} download className="inline-flex min-h-11 items-center rounded-lg py-2 text-sm font-medium text-accent underline decoration-accent/30 underline-offset-4 hover:decoration-accent">
           Download all attempts (.txt)
         </a>
-        <p className="text-xs leading-5 text-muted">All {stats.totalAttempts} completed {stats.totalAttempts === 1 ? "attempt" : "attempts"} on this mock, including questions, answers and time spent.</p>
+        <p className="text-xs leading-5 text-muted">Summaries for all {stats.totalAttempts} completed {stats.totalAttempts === 1 ? "attempt" : "attempts"}, with focused question histories from the latest 10.</p>
       </div>
     </section>
   );

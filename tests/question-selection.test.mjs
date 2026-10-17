@@ -107,17 +107,21 @@ test("Roman-numbered statements, standalone letters and math variables still shu
   }
 });
 
-test("scoring and TXT exports use the shuffled snapshot's answer letters", () => {
+test("scoring and TXT exports use answer text from the shuffled snapshot", () => {
   const question = { id: "question-1", position: 1, questionText: "Pick the correct value", options: ["one", "two", "three", "four"], correctIndex: 0 };
   const snapshot = { ...question, ...shuffleQuestionOptions(question, () => 0) };
   const answers = [{ questionId: question.id, selectedIndex: snapshot.correctIndex, timeSpentMs: 1000, markedForReview: false, visited: true }];
   const scored = scoreAttempt({ marksCorrect: 2, marksWrong: 0.5, correctIndexes: new Map([[snapshot.id, snapshot.correctIndex]]), answers });
   assert.equal(scored.score, 2);
+  const wrongAnswers = [{ ...answers[0], selectedIndex: 0 }];
+  const wrongScore = scoreAttempt({ marksCorrect: 2, marksWrong: 0.5, correctIndexes: new Map([[snapshot.id, snapshot.correctIndex]]), answers: wrongAnswers });
   const result = toExportableResult({
-    attempt: { takenBy: "JK", submittedAt: "2026-10-10T00:00:00.000Z", timeTakenSeconds: 1, score: scored.score.toFixed(2), correctCount: scored.correctCount, wrongCount: scored.wrongCount, skippedCount: scored.skippedCount, answers },
+    attempt: { takenBy: "JK", submittedAt: "2026-10-10T00:00:00.000Z", timeTakenSeconds: 1, score: wrongScore.score.toFixed(2), correctCount: wrongScore.correctCount, wrongCount: wrongScore.wrongCount, skippedCount: wrongScore.skippedCount, answers: wrongAnswers },
     mock: { title: "Shuffled", durationMinutes: 20, marksCorrect: "2" }, questions: [snapshot], allScores: [],
   });
   const text = generateResultTxt(result);
-  assert.ok(text.includes("A) two\nB) three\nC) four\nD) one"));
-  assert.ok(text.includes("Correct answer: D | Your answer: D | Result: CORRECT"));
+  assert.ok(text.includes("Correct option: one"));
+  assert.ok(text.includes("Selected wrong option: two"));
+  assert.ok(!text.includes("three"));
+  assert.ok(!text.includes("four"));
 });
