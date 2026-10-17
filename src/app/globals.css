@@ -94,6 +94,54 @@ input:focus-visible, textarea:focus-visible, select:focus-visible {
   background: var(--selection);
 }
 
+.identity-initials {
+  font-family: Georgia, "Times New Roman", serif;
+  font-weight: 600;
+  font-style: italic;
+  letter-spacing: -0.06em;
+}
+
+.identity-card[data-picker-user="JK"] {
+  --identity-color: #bd0202;
+  --identity-border: #fc0303;
+  --identity-soft: #fff2f1;
+  --identity-line: #efc9c4;
+}
+
+.identity-card[data-picker-user="HE"] {
+  --identity-color: #7e22b5;
+  --identity-border: #ad42f5;
+  --identity-soft: #f8efff;
+  --identity-line: #e0c5ee;
+}
+
+.identity-card {
+  border-color: var(--identity-line);
+  background: white;
+  box-shadow: 0 2px 4px rgb(32 43 37 / 0.025);
+  transition: background-color 150ms ease, border-color 150ms ease, box-shadow 150ms ease;
+}
+
+.identity-card .identity-initials {
+  color: var(--identity-color);
+}
+
+.identity-arrow {
+  border-color: var(--identity-line);
+  color: var(--identity-color);
+}
+
+.identity-card:is(:hover, :focus-visible, :active) {
+  border-color: var(--identity-border);
+  background: var(--identity-soft);
+  color: var(--identity-color);
+  box-shadow: 0 6px 18px rgb(32 43 37 / 0.05);
+}
+
+.identity-card:focus-visible {
+  outline-color: var(--identity-border);
+}
+
 @utility eyebrow {
   color: var(--muted);
   font-size: 0.625rem;

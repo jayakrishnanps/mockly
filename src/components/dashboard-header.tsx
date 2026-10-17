@@ -31,16 +31,18 @@ export function DashboardHeader({ user }: { user: User }) {
         <div className="flex min-h-18 flex-wrap items-center justify-between gap-x-2 gap-y-1 py-2 sm:py-3">
           <Brand user={user} />
           <div className="flex items-center gap-2 sm:gap-4">
-            <Link
-              href="/studio"
-              aria-label="Open Studio"
-              title="Studio"
-              className="flex size-11 items-center justify-center rounded-xl border border-line bg-white text-2xl text-accent transition-colors hover:border-accent/40 hover:bg-accent-soft"
-            >
-              <span aria-hidden="true">+</span>
-            </Link>
+            {user === "JK" && (
+              <Link
+                href="/studio"
+                aria-label="Open Studio"
+                title="Studio"
+                className="flex size-11 items-center justify-center rounded-xl border border-line bg-white text-2xl text-accent transition-colors hover:border-accent/40 hover:bg-accent-soft"
+              >
+                <span aria-hidden="true">+</span>
+              </Link>
+            )}
             <div className="flex items-center gap-2 sm:gap-3">
-              <span className="rounded-full border border-accent/20 bg-white px-2.5 py-1 text-xs font-semibold text-accent" aria-label={`Current user: ${user}`}>
+              <span className="identity-initials border-r border-accent/20 pr-3 text-lg leading-none text-accent sm:pr-4" aria-label={`Current user: ${user}`}>
                 {user}
               </span>
               <button type="button" onClick={switchUser} className="min-h-11 rounded-md px-1 text-xs font-medium text-muted transition-colors hover:text-foreground">
