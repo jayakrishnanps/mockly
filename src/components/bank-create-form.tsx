@@ -52,12 +52,12 @@ function CreateForm() {
     }
   }
 
-  return <form onSubmit={submit} className="border-y border-line py-5">
-    <fieldset disabled={pending} aria-busy={pending}>
+  return <form onSubmit={submit} className="rounded-xl border border-line bg-white p-4 sm:p-5">
+    <fieldset disabled={pending} aria-busy={pending} className="min-w-0">
       <label htmlFor="bank-name" className="text-sm font-medium">Create a question bank</label>
       <div className="mt-2 flex flex-col gap-3 sm:flex-row">
-        <input id="bank-name" value={draft.title} readOnly={draft.id !== null} maxLength={200} onChange={(event) => commit({ ...draft, title: event.target.value })} placeholder="Bank name" required aria-describedby={error ? "bank-create-error" : undefined} className="min-h-11 min-w-0 flex-1 rounded-md border border-line bg-white px-3 py-2.5 text-base read-only:text-muted sm:text-sm" />
-        <button type="submit" className="min-h-11 rounded-md bg-accent px-5 py-3 text-sm font-medium text-white hover:bg-accent/90 disabled:opacity-50">{pending ? "Creating…" : draft.id ? "Retry creation" : "Create bank"}</button>
+        <input id="bank-name" value={draft.title} readOnly={draft.id !== null} maxLength={200} onChange={(event) => commit({ ...draft, title: event.target.value })} placeholder="Bank name" required aria-describedby={error ? "bank-create-error" : undefined} className="min-h-11 min-w-0 flex-1 rounded-lg border border-line bg-white px-3 py-2.5 text-base read-only:text-muted sm:text-sm" />
+        <button type="submit" className="min-h-11 shrink-0 rounded-lg bg-accent px-5 py-3 text-sm font-medium text-white hover:bg-accent/90 disabled:opacity-50">{pending ? "Creating…" : draft.id ? "Retry creation" : "Create bank"}</button>
       </div>
       {storageError && <p role="alert" className="mt-3 text-sm text-amber-900">{storageError}</p>}
       {error && <p id="bank-create-error" role="alert" className="mt-3 text-sm text-red-800">{error}</p>}

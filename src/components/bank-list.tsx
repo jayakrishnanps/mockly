@@ -26,39 +26,39 @@ export function BankList({ banks }: { banks: BankListItem[] }) {
   const visibleBanks = filtered.slice((currentPage - 1) * BANK_PAGE_SIZE, currentPage * BANK_PAGE_SIZE);
 
   return <>
-    <div role="search" aria-label="Find a question bank" className="mb-5">
+    <div role="search" aria-label="Find a question bank" className="mb-5 rounded-xl border border-line bg-white p-4 sm:p-5">
       <div className="grid grid-cols-[minmax(0,1fr)_auto] items-end gap-3 sm:grid-cols-[minmax(0,1fr)_12rem_auto]">
         <div className="col-span-2 min-w-0 sm:col-span-1">
           <label htmlFor="bank-search" className="block text-xs font-medium text-muted">Search by title</label>
-          <input id="bank-search" type="search" value={title} onChange={(event) => { setTitle(event.target.value); setPage(1); }} placeholder="Bank name" className="mt-2 min-h-11 w-full min-w-0 rounded-md border border-line bg-white px-3 py-2.5 text-base sm:text-sm" />
+          <input id="bank-search" type="search" value={title} onChange={(event) => { setTitle(event.target.value); setPage(1); }} placeholder="Bank name" className="mt-2 min-h-11 w-full min-w-0 rounded-lg border border-line bg-white px-3 py-2.5 text-base sm:text-sm" />
         </div>
         <div className="min-w-0">
           <label htmlFor="bank-created-date" className="block text-xs font-medium text-muted">Created on (IST)</label>
-          <input id="bank-created-date" type="date" value={date} onChange={(event) => { setDate(event.target.value); setPage(1); }} className="mt-2 min-h-11 w-full min-w-0 rounded-md border border-line bg-white px-3 py-2.5 text-base sm:text-sm" />
+          <input id="bank-created-date" type="date" value={date} onChange={(event) => { setDate(event.target.value); setPage(1); }} className="mt-2 min-h-11 w-full min-w-0 rounded-lg border border-line bg-white px-3 py-2.5 text-base sm:text-sm" />
         </div>
-        <button type="button" disabled={!hasFilters} onClick={() => { setTitle(""); setDate(""); setPage(1); }} className="min-h-11 rounded-md px-3 py-2.5 text-sm text-accent hover:bg-accent-soft disabled:opacity-40">Clear</button>
+        <button type="button" disabled={!hasFilters} onClick={() => { setTitle(""); setDate(""); setPage(1); }} className="min-h-11 rounded-lg px-3 py-2.5 text-sm font-medium text-accent hover:bg-accent-soft disabled:opacity-40">Clear</button>
       </div>
       <p role="status" aria-live="polite" aria-atomic="true" className="mt-3 text-xs text-muted">{hasFilters ? `${filtered.length} of ${banks.length}` : banks.length} {banks.length === 1 ? "question bank" : "question banks"}</p>
     </div>
     {filtered.length === 0 ? <EmptyState title="No matching question banks.">Try another title or creation date, or clear the filters.</EmptyState> :
-      <ul className="divide-y divide-line border-y border-line bg-white">
+      <ul className="divide-y divide-line rounded-xl border border-line bg-white">
         {visibleBanks.map((bank) => <li key={bank.id} className="min-w-0">
-          <Link href={`/u/JK/bank/${bank.id}`} className="group flex min-h-20 items-center justify-between gap-4 px-4 py-5 transition-colors hover:bg-accent-soft/50 sm:px-6">
-            <div className="min-w-0">
-              <h2 className="break-words text-lg font-semibold tracking-tight group-hover:text-accent">{bank.title}</h2>
-              <div className="mt-3 flex flex-wrap gap-x-4 gap-y-1 text-xs text-muted">
-                <span>{bank.questionCount} {bank.questionCount === 1 ? "question" : "questions"}</span>
+          <Link href={`/u/JK/bank/${bank.id}`} className="group flex min-h-20 items-center justify-between gap-3 rounded-xl px-4 py-5 hover:bg-accent-soft/50 sm:gap-5 sm:px-6 sm:py-6">
+            <div className="min-w-0 flex-1">
+              <h2 className="break-words text-base font-semibold leading-6 tracking-tight group-hover:text-accent sm:text-lg">{bank.title}</h2>
+              <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-1.5 text-xs text-muted">
+                <span className="font-medium tabular-nums text-foreground">{bank.questionCount} {bank.questionCount === 1 ? "question" : "questions"}</span>
                 <span>Created <time dateTime={bank.createdAt}>{bank.createdLabel}</time></span>
               </div>
             </div>
-            <span aria-hidden="true" className="shrink-0 text-accent">→</span>
+            <span aria-hidden="true" className="flex size-8 shrink-0 items-center justify-center rounded-full bg-accent-soft text-accent">→</span>
           </Link>
         </li>)}
       </ul>}
     {pageCount > 1 && <nav aria-label="Question bank pages" className="mt-4 flex flex-wrap items-center justify-between gap-3 text-sm">
-      <button type="button" disabled={currentPage === 1} onClick={() => setPage(currentPage - 1)} className="min-h-11 rounded-md px-3 py-2.5 text-accent hover:bg-accent-soft disabled:opacity-40">← Previous</button>
+      <button type="button" disabled={currentPage === 1} onClick={() => setPage(currentPage - 1)} className="min-h-11 rounded-lg border border-line bg-white px-3 py-2.5 text-accent hover:bg-accent-soft disabled:opacity-40">← Previous</button>
       <p role="status" aria-live="polite" aria-atomic="true" className="text-xs tabular-nums text-muted">Page {currentPage} of {pageCount}</p>
-      <button type="button" disabled={currentPage === pageCount} onClick={() => setPage(currentPage + 1)} className="min-h-11 rounded-md px-3 py-2.5 text-accent hover:bg-accent-soft disabled:opacity-40">Next →</button>
+      <button type="button" disabled={currentPage === pageCount} onClick={() => setPage(currentPage + 1)} className="min-h-11 rounded-lg border border-line bg-white px-3 py-2.5 text-accent hover:bg-accent-soft disabled:opacity-40">Next →</button>
     </nav>}
   </>;
 }

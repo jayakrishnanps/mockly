@@ -28,34 +28,34 @@ export function DashboardHeader({ user }: { user: User }) {
   return (
     <header className="border-b border-line bg-white">
       <div className="mx-auto max-w-5xl px-4 sm:px-8">
-        <div className="flex min-h-18 flex-wrap items-center justify-between gap-x-2 gap-y-1 py-2">
+        <div className="flex min-h-18 flex-wrap items-center justify-between gap-x-2 gap-y-1 py-2 sm:py-3">
           <Brand user={user} />
-          <div className="flex items-center gap-1 sm:gap-4">
+          <div className="flex items-center gap-2 sm:gap-4">
             <Link
               href="/studio"
               aria-label="Open Studio"
               title="Studio"
-              className="flex size-11 items-center justify-center rounded-md text-2xl text-accent transition-colors hover:bg-accent-soft"
+              className="flex size-11 items-center justify-center rounded-xl border border-line bg-white text-2xl text-accent transition-colors hover:border-accent/40 hover:bg-accent-soft"
             >
               <span aria-hidden="true">+</span>
             </Link>
-            <div className="flex items-center gap-2 border-l border-line pl-3">
-              <span className="text-xs font-semibold text-accent" aria-label={`Current user: ${user}`}>
+            <div className="flex items-center gap-2 sm:gap-3">
+              <span className="rounded-full border border-accent/20 bg-white px-2.5 py-1 text-xs font-semibold text-accent" aria-label={`Current user: ${user}`}>
                 {user}
               </span>
-              <button type="button" onClick={switchUser} className="min-h-11 rounded-sm text-xs text-muted hover:text-foreground">
+              <button type="button" onClick={switchUser} className="min-h-11 rounded-md px-1 text-xs font-medium text-muted transition-colors hover:text-foreground">
                 Switch user
               </button>
             </div>
           </div>
         </div>
-        <nav className="-mb-px flex gap-6" aria-label="Dashboard">
+        <nav className="-mb-px flex gap-5 overflow-x-auto sm:gap-7" aria-label="Dashboard">
           {links.map(({ href, label }) => (
             <Link
               key={href}
               href={href}
               aria-current={pathname === href || (label === "Question bank" && pathname.startsWith(`${href}/`)) ? "page" : undefined}
-              className={`min-h-11 border-b-2 px-1 py-3 text-sm font-medium transition-colors ${pathname === href || (label === "Question bank" && pathname.startsWith(`${href}/`)) ? "border-accent text-accent" : "border-transparent text-muted hover:text-foreground"}`}
+              className={`min-h-11 shrink-0 border-b-2 px-1 py-3 text-sm font-medium whitespace-nowrap transition-colors ${pathname === href || (label === "Question bank" && pathname.startsWith(`${href}/`)) ? "border-accent text-accent" : "border-transparent text-muted hover:text-foreground"}`}
             >
               {label}
             </Link>

@@ -70,19 +70,19 @@ function MockForm({ bankId, title, questionCount }: Props) {
 
   return <form onSubmit={submit} className="min-w-0">
     <fieldset disabled={pending} aria-busy={pending} className="min-w-0 space-y-6">
-      <p className="text-sm leading-6 text-muted">Create a mock for JK, HE, or both. New attempts draw a random selection from this bank’s current question pool ({questionCount} questions now), including questions added later. Attempts already started keep their saved questions.</p>
+      <p className="max-w-2xl rounded-lg bg-accent-soft/30 px-4 py-3 text-sm leading-6 text-muted">Create a mock for JK, HE, or both. New attempts draw a random selection from this bank’s current question pool ({questionCount} questions now), including questions added later. Attempts already started keep their saved questions.</p>
       <fieldset disabled={draft.testId !== null} className="min-w-0 space-y-6">
       <MockInformation value={draft.metadata} errors={fields} onChange={(metadata) => { commit({ ...draft, metadata }); setFields({}); }} />
       <div>
         <label htmlFor="bank-question-limit" className="text-sm font-medium">Questions per attempt</label>
-        <input id="bank-question-limit" type="number" min={1} max={questionCount} step={1} value={draft.questionLimit} onChange={(event) => { commit({ ...draft, questionLimit: event.target.value }); setCountError(""); }} aria-invalid={!!countError} aria-describedby={countError ? "bank-limit-error bank-limit-help" : "bank-limit-help"} className="mt-2 block min-h-11 w-full rounded-md border border-line bg-white px-3 py-2.5 text-base sm:max-w-48 sm:text-sm" />
-        <p id="bank-limit-help" className="mt-2 text-xs leading-5 text-muted">Up to {questionCount} questions. This count is fixed for every attempt; the questions are randomly selected each time.</p>
+        <input id="bank-question-limit" type="number" min={1} max={questionCount} step={1} value={draft.questionLimit} onChange={(event) => { commit({ ...draft, questionLimit: event.target.value }); setCountError(""); }} aria-invalid={!!countError} aria-describedby={countError ? "bank-limit-error bank-limit-help" : "bank-limit-help"} className="mt-2 block min-h-11 w-full rounded-lg border border-line bg-white px-3 py-2.5 text-base sm:max-w-48 sm:text-sm" />
+        <p id="bank-limit-help" className="mt-2 max-w-xl text-xs leading-5 text-muted">Up to {questionCount} questions. This count is fixed for every attempt; the questions are randomly selected each time.</p>
         {countError && <p id="bank-limit-error" className="mt-2 text-sm text-red-800">{countError}</p>}
       </div>
       </fieldset>
       {storageError && <p role="alert" className="text-sm text-amber-900">{storageError}</p>}
       {error && <p role="alert" className="text-sm text-red-800">{error}</p>}
-      {savedId && <p role="status" className="border-l-2 border-accent bg-accent-soft p-4 text-sm">Mock created. <Link href={`/test/${savedId}`} className="font-medium text-accent underline underline-offset-4">Open mock</Link></p>}
+      {savedId && <p role="status" className="rounded-lg border border-line bg-accent-soft p-4 text-sm leading-6">Mock created. <Link href={`/test/${savedId}`} className="font-medium text-accent underline underline-offset-4">Open mock</Link></p>}
       {draft.testId && !pending && <div className="text-sm">
         <p className="leading-6 text-muted">This request is kept unchanged until creation is confirmed. Retry safely, or open the mock if it was already created.</p>
         <div className="flex flex-wrap gap-x-5">
@@ -98,7 +98,7 @@ function MockForm({ bankId, title, questionCount }: Props) {
           </div>
         </div>}
       </div>}
-      <button type="submit" className="min-h-11 w-full rounded-md bg-accent px-5 py-3 text-sm font-medium text-white hover:bg-accent/90 disabled:opacity-50 sm:w-auto">{pending ? "Creating mock…" : draft.testId ? "Retry creation" : "Create mock"}</button>
+      <button type="submit" className="min-h-11 w-full rounded-lg bg-accent px-5 py-3 text-sm font-medium text-white hover:bg-accent/90 disabled:opacity-50 sm:w-auto">{pending ? "Creating mock…" : draft.testId ? "Retry creation" : "Create mock"}</button>
     </fieldset>
   </form>;
 }

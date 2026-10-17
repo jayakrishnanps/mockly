@@ -11,22 +11,19 @@ const logos = {
 export function Brand({ user }: { user?: User | null }) {
   const content = (
     <>
-      {Object.entries(logos).map(([user, src]) => (
-        <Image
-          key={user}
-          src={src}
-          alt=""
-          width={48}
-          height={48}
-          sizes="48px"
-          data-brand-user={user}
-          className="brand-logo size-12 shrink-0 object-contain"
-        />
-      ))}
+      <Image
+        src={logos[user ?? "default"]}
+        alt=""
+        width={48}
+        height={48}
+        sizes="(min-width: 640px) 44px, 40px"
+        loading="eager"
+        className="size-10 shrink-0 object-contain sm:size-11"
+      />
       <span className="text-xl font-semibold tracking-tight">mockly<span className="text-accent">.</span></span>
     </>
   );
-  const className = "inline-flex shrink-0 items-center gap-1.5 rounded-sm";
+  const className = "inline-flex min-h-11 shrink-0 items-center gap-2 rounded-md";
   return user ? (
     <Link href={`/u/${user}`} className={className} aria-label={`Mockly — ${user}'s mocks`}>
       {content}

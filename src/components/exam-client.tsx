@@ -85,7 +85,7 @@ function ExamWorkspace(props: ExamClientProps) {
   if (showConfirm) {
     return (
       <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
-        <section role="dialog" aria-modal="true" aria-labelledby="submit-heading" onKeyDown={(event) => { if (event.key === "Escape" && !submitting) setShowConfirm(false); }} className="max-h-[calc(100dvh-2rem)] w-full max-w-md overflow-y-auto rounded-lg bg-white p-6 sm:p-8">
+        <section role="dialog" aria-modal="true" aria-labelledby="submit-heading" onKeyDown={(event) => { if (event.key === "Escape" && !submitting) setShowConfirm(false); }} className="max-h-[calc(100dvh-2rem)] w-full max-w-md overflow-y-auto rounded-2xl border border-line bg-white p-6 sm:p-8">
           <h2 id="submit-heading" className="text-xl font-semibold">Submit test?</h2>
           <p className="mt-2 text-sm text-muted">Review your progress before submitting. Submission is final.</p>
           <dl className="mt-5 grid grid-cols-2 gap-x-4 gap-y-5 border-y border-line py-5 text-sm">
@@ -115,11 +115,11 @@ function ExamWorkspace(props: ExamClientProps) {
         <div className="mx-auto flex min-h-16 max-w-7xl flex-col gap-1 px-4 py-2 sm:flex-row sm:items-center sm:justify-between sm:gap-6 sm:px-6 lg:px-8">
           <div className="flex min-w-0 items-center justify-between gap-4">
             <h1 className="truncate text-sm font-semibold">{mockTitle}</h1>
-            <span className="shrink-0 border-l border-line pl-3 text-xs font-medium text-muted">{user}</span>
+            <span className="shrink-0 rounded-full border border-accent/20 bg-white px-2.5 py-1 text-xs font-semibold text-accent">{user}</span>
           </div>
           <div className="flex shrink-0 items-center justify-between gap-3">
             <span className="text-xs tabular-nums text-muted">{current + 1} of {questions.length}</span>
-            <div className={`px-2 py-2 font-mono text-lg font-semibold tabular-nums ${isUrgent ? "text-red-700" : "text-foreground"}`} role="timer" aria-label="Time remaining">
+            <div className={`rounded-lg border border-line bg-white px-3 py-1.5 font-mono text-lg font-semibold tabular-nums ${isUrgent ? "text-red-700" : "text-foreground"}`} role="timer" aria-label="Time remaining">
               {timeStr}
             </div>
             <button disabled={submitting} onClick={() => { setShowPalette(false); setShowConfirm(true); }} className="min-h-11 rounded-lg bg-accent px-4 text-sm font-medium text-white transition-colors hover:bg-accent/90 disabled:opacity-50">
@@ -149,7 +149,7 @@ function ExamWorkspace(props: ExamClientProps) {
                 return (
                   <label
                     key={index}
-                    className={`flex min-h-14 cursor-pointer items-start gap-3 rounded-md border px-3 py-2 transition-colors sm:px-4 sm:py-2.5 ${selected ? "border-accent bg-accent-soft" : "border-line hover:border-accent/40 hover:bg-background/50"}`}
+                    className={`flex min-h-14 cursor-pointer items-start gap-3 rounded-xl border px-3 py-2 transition-colors sm:px-4 sm:py-2.5 ${selected ? "border-accent bg-accent-soft" : "border-line hover:border-accent/40 hover:bg-background/50"}`}
                   >
                     <input
                       type="radio"
@@ -218,7 +218,7 @@ function ExamWorkspace(props: ExamClientProps) {
       {/* Keep primary actions reachable even after scrolling a long question. */}
       <nav aria-label="Mobile exam controls" className="fixed inset-x-0 bottom-0 z-30 border-t border-line bg-white px-3 pt-2 pb-[max(0.5rem,env(safe-area-inset-bottom))] lg:hidden">
         {showPalette && (
-          <section id="mobile-question-palette" aria-label="Jump to a question" className="absolute inset-x-0 bottom-full max-h-[45dvh] overflow-y-auto overscroll-contain border-t border-line bg-white p-4 shadow-lg">
+          <section id="mobile-question-palette" aria-label="Jump to a question" className="absolute inset-x-0 bottom-full max-h-[45dvh] overflow-y-auto overscroll-contain rounded-t-2xl border-t border-line bg-white p-4 shadow-lg">
             <div className="mb-3 flex items-center justify-between gap-3">
               <h2 className="text-sm font-semibold">Jump to a question</h2>
               <button onClick={() => setShowPalette(false)} className="min-h-11 rounded-lg px-3 text-sm font-medium text-muted hover:bg-background">Close</button>

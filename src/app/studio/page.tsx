@@ -29,15 +29,17 @@ export default async function StudioPage({ searchParams }: PageProps<"/studio">)
       <header className="border-b border-line bg-white">
         <div className="mx-auto flex min-h-18 max-w-5xl items-center justify-between gap-3 px-4 sm:px-8">
           <Brand user={user} />
-          <Link href="/" className="inline-flex min-h-11 items-center rounded-sm py-2 text-sm text-muted hover:text-accent">← Mocks</Link>
+          <Link href={user ? `/u/${user}` : "/"} className="inline-flex min-h-11 shrink-0 items-center rounded-lg border border-line bg-white px-3 py-2 text-sm font-medium text-muted hover:border-accent hover:text-accent">← Mocks</Link>
         </div>
       </header>
       <main className="mx-auto w-full max-w-5xl flex-1 px-4 py-7 sm:px-8 sm:py-10">
-        <div className="mb-6">
+        <div className="mb-7">
           <h1 className="text-2xl font-semibold tracking-tight sm:text-3xl">Studio</h1>
           <p className="mt-2 text-sm leading-6 text-muted">{target ? "Add questions to this mock." : "Prepare a mock and review the questions before saving."}</p>
         </div>
-        <StudioWorkspace target={target} />
+        <div className="rounded-xl border border-line bg-white p-4 sm:p-7">
+          <StudioWorkspace target={target} />
+        </div>
       </main>
     </>
   );

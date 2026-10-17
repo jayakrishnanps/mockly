@@ -28,7 +28,7 @@ export default async function BankPage({ params, searchParams }: PageProps<"/u/[
     <div className="mb-7 mt-2 flex flex-wrap items-start justify-between gap-4">
       <div className="min-w-0"><h1 className="break-words text-2xl font-semibold tracking-tight sm:text-3xl">{bank.title}</h1><p className="mt-2 text-sm text-muted">{bank.questionCount} saved {bank.questionCount === 1 ? "question" : "questions"}</p></div>
     </div>
-    <details className="mb-8 border-y border-line bg-white px-4 sm:px-6">
+    <details className="mb-8 rounded-xl border border-line bg-white px-4 sm:px-6">
       <summary className="cursor-pointer py-5 text-base font-semibold text-accent">Create a mock from this bank</summary>
       <div className="pb-6"><BankMockForm bankId={bank.id} title={bank.title} questionCount={bank.questionCount} /></div>
     </details>
@@ -37,15 +37,15 @@ export default async function BankPage({ params, searchParams }: PageProps<"/u/[
       <h2 id="saved-bank-questions" className="text-xl font-semibold tracking-tight">Saved questions</h2>
       <p className="mt-2 text-sm text-muted">Questions here stay in the bank when you delete a mock.</p>
       {bank.questions.length === 0 ? <p className="py-6 text-sm text-muted">No saved questions on this page.</p> :
-        <ol className="mt-4 divide-y divide-line border-y border-line bg-white">
+        <ol className="mt-4 divide-y divide-line rounded-xl border border-line bg-white">
           {bank.questions.map((question) => <li key={question.id} className="min-w-0 px-4 py-5 sm:p-6">
             <h3 className="mb-3 text-xs font-semibold text-muted">Question {question.position}</h3>
             <QuestionContent text={question.questionText} />
           </li>)}
         </ol>}
       <nav aria-label="Saved question pages" className="mt-4 flex justify-between gap-4 text-sm text-accent">
-        {page > 1 ? <Link className="inline-flex min-h-11 items-center" href={`/u/JK/bank/${bank.id}?page=${page - 1}`}>← Previous</Link> : <span />}
-        {bank.hasNext && <Link className="inline-flex min-h-11 items-center" href={`/u/JK/bank/${bank.id}?page=${page + 1}`}>Next →</Link>}
+        {page > 1 ? <Link className="inline-flex min-h-11 items-center rounded-lg border border-line bg-white px-3 hover:bg-accent-soft" href={`/u/JK/bank/${bank.id}?page=${page - 1}`}>← Previous</Link> : <span />}
+        {bank.hasNext && <Link className="inline-flex min-h-11 items-center rounded-lg border border-line bg-white px-3 hover:bg-accent-soft" href={`/u/JK/bank/${bank.id}?page=${page + 1}`}>Next →</Link>}
       </nav>
     </section>
     <BankDeleteButton bankId={bank.id} />

@@ -12,8 +12,7 @@ function render(text, preserveStatements = true) {
   return renderToStaticMarkup(createElement(Markdown, {
     remarkPlugins: preserveStatements ? [remarkMath, remarkStatementBreaks] : [remarkMath],
     rehypePlugins: [rehypeKatex],
-    children: text,
-  }));
+  }, text));
 }
 
 for (const newline of ["\n", "\r\n"]) for (const labels of [["I", "II", "III"], ["1", "2", "3"]]) {
