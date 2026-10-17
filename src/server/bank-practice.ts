@@ -93,8 +93,10 @@ export async function getBankPractice(database: Pick<typeof db, "execute">, bank
     )
     select summaries.question_id, summaries.practice_count, summaries.last_practised_at,
       summaries.latest_outcome,
-      coalesce(correct_since_wrong.correct_count, 0) < 2 as unresolved_wrong
-    from summaries left join correct_since_wrong on correct_since_wrong.question_id = summaries.question_id
+      latest_wrong.question_id is not null and coalesce(correct_since_wrong.correct_count, 0) < 2 as unresolved_wrong
+    from summaries
+    left join latest_wrong on latest_wrong.question_id = summaries.question_id
+    left join correct_since_wrong on correct_since_wrong.question_id = summaries.question_id
   `);
   return parseBankPractice(result.rows);
 }

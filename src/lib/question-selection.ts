@@ -72,7 +72,7 @@ export function selectBankQuestions<T extends { id: string }>(
     const rightPriority = rightPractice?.review === "wrong" ? 0 : 1;
     return leftPriority - rightPriority || (leftPractice?.lastPractisedAt ?? 0) - (rightPractice?.lastPractisedAt ?? 0);
   });
-  const reviewPlaces = Math.floor(count / 5);
+  const reviewPlaces = Math.max(1, Math.floor(count / 5));
   const selected = reviewCandidates.slice(0, reviewPlaces);
   const selectedIds = new Set(selected.map((question) => question.id));
   const remaining = shuffled.filter((question) => !selectedIds.has(question.id));

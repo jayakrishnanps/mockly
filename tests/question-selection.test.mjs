@@ -4,6 +4,14 @@ import { resolveQuestionCount, selectBankQuestions, selectQuestions, shuffleQues
 import { scoreAttempt } from "../src/lib/scoring.ts";
 import { generateResultTxt, toExportableResult } from "../src/lib/export.ts";
 
+function seededRandom(seed) {
+  let state = seed >>> 0;
+  return (upperBound) => {
+    state = (Math.imul(state, 1664525) + 1013904223) >>> 0;
+    return Math.floor(state / 4294967296 * upperBound);
+  };
+}
+
 test("ordinary mocks keep all questions and reject a smaller requested set", () => {
   assert.deepEqual(resolveQuestionCount(60, null, undefined), { ok: true, count: 60 });
   assert.deepEqual(resolveQuestionCount(60, null, 60), { ok: true, count: 60 });
@@ -76,11 +84,134 @@ test("bank selection fills small and exhausted pools without exceeding unique qu
     ["b", { count: 4, lastPractisedAt: 200, review: "skipped" }],
     ["c", { count: 1, lastPractisedAt: 50, review: null }],
   ]);
-  assert.equal(selectBankQuestions(shortPool, 1, history, () => 0)[0].id, "c");
+  assert.equal(selectBankQuestions(shortPool, 1, history, () => 0)[0].id, "a");
   assert.equal(new Set(selectBankQuestions(shortPool, 3, history, () => 0).map((question) => question.id)).size, 3);
   const fiveQuestions = [...shortPool, { id: "d" }, { id: "e" }, { id: "f" }, { id: "g" }];
   assert.ok(selectBankQuestions(fiveQuestions, 5, history, () => 0).some((question) => question.id === "a"));
   assert.throws(() => selectBankQuestions([{ id: "a" }, { id: "a" }], 1, new Map(), () => 0), RangeError);
+});
+
+test("bank selection keeps one review place in mocks shorter than five questions", () => {
+  const pool = Array.from({ length: 20 }, (_, index) => ({ id: `q${index}` }));
+  const history = new Map([
+    ["q18", { count: 10, lastPractisedAt: 200, review: "wrong" }],
+    ["q19", { count: 1, lastPractisedAt: 100, review: "skipped" }],
+  ]);
+  for (let count = 1; count < 5; count++) {
+    const selected = selectBankQuestions(pool, count, history, () => 0);
+    assert.equal(selected.length, count);
+    assert.ok(selected.some((question) => question.id === "q18"));
+    assert.equal(selected.filter((question) => history.has(question.id)).length, 1);
+  }
+});
+
+test("bank selection fills from the fewest previous encounters after unseen questions run out", () => {
+  const pool = Array.from({ length: 100 }, (_, index) => ({ id: `q${index}` }));
+  const history = new Map(pool.map((question, index) => [question.id, {
+    count: index < 20 ? 1 : index < 40 ? 2 : 3,
+    lastPractisedAt: 1000 + index, review: null,
+  }]));
+  const selected = selectBankQuestions(pool, 30, history, seededRandom(17));
+  assert.equal(selected.filter((question) => history.get(question.id).count === 1).length, 20);
+  assert.equal(selected.filter((question) => history.get(question.id).count === 2).length, 10);
+  assert.equal(selected.filter((question) => history.get(question.id).count === 3).length, 0);
+});
+
+test("bank selection gives vacant review places to the oldest meaningful skips after wrong answers", () => {
+  const pool = Array.from({ length: 100 }, (_, index) => ({ id: `q${index}` }));
+  const history = new Map(pool.slice(0, 8).map((question, index) => [question.id, {
+    count: 10, lastPractisedAt: index < 3 ? 5000 + index : 1000 + index,
+    review: index < 3 ? "wrong" : "skipped",
+  }]));
+  const selected = selectBankQuestions(pool, 30, history, seededRandom(9));
+  const selectedReviewIds = selected.filter((question) => history.has(question.id)).map((question) => question.id);
+  assert.deepEqual(new Set(selectedReviewIds), new Set(["q0", "q1", "q2", "q3", "q4", "q5"]));
+  assert.equal(selected.filter((question) => !history.has(question.id)).length, 24);
+});
+
+test("bank selection rotates review priority toward the mistakes practised least recently", () => {
+  const pool = Array.from({ length: 100 }, (_, index) => ({ id: `q${index}` }));
+  const history = new Map(pool.slice(0, 10).map((question, index) => [question.id, {
+    count: 10, lastPractisedAt: 1000 + index, review: "wrong",
+  }]));
+  const first = selectBankQuestions(pool, 30, history, seededRandom(11));
+  const firstReview = first.filter((question) => history.has(question.id));
+  assert.deepEqual(new Set(firstReview.map((question) => question.id)), new Set(["q0", "q1", "q2", "q3", "q4", "q5"]));
+  for (const question of firstReview) {
+    const previous = history.get(question.id);
+    history.set(question.id, { ...previous, count: previous.count + 1, lastPractisedAt: previous.lastPractisedAt + 5000 });
+  }
+  const second = selectBankQuestions(pool, 30, history, seededRandom(12));
+  const secondReview = second.filter((question) => history.has(question.id));
+  assert.deepEqual(new Set(secondReview.map((question) => question.id)), new Set(["q6", "q7", "q8", "q9", "q0", "q1"]));
+});
+
+test("bank selection fills the requested count when review questions exceed their reserved share", () => {
+  const pool = Array.from({ length: 6 }, (_, index) => ({ id: `q${index}` }));
+  const history = new Map(pool.map((question, index) => [question.id, {
+    count: 1, lastPractisedAt: 1000 + index, review: index < 3 ? "wrong" : "skipped",
+  }]));
+  const selected = selectBankQuestions(pool, 5, history, seededRandom(4));
+  assert.equal(selected.length, 5);
+  assert.equal(new Set(selected.map((question) => question.id)).size, 5);
+  assert.ok(selected.every((question) => pool.includes(question)));
+  assert.ok(selected.some((question) => question.id === "q0"));
+});
+
+test("final bank shuffle can place a review question in every position without mutating input", () => {
+  const pool = Array.from({ length: 10 }, (_, index) => ({ id: `q${index}`, text: `Question ${index}` }));
+  const history = new Map([["q9", { count: 10, lastPractisedAt: 1000, review: "wrong" }]]);
+  const originalPool = structuredClone(pool);
+  const originalHistory = structuredClone(history);
+  for (let position = 0; position < 5; position++) {
+    let initialShuffleCalls = pool.length - 1;
+    const selected = selectBankQuestions(pool, 5, history, (upperBound) => {
+      if (initialShuffleCalls-- > 0) return upperBound - 1;
+      return upperBound === position + 1 ? 0 : upperBound - 1;
+    });
+    assert.equal(selected.findIndex((question) => question.id === "q9"), position);
+    assert.equal(new Set(selected.map((question) => question.id)).size, 5);
+    assert.deepEqual(pool, originalPool);
+    assert.deepEqual(history, originalHistory);
+  }
+});
+
+test("500-question bank keeps review places and unseen questions across deterministic random draws", () => {
+  const pool = Array.from({ length: 500 }, (_, index) => ({ id: `q${index}` }));
+  const history = new Map(pool.slice(0, 350).map((question, index) => [question.id, {
+    count: index < 20 ? 8 : 2, lastPractisedAt: 1000 + index,
+    review: index < 10 ? "wrong" : index < 20 ? "skipped" : null,
+  }]));
+  const selections = new Set();
+  for (let seed = 1; seed <= 100; seed++) {
+    const selected = selectBankQuestions(pool, 30, history, seededRandom(seed));
+    assert.equal(selected.length, 30);
+    assert.equal(new Set(selected.map((question) => question.id)).size, 30);
+    assert.ok(selected.every((question) => pool.includes(question)));
+    assert.deepEqual(new Set(selected.filter((question) => history.has(question.id)).map((question) => question.id)), new Set(["q0", "q1", "q2", "q3", "q4", "q5"]));
+    assert.equal(selected.filter((question) => !history.has(question.id)).length, 24);
+    selections.add(selected.map((question) => question.id).join(","));
+  }
+  assert.ok(selections.size > 1);
+});
+
+test("30-question mocks cover all 500 bank questions before ordinary questions repeat", () => {
+  const pool = Array.from({ length: 500 }, (_, index) => ({ id: `q${index}` }));
+  const history = new Map();
+  for (let sitting = 0; sitting < 17; sitting++) {
+    const selected = selectBankQuestions(pool, 30, history, seededRandom(sitting + 1));
+    const unseenCount = selected.filter((question) => !history.has(question.id)).length;
+    assert.equal(unseenCount, sitting < 16 ? 30 : 20);
+    assert.equal(new Set(selected.map((question) => question.id)).size, 30);
+    for (const question of selected) {
+      history.set(question.id, {
+        count: (history.get(question.id)?.count ?? 0) + 1,
+        lastPractisedAt: sitting + 1, review: null,
+      });
+    }
+  }
+  assert.equal(history.size, 500);
+  assert.equal([...history.values()].filter((practice) => practice.count === 2).length, 10);
 });
 
 test("sampling rejects invalid sizes rather than returning an incomplete selection", () => {
