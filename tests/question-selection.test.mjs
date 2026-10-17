@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { resolveQuestionCount, selectQuestions, shuffleQuestionOptions } from "../src/lib/question-selection.ts";
+import { resolveQuestionCount, selectBankQuestions, selectQuestions, shuffleQuestionOptions } from "../src/lib/question-selection.ts";
 import { scoreAttempt } from "../src/lib/scoring.ts";
 import { generateResultTxt, toExportableResult } from "../src/lib/export.ts";
 
@@ -53,6 +53,34 @@ test("independent draws allow every ordered selection, including a repeated one"
   assert.deepEqual(selectQuestions(questions, 3, (upper) => upper - 1), questions);
   assert.deepEqual(selectQuestions(questions, 3, (upper) => upper - 1), questions);
   assert.deepEqual(selectQuestions([{ id: "a" }], 1, () => 0), [{ id: "a" }]);
+});
+
+test("bank selection reserves up to a fifth for oldest wrongs before meaningful skips", () => {
+  const questions = Array.from({ length: 100 }, (_, index) => ({ id: `q${index}` }));
+  const history = new Map(questions.slice(0, 8).map((question, index) => [question.id, {
+    count: 4, lastPractisedAt: 1000 + index, review: index < 7 ? "wrong" : "skipped",
+  }]));
+  const selected = selectBankQuestions(questions, 30, history, () => 0);
+  const ids = selected.map((question) => question.id);
+  assert.equal(ids.length, 30);
+  assert.equal(new Set(ids).size, 30);
+  assert.equal(ids.filter((id) => history.get(id)?.review === "wrong").length, 6);
+  assert.equal(ids.filter((id) => history.get(id)?.review === "skipped").length, 0);
+  assert.equal(ids.filter((id) => !history.has(id)).length, 24);
+});
+
+test("bank selection fills small and exhausted pools without exceeding unique questions", () => {
+  const shortPool = [{ id: "a" }, { id: "b" }, { id: "c" }];
+  const history = new Map([
+    ["a", { count: 2, lastPractisedAt: 100, review: "wrong" }],
+    ["b", { count: 4, lastPractisedAt: 200, review: "skipped" }],
+    ["c", { count: 1, lastPractisedAt: 50, review: null }],
+  ]);
+  assert.equal(selectBankQuestions(shortPool, 1, history, () => 0)[0].id, "c");
+  assert.equal(new Set(selectBankQuestions(shortPool, 3, history, () => 0).map((question) => question.id)).size, 3);
+  const fiveQuestions = [...shortPool, { id: "d" }, { id: "e" }, { id: "f" }, { id: "g" }];
+  assert.ok(selectBankQuestions(fiveQuestions, 5, history, () => 0).some((question) => question.id === "a"));
+  assert.throws(() => selectBankQuestions([{ id: "a" }, { id: "a" }], 1, new Map(), () => 0), RangeError);
 });
 
 test("sampling rejects invalid sizes rather than returning an incomplete selection", () => {

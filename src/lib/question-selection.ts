@@ -31,16 +31,54 @@ function shuffledCopy<T>(items: readonly T[], randomIndex: (upperBound: number) 
   return shuffled;
 }
 
+function validateSelectionCount(count: number, available: number): void {
+  if (!Number.isSafeInteger(count) || count < 1 || count > available) {
+    throw new RangeError("Question count must be within the available pool.");
+  }
+}
+
 export function selectQuestions<T>(
   questions: readonly T[],
   count: number,
   randomIndex: (upperBound: number) => number,
 ): T[] {
-  if (!Number.isSafeInteger(count) || count < 1 || count > questions.length) {
-    throw new RangeError("Question count must be within the available pool.");
-  }
+  validateSelectionCount(count, questions.length);
   // Each new attempt draws independently; a repeated selection is still valid.
   return shuffledCopy(questions, randomIndex).slice(0, count);
+}
+
+export type QuestionPractice = {
+  count: number;
+  lastPractisedAt: number;
+  review: "wrong" | "skipped" | null;
+};
+
+export function selectBankQuestions<T extends { id: string }>(
+  questions: readonly T[],
+  count: number,
+  practice: ReadonlyMap<string, QuestionPractice>,
+  randomIndex: (upperBound: number) => number,
+): T[] {
+  validateSelectionCount(count, questions.length);
+  if (new Set(questions.map((question) => question.id)).size !== questions.length) {
+    throw new RangeError("Question IDs must be unique within the bank.");
+  }
+  const shuffled = shuffledCopy(questions, randomIndex);
+  const reviewCandidates = shuffled.filter((question) => practice.get(question.id)?.review != null);
+  reviewCandidates.sort((left, right) => {
+    const leftPractice = practice.get(left.id);
+    const rightPractice = practice.get(right.id);
+    const leftPriority = leftPractice?.review === "wrong" ? 0 : 1;
+    const rightPriority = rightPractice?.review === "wrong" ? 0 : 1;
+    return leftPriority - rightPriority || (leftPractice?.lastPractisedAt ?? 0) - (rightPractice?.lastPractisedAt ?? 0);
+  });
+  const reviewPlaces = Math.floor(count / 5);
+  const selected = reviewCandidates.slice(0, reviewPlaces);
+  const selectedIds = new Set(selected.map((question) => question.id));
+  const remaining = shuffled.filter((question) => !selectedIds.has(question.id));
+  remaining.sort((left, right) => (practice.get(left.id)?.count ?? 0) - (practice.get(right.id)?.count ?? 0));
+  selected.push(...remaining.slice(0, count - selected.length));
+  return shuffledCopy(selected, randomIndex);
 }
 
 type QuestionOptions = { questionText: string; options: readonly string[]; correctIndex: number };

@@ -7,6 +7,7 @@ import { drizzle } from "drizzle-orm/node-postgres";
 import { eq, inArray } from "drizzle-orm";
 import * as schema from "../src/db/schema.ts";
 import { createAttemptStore } from "../src/server/attempt-store.ts";
+import { getBankPractice } from "../src/server/bank-practice.ts";
 
 test("bank mock attempts draw from the current bank and preserve historical snapshots", { skip: process.env.MOCKLY_INTEGRATION_TESTS !== "1" }, async (t) => {
   config({ path: ".env.local", quiet: true });
@@ -128,6 +129,50 @@ test("bank mock attempts draw from the current bank and preserve historical snap
     const he = await store.startOrResume(bankMockId, "HE");
     assert.equal((await store.getExamData(he.attemptId, "HE")).questions.length, 30);
     await assert.rejects(store.getExamData(he.attemptId, "JK"), { code: "forbidden" });
+  });
+
+  await t.test("new sibling mocks review wrong answers before skips and fill from unseen bank questions", async () => {
+    const reviewMockId = randomUUID();
+    const nextMockId = randomUUID();
+    ids.push(reviewMockId, nextMockId);
+    await db.insert(schema.tests).values([
+      { id: reviewMockId, sourceBankId: bankId, title: `[Review source verification] ${reviewMockId}`, forUsers: ["JK"], durationMinutes: 20, questionLimit: 30 },
+      { id: nextMockId, sourceBankId: bankId, title: `[Review selection verification] ${nextMockId}`, forUsers: ["JK"], durationMinutes: 20, questionLimit: 30 },
+    ]);
+
+    const reviewAttempt = await store.startOrResume(reviewMockId, "JK");
+    const reviewExam = await store.getExamData(reviewAttempt.attemptId, "JK");
+    const wrongQuestions = reviewExam.questions.slice(0, 7);
+    const skippedQuestion = reviewExam.questions[7];
+    const answers = reviewExam.answers.map((answer, index) => {
+      if (index < 7) return {
+        ...answer, selectedIndex: (reviewExam.questions[index].options.indexOf("Correct") + 1) % 4,
+        visited: true, timeSpentMs: 1000,
+      };
+      if (index === 7) return { ...answer, visited: true, timeSpentMs: 5000 };
+      return answer;
+    });
+    clock += 20_000;
+    await store.submitAttempt(reviewAttempt.attemptId, "JK", answers, reviewExam.revision);
+
+    const freshQuestions = Array.from({ length: 100 }, (_, index) => ({
+      id: randomUUID(), bankId, position: bankRows.length + index + 1,
+      questionText: `Fresh bank question ${index + 1}`, options: ["Correct", "B", "C", "D"], correctIndex: 0,
+    }));
+    await db.insert(schema.bankQuestions).values(freshQuestions);
+    bankRows.push(...freshQuestions);
+
+    const practice = await db.transaction((tx) => getBankPractice(tx, bankId, "JK"));
+    const unseenCount = bankRows.filter((question) => !practice.has(question.id)).length;
+    assert.ok(unseenCount >= 24);
+    const next = await store.startOrResume(nextMockId, "JK");
+    const nextExam = await store.getExamData(next.attemptId, "JK");
+    const nextIds = new Set(nextExam.questions.map((question) => question.id));
+    assert.equal(nextIds.size, 30);
+    assert.equal(wrongQuestions.filter((question) => nextIds.has(question.id)).length, 6);
+    assert.equal(nextIds.has(skippedQuestion.id), false);
+    assert.equal([...nextIds].filter((id) => !practice.has(id)).length, 24);
+    assert.ok(nextExam.questions.every((question) => question.options.includes("Correct")));
   });
 
   await t.test("ordinary mocks keep all questions and score limits use the selected length", async () => {

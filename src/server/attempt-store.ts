@@ -6,7 +6,8 @@ import { scoreAttempt, type AnswerRecord } from "../lib/scoring.ts";
 import { validateAnswers } from "../lib/attempt-state.ts";
 import { isRecord, isUuid } from "../lib/mock-validation.ts";
 import { isUser, type User } from "../lib/users.ts";
-import { resolveQuestionCount, selectQuestions, shuffleQuestionOptions } from "../lib/question-selection.ts";
+import { resolveQuestionCount, selectBankQuestions, selectQuestions, shuffleQuestionOptions } from "../lib/question-selection.ts";
+import { getBankPractice } from "./bank-practice.ts";
 
 type Database = typeof DbType;
 type Transaction = Parameters<Parameters<Database["transaction"]>[0]>[0];
@@ -149,7 +150,9 @@ export function createAttemptStore(database: Database, now: () => number = Date.
           throw new AttemptError("invalid", "This marking scheme exceeds the existing score column's supported range.");
         }
         // Select and shuffle once; recovery, scoring and results use this snapshot.
-        const ordered = selectQuestions(rows, selection.count, randomInt);
+        const ordered = mock.sourceBankId !== null && selection.count < rows.length
+          ? selectBankQuestions(rows, selection.count, await getBankPractice(tx, mock.sourceBankId, user), randomInt)
+          : selectQuestions(rows, selection.count, randomInt);
         const snapshot: AttemptSnapshot = {
           version: 1, revision: 0, durationMinutes: mock.durationMinutes, marksCorrect: mock.marksCorrect, marksWrong: mock.marksWrong,
           questions: ordered.map((question, index) => ({
