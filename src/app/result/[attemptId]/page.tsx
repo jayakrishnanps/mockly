@@ -7,6 +7,7 @@ import { isUuid } from "@/lib/mock-validation";
 import { attemptStore } from "@/server/attempts";
 import { gradeFromPercentage } from "@/lib/grades";
 import { calculatePercentile } from "@/lib/scoring";
+import { buildAnswerReview } from "@/lib/result-review";
 import { Brand } from "@/components/brand";
 import { OPTION_LABELS } from "@/lib/parser";
 import { QuestionContent } from "@/components/question-content";
@@ -39,6 +40,7 @@ export default async function ResultPage({ params }: PageProps<"/result/[attempt
   const grade = gradeFromPercentage(scorePercent);
   const percentile = calculatePercentile(Number(attempt.score), allScores);
   const answers = attempt.answers;
+  const answerReview = buildAnswerReview(questions, answers);
 
   const attempted = (attempt.correctCount || 0) + (attempt.wrongCount || 0);
   const accuracy = attempted > 0 ? ((attempt.correctCount || 0) / attempted) * 100 : 0;
@@ -103,14 +105,10 @@ export default async function ResultPage({ params }: PageProps<"/result/[attempt
 
       <h2 className="mt-8 text-xl font-semibold tracking-tight sm:mt-10">Review answers</h2>
       <ol aria-label="Questions review" className="mt-4 space-y-4">
-        {questions.map((question) => {
-          const ans = answers.find(a => a.questionId === question.id);
-          const isCorrect = ans?.selectedIndex === question.correctIndex;
-          const isSkipped = ans?.selectedIndex === null || ans?.selectedIndex === undefined;
-          
+        {answerReview.map(({ question, answer: ans, status }) => {
           let statusBadge;
-          if (isSkipped) statusBadge = <span className="rounded-md bg-background px-2 py-1 text-xs font-medium text-muted">Skipped</span>;
-          else if (isCorrect) statusBadge = <span className="rounded-md bg-green-50 px-2 py-1 text-xs font-medium text-green-800">Correct (+{mock.marksCorrect})</span>;
+          if (status === "skipped") statusBadge = <span className="rounded-md bg-background px-2 py-1 text-xs font-medium text-muted">Skipped</span>;
+          else if (status === "correct") statusBadge = <span className="rounded-md bg-green-50 px-2 py-1 text-xs font-medium text-green-800">Correct (+{mock.marksCorrect})</span>;
           else statusBadge = <span className="rounded-md bg-red-50 px-2 py-1 text-xs font-medium text-red-700">Wrong (−{mock.marksWrong})</span>;
 
           return (
@@ -119,7 +117,6 @@ export default async function ResultPage({ params }: PageProps<"/result/[attempt
                 <h3 className="text-sm font-semibold">Question {question.position}</h3>
                 <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
                   {ans?.markedForReview && <span className="text-xs font-medium text-muted">Marked for review</span>}
-                  <span className="text-xs tabular-nums text-muted">{Math.round((ans?.timeSpentMs || 0) / 1000)}s</span>
                   {statusBadge}
                 </div>
               </div>

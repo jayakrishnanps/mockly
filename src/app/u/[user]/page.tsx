@@ -36,7 +36,7 @@ export default async function MocksPage({ params }: PageProps<"/u/[user]">) {
   return (
     <>
       <div className="mb-7">
-        <h1 className="text-3xl font-semibold tracking-tight">Your mocks</h1>
+        <h1 className="page-title text-3xl">Your mocks</h1>
         <p className="mt-2 text-sm leading-6 text-muted">Choose a mock to start or continue an attempt.</p>
       </div>
 

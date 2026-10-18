@@ -22,7 +22,7 @@ export default async function HistoryPage({ params }: PageProps<"/u/[user]/histo
   return (
     <>
       <div className="mb-6 sm:mb-8">
-        <h1 className="text-3xl font-semibold tracking-tight">History</h1>
+        <h1 className="page-title text-3xl">History</h1>
         <p className="mt-2 text-sm leading-6 text-muted">Your completed attempts and answer reviews.</p>
         {history.length > 0 && <ClearHistory user={user} />}
       </div>
