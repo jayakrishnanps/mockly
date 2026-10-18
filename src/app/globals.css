@@ -113,13 +113,13 @@ input:focus-visible, textarea:focus-visible, select:focus-visible {
 }
 
 @keyframes wordmark-camouflage {
-  0%, 12.5%, 100% { color: var(--foreground); }
-  6.25% { color: var(--accent-soft); }
+  0%, 25%, 100% { color: var(--foreground); }
+  3.333333%, 20% { color: var(--accent-soft); }
 }
 
 @media (prefers-reduced-motion: no-preference) {
   .brand-letter {
-    animation: wordmark-camouflage 8s ease-in-out infinite;
+    animation: wordmark-camouflage 1.8s linear infinite;
   }
 }
 
