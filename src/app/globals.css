@@ -117,9 +117,14 @@ input:focus-visible, textarea:focus-visible, select:focus-visible {
   3.333333%, 20% { color: var(--accent-soft); }
 }
 
+@keyframes wordmark-reminder {
+  0%, 3.2%, 100% { color: var(--foreground); }
+  0.4%, 2.6% { color: var(--accent-soft); }
+}
+
 @media (prefers-reduced-motion: no-preference) {
   .brand-letter {
-    animation: wordmark-camouflage 1.8s linear infinite;
+    animation: wordmark-camouflage 1.8s linear 2, wordmark-reminder 14s linear infinite;
   }
 }
 

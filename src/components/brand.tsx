@@ -23,7 +23,13 @@ export function Brand({ user }: { user?: User | null }) {
       {user ? (
         <span className="identity-initials whitespace-nowrap text-xl" aria-hidden="true">
           {Array.from("mockly", (letter, index) => (
-            <span key={index} className="brand-letter" style={{ animationDelay: `${index * 300}ms` }}>{letter}</span>
+            <span
+              key={index}
+              className="brand-letter"
+              style={{ animationDelay: `${index * 300}ms, ${16000 + index * 300}ms` }}
+            >
+              {letter}
+            </span>
           ))}
           <span className="text-accent">.</span>
         </span>

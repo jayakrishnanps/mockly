@@ -21,7 +21,7 @@ export default function Home() {
       </header>
 
       <main className="mx-auto flex w-full max-w-3xl flex-1 flex-col justify-center px-5 pt-8 pb-16 sm:px-8 sm:pt-12 sm:pb-28">
-        <h1 className="text-[2.5rem] leading-tight font-semibold tracking-tight sm:text-5xl">
+        <h1 className="text-[2.5rem] leading-tight font-semibold tracking-tight underline decoration-2 underline-offset-8 sm:text-5xl">
           Who are you?
         </h1>
         <div className="mt-8 grid gap-4 sm:mt-10 sm:grid-cols-2 sm:gap-5">
