@@ -22,7 +22,6 @@ export default async function BanksPage({ params }: PageProps<"/u/[user]/bank">)
   return <>
     <div className="mb-7">
       <h1 className="page-title text-3xl">Question bank</h1>
-      <p className="mt-2 max-w-xl text-sm leading-6 text-muted">Keep your questions together, then make mocks for JK, HE, or both.</p>
     </div>
     <BankCreateForm />
     <section className="mt-8" aria-label="Saved question banks">

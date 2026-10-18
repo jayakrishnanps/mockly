@@ -58,11 +58,14 @@ h1 {
 }
 
 .page-title {
-  font-family: Georgia, "Times New Roman", serif;
-  font-style: italic;
-  font-weight: 500;
-  letter-spacing: -0.035em;
+  font-family: "Palatino Linotype", "Book Antiqua", Palatino, Georgia, serif;
+  font-weight: 600;
+  letter-spacing: -0.025em;
   line-height: 1.2;
+  text-decoration: underline;
+  text-decoration-color: var(--accent);
+  text-decoration-thickness: 2px;
+  text-underline-offset: 0.3em;
 }
 
 :root[data-user-theme] header {
@@ -107,6 +110,17 @@ input:focus-visible, textarea:focus-visible, select:focus-visible {
   font-weight: 600;
   font-style: italic;
   letter-spacing: -0.06em;
+}
+
+@keyframes wordmark-camouflage {
+  0%, 12.5%, 100% { color: var(--foreground); }
+  6.25% { color: var(--accent-soft); }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .brand-letter {
+    animation: wordmark-camouflage 8s ease-in-out infinite;
+  }
 }
 
 .identity-card[data-picker-user="JK"] {

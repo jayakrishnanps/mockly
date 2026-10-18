@@ -20,7 +20,16 @@ export function Brand({ user }: { user?: User | null }) {
         loading="eager"
         className="size-10 shrink-0 object-contain sm:size-11"
       />
-      <span className="text-xl font-semibold tracking-tight">mockly<span className="text-accent">.</span></span>
+      {user ? (
+        <span className="identity-initials whitespace-nowrap text-xl" aria-hidden="true">
+          {Array.from("mockly", (letter, index) => (
+            <span key={index} className="brand-letter" style={{ animationDelay: `${index}s` }}>{letter}</span>
+          ))}
+          <span className="text-accent">.</span>
+        </span>
+      ) : (
+        <span className="text-xl font-semibold tracking-tight">mockly<span className="text-accent">.</span></span>
+      )}
     </>
   );
   const className = "inline-flex min-h-11 shrink-0 items-center gap-2 rounded-md";

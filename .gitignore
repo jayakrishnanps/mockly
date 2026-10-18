@@ -30,3 +30,4 @@ next-env.d.ts
 /.vscode/
 Thumbs.db
 *.log
+/All In.txt
