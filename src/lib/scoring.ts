@@ -6,6 +6,17 @@ export type AnswerRecord = {
   visited?: boolean;
 };
 
+export function averageAnsweredTime(answers: readonly AnswerRecord[]): number {
+  let count = 0;
+  let time = 0;
+  for (const answer of answers) {
+    if (answer.selectedIndex === null) continue;
+    count++;
+    time += answer.timeSpentMs;
+  }
+  return count > 0 ? time / count : 0;
+}
+
 export type ScoringInput = {
   marksCorrect: number;
   marksWrong: number;
@@ -31,11 +42,13 @@ export function scoreAttempt(input: ScoringInput): ScoringResult {
   let wrongCount = 0;
   let skippedCount = 0;
   let totalTimeMs = 0;
+  let answeredTimeMs = 0;
 
   const byId = new Map(input.answers.map((answer) => [answer.questionId, answer]));
   for (const [questionId, correctIndex] of input.correctIndexes) {
     const answer = byId.get(questionId);
     totalTimeMs += answer?.timeSpentMs ?? 0;
+    if (answer && answer.selectedIndex !== null) answeredTimeMs += answer.timeSpentMs;
     if (!answer || answer.selectedIndex === null) {
       skippedCount++;
     } else if (answer.selectedIndex === correctIndex) {
@@ -50,7 +63,7 @@ export function scoreAttempt(input: ScoringInput): ScoringResult {
   const maxScore = input.correctIndexes.size * Math.round(input.marksCorrect * 100) / 100;
   const scorePercent = maxScore > 0 ? (score / maxScore) * 100 : 0;
   const accuracy = attempted > 0 ? (correctCount / attempted) * 100 : 0;
-  const avgTimeMsPerAttempted = attempted > 0 ? totalTimeMs / attempted : 0;
+  const avgTimeMsPerAttempted = attempted > 0 ? answeredTimeMs / attempted : 0;
 
   return { score, maxScore, scorePercent, correctCount, wrongCount, skippedCount, attempted, accuracy, totalTimeMs, avgTimeMsPerAttempted };
 }

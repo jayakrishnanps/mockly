@@ -1,4 +1,4 @@
-import { calculatePercentile, type AnswerRecord } from "./scoring.ts";
+import { averageAnsweredTime, calculatePercentile, type AnswerRecord } from "./scoring.ts";
 import { gradeFromPercentage } from "./grades.ts";
 
 export type ExportableResult = {
@@ -93,17 +93,6 @@ type QuestionHistory = {
   encounters: Encounter[];
   earlier: Record<Encounter["outcome"], number>;
 };
-
-function averageAnsweredTime(answers: AnswerRecord[]): number {
-  let count = 0;
-  let time = 0;
-  for (const answer of answers) {
-    if (answer.selectedIndex === null) continue;
-    count++;
-    time += answer.timeSpentMs;
-  }
-  return count > 0 ? time / count : 0;
-}
 
 function skippedOmission(answer: AnswerRecord): "unreached" | "brief" | null {
   if (answer.selectedIndex !== null) return null;

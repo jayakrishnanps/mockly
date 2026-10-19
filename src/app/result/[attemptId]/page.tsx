@@ -6,7 +6,7 @@ import { AttemptError } from "@/server/attempt-store";
 import { isUuid } from "@/lib/mock-validation";
 import { attemptStore } from "@/server/attempts";
 import { gradeFromPercentage } from "@/lib/grades";
-import { calculatePercentile } from "@/lib/scoring";
+import { averageAnsweredTime, calculatePercentile } from "@/lib/scoring";
 import { buildAnswerReview } from "@/lib/result-review";
 import { Brand } from "@/components/brand";
 import { OPTION_LABELS } from "@/lib/parser";
@@ -43,6 +43,7 @@ export default async function ResultPage({ params }: PageProps<"/result/[attempt
   const answerReview = buildAnswerReview(questions, answers);
 
   const attempted = (attempt.correctCount || 0) + (attempt.wrongCount || 0);
+  const averageAnswerTimeMs = averageAnsweredTime(answers);
   const accuracy = attempted > 0 ? ((attempt.correctCount || 0) / attempted) * 100 : 0;
   
   const m = Math.floor((attempt.timeTakenSeconds || 0) / 60);
@@ -99,7 +100,7 @@ export default async function ResultPage({ params }: PageProps<"/result/[attempt
         <div><dt className="text-xs text-muted">Wrong</dt><dd className="mt-2 text-sm font-semibold text-red-600">{attempt.wrongCount}</dd></div>
         <div><dt className="text-xs text-muted">Accuracy</dt><dd className="mt-2 text-sm font-semibold">{accuracy.toFixed(1)}%</dd></div>
         <div><dt className="text-xs text-muted">Skipped</dt><dd className="mt-2 text-sm font-semibold">{attempt.skippedCount}</dd></div>
-        <div><dt className="text-xs text-muted">Recorded time / attempted question</dt><dd className="mt-2 text-sm font-semibold">{attempted ? `${(answers.reduce((sum, answer) => sum + answer.timeSpentMs, 0) / attempted / 1000).toFixed(1)}s` : "—"}</dd></div>
+        <div><dt className="text-xs text-muted">Recorded time / attempted question</dt><dd className="mt-2 text-sm font-semibold">{attempted ? `${(averageAnswerTimeMs / 1000).toFixed(1)}s` : "—"}</dd></div>
       </dl>
       </section>
 

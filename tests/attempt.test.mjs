@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import { randomUUID } from "node:crypto";
 import { test } from "node:test";
-import { scoreAttempt, calculatePercentile } from "../src/lib/scoring.ts";
+import { averageAnsweredTime, scoreAttempt, calculatePercentile } from "../src/lib/scoring.ts";
 import { gradeFromPercentage } from "../src/lib/grades.ts";
 import { validateAnswers, questionState, remainingSeconds, addQuestionTime, readRecovery } from "../src/lib/attempt-state.ts";
 import { generateResultTxt } from "../src/lib/export.ts";
@@ -25,7 +25,43 @@ for (const [label, choices, expected] of [
 test("fractional and custom marking does not accumulate floating-point cents", () => {
   assert.equal(score([0, 0, 0], 0.1, 0.05).score, 0.3);
   assert.equal(score([0, 1, null], 3.25, 0.75).score, 2.5);
-  assert.equal(score([0, 1, null]).avgTimeMsPerAttempted, 1500);
+  assert.equal(score([0, 1, null]).avgTimeMsPerAttempted, 1000);
+});
+
+test("answer-time average excludes skipped time and includes correct and wrong answers", () => {
+  const answers = [
+    { ...answer(ids[0], 0), timeSpentMs: 10000 },
+    { ...answer(ids[1], 1), timeSpentMs: 30000 },
+    { ...answer(ids[2], null), timeSpentMs: 540000 },
+  ];
+  const result = scoreAttempt({ marksCorrect: 2, marksWrong: 0.5, correctIndexes: new Map(ids.map(id => [id, 0])), answers });
+  assert.equal(averageAnsweredTime(answers), 20000);
+  assert.equal(result.avgTimeMsPerAttempted, 20000);
+  assert.equal(result.totalTimeMs, 580000);
+  assert.deepEqual([result.score, result.correctCount, result.wrongCount, result.skippedCount], [1.5, 1, 1, 1]);
+});
+
+test("answer-time average handles no answers, all skips, and answered questions with zero time", () => {
+  assert.equal(averageAnsweredTime([]), 0);
+  assert.equal(averageAnsweredTime([answer(ids[0]), answer(ids[1])]), 0);
+  assert.equal(score([null, null, null]).avgTimeMsPerAttempted, 0);
+  assert.equal(averageAnsweredTime([
+    { ...answer(ids[0], 0), timeSpentMs: 0 },
+    { ...answer(ids[1], 1), timeSpentMs: 2000 },
+    { ...answer(ids[2], null), timeSpentMs: 60000 },
+  ]), 1000);
+});
+
+test("scoring average keeps the existing question filtering and duplicate-answer handling", () => {
+  const answers = [
+    { ...answer(ids[0], 0), timeSpentMs: 90000 },
+    { ...answer(ids[0], 1), timeSpentMs: 2000 },
+    { ...answer(randomUUID(), 0), timeSpentMs: 100000 },
+  ];
+  const result = scoreAttempt({ marksCorrect: 2, marksWrong: 0.5, correctIndexes: new Map(ids.map(id => [id, 0])), answers });
+  assert.equal(result.avgTimeMsPerAttempted, 2000);
+  assert.equal(result.totalTimeMs, 2000);
+  assert.deepEqual([result.score, result.correctCount, result.wrongCount, result.skippedCount], [-0.5, 0, 1, 2]);
 });
 for (const [percent, grade] of [[100, "S"], [99.99, "A+"], [95, "A+"], [94.99, "A"], [90, "A"], [89.99, "B+"], [85, "B+"], [80, "B"], [75, "C+"], [70, "C"], [60, "D"], [59.99, "Very Bad"], [-10, "Very Bad"]]) {
   test(`grade boundary ${percent}`, () => assert.equal(gradeFromPercentage(percent), grade));
