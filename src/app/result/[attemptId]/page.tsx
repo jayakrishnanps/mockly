@@ -11,6 +11,7 @@ import { buildAnswerReview } from "@/lib/result-review";
 import { Brand } from "@/components/brand";
 import { OPTION_LABELS } from "@/lib/parser";
 import { QuestionContent } from "@/components/question-content";
+import { ResultProgress } from "@/components/result-progress";
 import "katex/dist/katex.min.css";
 import "@/app/studio/studio.css";
 
@@ -34,6 +35,7 @@ export default async function ResultPage({ params }: PageProps<"/result/[attempt
   if (!data) redirect(`/exam/${attemptId}`);
 
   const { attempt, mock, questions, allScores } = data;
+  const scoreHistory = await attemptStore.getMockScoreHistory(attempt.testId, user);
   const scorePercent = Number(mock.marksCorrect) > 0 && questions.length > 0 
     ? (Number(attempt.score) / (questions.length * Number(mock.marksCorrect))) * 100 
     : 0;
@@ -103,6 +105,8 @@ export default async function ResultPage({ params }: PageProps<"/result/[attempt
         <div><dt className="text-xs text-muted">Recorded time / attempted question</dt><dd className="mt-2 text-sm font-semibold">{attempted ? `${(averageAnswerTimeMs / 1000).toFixed(1)}s` : "—"}</dd></div>
       </dl>
       </section>
+
+      <ResultProgress history={scoreHistory} currentAttemptId={attempt.id} />
 
       <h2 className="mt-8 text-xl font-semibold tracking-tight sm:mt-10">Review answers</h2>
       <ol aria-label="Questions review" className="mt-4 space-y-4">

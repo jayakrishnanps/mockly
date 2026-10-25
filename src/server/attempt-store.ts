@@ -221,6 +221,30 @@ export function createAttemptStore(database: Database, now: () => number = Date.
       });
     },
 
+    async getMockScoreHistory(testId: string, user: User) {
+      if (!isUuid(testId) || !isUser(user)) throw new AttemptError("invalid", "Invalid score-history request.");
+      const rows = await database.select({
+        id: attempts.id, submittedAt: attempts.submittedAt, score: attempts.score,
+        correctCount: attempts.correctCount, wrongCount: attempts.wrongCount,
+        skippedCount: attempts.skippedCount, snapshotMarksCorrect, marksCorrect: tests.marksCorrect,
+      }).from(attempts).innerJoin(tests, eq(attempts.testId, tests.id))
+        .where(and(eq(attempts.testId, testId), eq(attempts.takenBy, user), isNotNull(attempts.submittedAt)))
+        .orderBy(asc(attempts.submittedAt), asc(attempts.id));
+
+      const history: { id: string; submittedAt: string; score: number; maxScore: number }[] = [];
+      for (const row of rows) {
+        const counts = [row.correctCount, row.wrongCount, row.skippedCount];
+        if (!row.submittedAt || row.score === null || counts.some((count) => count === null || !Number.isSafeInteger(count) || count < 0)) continue;
+        const count = (row.correctCount ?? 0) + (row.wrongCount ?? 0) + (row.skippedCount ?? 0);
+        const submittedAt = Date.parse(row.submittedAt);
+        const score = Number(row.score);
+        const maxScore = count * Number(row.snapshotMarksCorrect ?? row.marksCorrect);
+        if (!Number.isFinite(submittedAt) || !Number.isFinite(score) || !Number.isFinite(maxScore) || maxScore <= 0) continue;
+        history.push({ id: row.id, submittedAt: new Date(submittedAt).toISOString(), score, maxScore });
+      }
+      return history;
+    },
+
     async getUserHistory(user: User) {
       const rows = await database.select({
         id: attempts.id, testId: attempts.testId, submittedAt: attempts.submittedAt,
