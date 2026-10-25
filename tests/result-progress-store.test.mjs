@@ -23,14 +23,15 @@ test("result score history uses only the person's completed attempts on the same
     await database.insert(attempts).values({
       id, testId: mockId, takenBy: "JK", submittedAt: "2026-10-20T10:00:00Z",
       score: "12", correctCount: 6, wrongCount: 2, skippedCount: 2,
+      timeTakenSeconds: 125,
       answers: { version: 1, marksCorrect: "3", questions: "not transferred" },
       ...values,
     });
   }
 
-  await completed(latestId, { submittedAt: "2026-10-23T10:00:00Z", score: "-0.50", correctCount: 0, wrongCount: 1, skippedCount: 0, answers: [] });
+  await completed(latestId, { submittedAt: "2026-10-23T10:00:00Z", score: "-0.50", correctCount: 0, wrongCount: 1, skippedCount: 0, answers: [], timeTakenSeconds: null });
   await completed(secondId);
-  await completed(firstId, { score: "8", correctCount: 4, wrongCount: 0, skippedCount: 1, answers: { version: 1, marksCorrect: "2" } });
+  await completed(firstId, { score: "8", correctCount: 4, wrongCount: 0, skippedCount: 1, answers: { version: 1, marksCorrect: "2" }, timeTakenSeconds: 0 });
   await completed(heId, { takenBy: "HE", score: "20" });
   await completed(randomUUID(), { testId: otherMockId, score: "18" });
   await completed(randomUUID(), { submittedAt: null });
@@ -41,10 +42,31 @@ test("result score history uses only the person's completed attempts on the same
   assert.deepEqual(history.map(({ score, maxScore }) => ({ score, maxScore })), [
     { score: 8, maxScore: 10 }, { score: 12, maxScore: 30 }, { score: -0.5, maxScore: 2 },
   ]);
-  assert.deepEqual(Object.keys(history[0]).sort(), ["id", "maxScore", "score", "submittedAt"]);
+  assert.deepEqual(history.map(({ timeTakenSeconds }) => timeTakenSeconds), [0, 125, null]);
+  assert.deepEqual(Object.keys(history[0]).sort(), ["id", "maxScore", "score", "submittedAt", "timeTakenSeconds"]);
   assert.ok(history.every(({ submittedAt }) => Number.isFinite(Date.parse(submittedAt))));
-  assert.deepEqual((await store.getMockScoreHistory(mockId, "HE")).map(({ id }) => id), [heId]);
+  const heHistory = await store.getMockScoreHistory(mockId, "HE");
+  assert.deepEqual(heHistory.map(({ id }) => id), [heId]);
+  assert.deepEqual(Object.keys(heHistory[0]).sort(), ["id", "maxScore", "score", "submittedAt"]);
   assert.deepEqual(await store.getMockScoreHistory(randomUUID(), "JK"), []);
+});
+
+test("result score history treats invalid stored elapsed time as unavailable without dropping the score", async (t) => {
+  const { database, close } = await createLocalDatabase();
+  t.after(close);
+  const mockId = randomUUID();
+  await database.insert(tests).values({ id: mockId, title: "Elapsed time validation", forUsers: ["JK"] });
+  const invalidTimeId = randomUUID();
+  await database.insert(attempts).values({
+    id: invalidTimeId, testId: mockId, takenBy: "JK", submittedAt: "2026-10-25T10:00:00Z",
+    score: "2", correctCount: 1, wrongCount: 0, skippedCount: 0, answers: [], timeTakenSeconds: -1,
+  });
+
+  const history = await createAttemptStore(database).getMockScoreHistory(mockId, "JK");
+  assert.equal(history.length, 1);
+  assert.equal(history[0].id, invalidTimeId);
+  assert.equal(history[0].timeTakenSeconds, null);
+  assert.equal(history[0].score, 2);
 });
 
 test("result score history rejects invalid input and omits incomplete summaries", async (t) => {

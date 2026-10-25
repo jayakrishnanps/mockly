@@ -3,13 +3,14 @@ export type ScoreHistoryPoint = {
   submittedAt: string;
   score: number;
   maxScore: number;
+  timeTakenSeconds?: number | null;
 };
 
 export const PROGRESS_WINDOW_SIZE = 10;
 export const PROGRESS_CHART_HEIGHT = 336;
 export type ProgressScale = "detail" | "full";
 
-export function buildProgressChart(history: readonly ScoreHistoryPoint[], range: number | "all", width: number, scale: ProgressScale = "detail") {
+export function buildProgressChart(history: readonly ScoreHistoryPoint[], range: number | "all", width: number, scale: ProgressScale = "detail", showTime = false) {
   const lastPage = Math.max(0, Math.ceil(history.length / PROGRESS_WINDOW_SIZE) - 1);
   const page = typeof range === "number" && Number.isSafeInteger(range) && range >= 0 ? Math.min(range, lastPage) : 0;
   const end = range === "all" ? history.length : history.length - page * PROGRESS_WINDOW_SIZE;
@@ -47,7 +48,7 @@ export function buildProgressChart(history: readonly ScoreHistoryPoint[], range:
   const step = ([1, 2, 2.5, 5, 10].find((factor) => factor * magnitude >= approximateStep) ?? 10) * magnitude;
   minimum = Number((Math.floor(minimum / step) * step).toFixed(8));
   maximum = Number((Math.ceil(maximum / step) * step).toFixed(8));
-  const plot = { left: 60, right: width - 24, top: 32, bottom: PROGRESS_CHART_HEIGHT - 40 };
+  const plot = { left: 60, right: width - (showTime ? 72 : 24), top: 32, bottom: PROGRESS_CHART_HEIGHT - 40 };
   const y = (percentage: number) => plot.top + (maximum - percentage) / (maximum - minimum) * (plot.bottom - plot.top);
   const points = series.map((point, index) => ({
     ...point,
@@ -59,4 +60,60 @@ export function buildProgressChart(history: readonly ScoreHistoryPoint[], range:
     return { value, y: y(value) };
   });
   return { start, end, points, ticks, plot, minimum, maximum };
+}
+
+export function buildTimeProgressChart(chart: ReturnType<typeof buildProgressChart>, scale: ProgressScale) {
+  let minimum = Infinity;
+  let maximum = 0;
+  for (const point of chart.points) {
+    const seconds = point.timeTakenSeconds;
+    if (typeof seconds !== "number" || !Number.isSafeInteger(seconds) || seconds < 0) continue;
+    minimum = Math.min(minimum, seconds);
+    maximum = Math.max(maximum, seconds);
+  }
+
+  if (minimum === Infinity) minimum = 0;
+  if (scale === "full") {
+    minimum = 0;
+    maximum = Math.max(60, maximum);
+  } else {
+    const padding = Math.max(60, maximum - minimum) * 0.1;
+    const span = Math.max(60, maximum - minimum) + padding * 2;
+    const middle = (minimum + maximum) / 2;
+    minimum = Math.max(0, middle - span / 2);
+    maximum = Math.max(maximum + padding, minimum + span);
+  }
+
+  const approximateStep = (maximum - minimum) / 6;
+  const magnitude = 10 ** Math.floor(Math.log10(approximateStep));
+  const step = ([1, 2, 3, 6, 10].find((factor) => factor * magnitude >= approximateStep) ?? 10) * magnitude;
+  minimum = Math.floor(minimum / step) * step;
+  maximum = Math.ceil(maximum / step) * step;
+  const y = (seconds: number) => chart.plot.top + (maximum - seconds) / (maximum - minimum) * (chart.plot.bottom - chart.plot.top);
+  const points = chart.points.map((point) => {
+    const seconds = point.timeTakenSeconds;
+    const valid = typeof seconds === "number" && Number.isSafeInteger(seconds) && seconds >= 0;
+    return { id: point.id, x: point.x, seconds: valid ? seconds : null, y: valid ? y(seconds) : null };
+  });
+  const ticks = Array.from({ length: Math.round((maximum - minimum) / step) + 1 }, (_, index) => {
+    const value = maximum - index * step;
+    return { value, y: y(value) };
+  });
+  let path = "";
+  let connected = false;
+  for (const point of points) {
+    if (point.y === null) {
+      connected = false;
+      continue;
+    }
+    path += `${connected ? "L" : "M"}${point.x},${point.y} `;
+    connected = true;
+  }
+  return { points, ticks, path: path.trim(), minimum, maximum };
+}
+
+export function formatProgressTime(seconds: number | null | undefined) {
+  if (typeof seconds !== "number" || !Number.isSafeInteger(seconds) || seconds < 0) return "—";
+  const minutes = Math.floor(seconds / 60);
+  return minutes > 0 ? `${minutes}m ${String(seconds % 60).padStart(2, "0")}s` : `${seconds}s`;
 }

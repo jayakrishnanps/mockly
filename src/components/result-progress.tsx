@@ -1,20 +1,22 @@
 "use client";
 
 import { useEffect, useId, useMemo, useRef, useState } from "react";
-import { buildProgressChart, PROGRESS_CHART_HEIGHT, PROGRESS_WINDOW_SIZE, type ProgressScale, type ScoreHistoryPoint } from "@/lib/result-progress";
+import { buildProgressChart, buildTimeProgressChart, formatProgressTime, PROGRESS_CHART_HEIGHT, PROGRESS_WINDOW_SIZE, type ProgressScale, type ScoreHistoryPoint } from "@/lib/result-progress";
 
 const dateFormatter = new Intl.DateTimeFormat("en-IN", {
   day: "numeric", month: "short", year: "numeric", timeZone: "Asia/Kolkata",
 });
 const axisFormatter = new Intl.NumberFormat("en-IN", { notation: "compact", maximumFractionDigits: 1 });
 
-export function ResultProgress({ history, currentAttemptId }: { history: ScoreHistoryPoint[]; currentAttemptId: string }) {
+export function ResultProgress({ history, currentAttemptId, allowTime = false }: { history: ScoreHistoryPoint[]; currentAttemptId: string; allowTime?: boolean }) {
   const chartId = useId();
   const container = useRef<HTMLDivElement>(null);
   const [width, setWidth] = useState(320);
   const [range, setRange] = useState<number | "all">(0);
   const [scale, setScale] = useState<ProgressScale>("detail");
   const [activeId, setActiveId] = useState(currentAttemptId);
+  const [timeVisible, setTimeVisible] = useState(false);
+  const timeEnabled = allowTime && timeVisible;
 
   useEffect(() => {
     const element = container.current;
@@ -24,8 +26,9 @@ export function ResultProgress({ history, currentAttemptId }: { history: ScoreHi
     return () => observer.disconnect();
   }, []);
 
-  const chartWidth = range === "all" ? Math.max(width, (history.length - 1) * 32 + 84) : width;
-  const chart = useMemo(() => buildProgressChart(history, range, chartWidth, scale), [history, range, chartWidth, scale]);
+  const chartWidth = Math.max(width, timeEnabled ? 420 : 0, range === "all" ? (history.length - 1) * 32 + (timeEnabled ? 132 : 84) : 0);
+  const chart = useMemo(() => buildProgressChart(history, range, chartWidth, scale, timeEnabled), [history, range, chartWidth, scale, timeEnabled]);
+  const timeChart = useMemo(() => timeEnabled ? buildTimeProgressChart(chart, scale) : null, [chart, scale, timeEnabled]);
   const currentIndex = history.findIndex((point) => point.id === currentAttemptId);
   const viewedPoint = chart.points.find((point) => point.id === currentAttemptId);
   const currentVisible = viewedPoint !== undefined;
@@ -40,14 +43,29 @@ export function ResultProgress({ history, currentAttemptId }: { history: ScoreHi
   const scrollTargetX = chart.points.find((point) => point.id === currentAttemptId)?.x ?? chart.points[chart.points.length - 1]?.x ?? 0;
 
   useEffect(() => {
-    container.current?.scrollTo({ left: range === "all" ? Math.max(0, scrollTargetX - width / 2) : 0 });
-  }, [range, scrollTargetX, width]);
+    container.current?.scrollTo({ left: chartWidth > width ? Math.max(0, scrollTargetX - width / 2) : 0 });
+  }, [chartWidth, range, scrollTargetX, width]);
 
   if (!activePoint) return null;
 
   return (
     <section aria-labelledby={`${chartId}-heading`} className="mt-6 min-w-0 rounded-xl border border-line bg-white p-4 sm:mt-8 sm:p-6">
-      <h2 id={`${chartId}-heading`} className="sr-only">Score progress</h2>
+      {allowTime ? (
+        <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
+          <h2 id={`${chartId}-heading`} className="identity-initials text-2xl text-foreground">{timeEnabled ? "Score & time" : "Score progress"}</h2>
+          <button
+            type="button"
+            aria-pressed={timeEnabled}
+            aria-label="Show total completion time"
+            onClick={() => setTimeVisible((visible) => !visible)}
+            className={`inline-flex min-h-11 items-center gap-2 rounded-lg border px-3 text-sm font-medium text-blue-700 focus-visible:outline-blue-700 ${timeEnabled ? "border-blue-300 bg-blue-50" : "border-blue-200 bg-white hover:bg-blue-50"}`}
+          >
+            <span aria-hidden="true" className="w-4 border-t-2 border-dashed border-current" />
+            Time
+            <span aria-hidden="true" className={`h-2 w-2 rounded-full ${timeEnabled ? "bg-blue-600" : "border border-blue-300"}`} />
+          </button>
+        </div>
+      ) : <h2 id={`${chartId}-heading`} className="sr-only">Score progress</h2>}
       <div className="flex flex-wrap items-center justify-between gap-3 border-b border-line pb-4">
         <div className="flex flex-wrap items-center gap-3 sm:gap-5">
           <span className="text-xs tabular-nums text-muted">{chart.start + 1}–{chart.end} / {history.length}</span>
@@ -93,14 +111,20 @@ export function ResultProgress({ history, currentAttemptId }: { history: ScoreHi
         </div>
       </div>
 
-      <div className="relative mt-5 min-w-0">
+      {timeEnabled && (
+        <div className="mt-5 flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-muted" aria-hidden="true">
+          <span className="inline-flex items-center gap-2"><span className="w-4 border-t-2 border-accent" />Score · left axis</span>
+          <span className="inline-flex items-center gap-2 text-blue-700"><span className="w-4 border-t-2 border-dashed border-current" />Time · right axis</span>
+        </div>
+      )}
+      <div className={`relative min-w-0 ${timeEnabled ? "mt-2" : "mt-5"}`}>
         <div className="pointer-events-none absolute top-0 left-0 z-10 bg-white" aria-hidden="true">
           <svg width={44} height={PROGRESS_CHART_HEIGHT} className="block">
             {chart.ticks.map((tick) => <text key={tick.value} x={38} y={tick.y + 4} textAnchor="end" fill="var(--muted)" fontSize={11}>{axisFormatter.format(tick.value)}%</text>)}
           </svg>
         </div>
         <div ref={container} className="min-w-0 overflow-x-auto overscroll-x-contain">
-          <svg width={chartWidth} height={PROGRESS_CHART_HEIGHT} role="group" aria-label={`Score percentage by completed attempt, ${scale === "detail" ? "fitted" : "full"} scale from ${chart.minimum} to ${chart.maximum} percent`} className="block">
+          <svg width={chartWidth} height={PROGRESS_CHART_HEIGHT} role="group" aria-label={`Score percentage by completed attempt, ${scale === "detail" ? "fitted" : "full"} scale from ${chart.minimum} to ${chart.maximum} percent${timeChart ? `; blue dashed line shows total completion time, right axis from ${formatProgressTime(timeChart.minimum)} to ${formatProgressTime(timeChart.maximum)}; lower time is faster` : ""}`} className="block">
             <defs>
               <linearGradient id={`${chartId}-fill`} x1="0" x2="0" y1="0" y2="1">
                 <stop offset="0%" stopColor="var(--accent)" stopOpacity={0.12} />
@@ -115,10 +139,12 @@ export function ResultProgress({ history, currentAttemptId }: { history: ScoreHi
             {chart.points.length > 1 && <polygon points={area} fill={`url(#${chartId}-fill)`} aria-hidden="true" />}
             <line x1={activePoint.x} x2={activePoint.x} y1={chart.plot.top} y2={chart.plot.bottom} stroke="var(--accent)" strokeOpacity={0.25} strokeDasharray="4 4" aria-hidden="true" />
             {chart.points.length > 1 && <polyline points={line} fill="none" stroke="var(--accent)" strokeWidth={2.25} strokeLinejoin="round" strokeLinecap="round" aria-hidden="true" />}
+            {timeChart && <path d={timeChart.path} fill="none" stroke="#1d4ed8" strokeWidth={2.25} strokeDasharray="6 4" strokeLinejoin="round" strokeLinecap="round" aria-hidden="true" />}
             {chart.points.map((point, index) => {
               const current = point.id === currentAttemptId;
               const active = point.id === activePoint.id;
-              const label = `Attempt ${point.attemptNumber}, ${dateFormatter.format(new Date(point.submittedAt))}, ${point.score} out of ${point.maxScore}, ${point.percentage.toFixed(1)} percent${current ? ", result being viewed" : ""}`;
+              const timePoint = timeChart?.points[index];
+              const label = `Attempt ${point.attemptNumber}, ${dateFormatter.format(new Date(point.submittedAt))}, ${point.score} out of ${point.maxScore}, ${point.percentage.toFixed(1)} percent${timeChart ? `, total completion time ${timePoint?.seconds === null ? "unavailable" : formatProgressTime(timePoint?.seconds)}` : ""}${current ? ", result being viewed" : ""}`;
               return (
                 <g
                   key={point.id}
@@ -138,7 +164,11 @@ export function ResultProgress({ history, currentAttemptId }: { history: ScoreHi
                   className="cursor-pointer rounded-sm"
                 >
                   <title>{label}</title>
-                  <rect x={point.x - 12} y={point.y - 22} width={24} height={44} fill="transparent" />
+                  <rect x={point.x - 12} y={Math.min(point.y, timePoint?.y ?? point.y) - 22} width={24} height={Math.abs(point.y - (timePoint?.y ?? point.y)) + 44} fill="transparent" />
+                  {timePoint?.y !== null && timePoint?.y !== undefined && <>
+                    {(current || active) && <circle cx={point.x} cy={timePoint.y} r={current ? 10 : 8} fill="#eff6ff" stroke="#1d4ed8" strokeWidth={1.5} />}
+                    <circle cx={point.x} cy={timePoint.y} r={current || active ? 5 : 3.5} fill={current || active ? "#1d4ed8" : "white"} stroke="#1d4ed8" strokeWidth={1.75} />
+                  </>}
                   {(current || active) && <circle cx={point.x} cy={point.y} r={current ? 10 : 8} fill="var(--accent-soft)" stroke="var(--accent)" strokeWidth={1.5} />}
                   <circle cx={point.x} cy={point.y} r={current || active ? 5 : 3.5} fill={current || active ? "var(--accent)" : "white"} stroke="var(--accent)" strokeWidth={1.75} />
                   {(chart.points.length <= 10 || current || index === 0 || index === chart.points.length - 1) && <text x={point.x} y={PROGRESS_CHART_HEIGHT - 12} textAnchor="middle" fill={current ? "var(--accent-strong)" : "var(--muted)"} fontSize={11}>{point.attemptNumber}</text>}
@@ -151,11 +181,19 @@ export function ResultProgress({ history, currentAttemptId }: { history: ScoreHi
             </g>}
           </svg>
         </div>
+        {timeChart && (
+          <div className="pointer-events-none absolute top-0 right-0 z-10 bg-white" aria-hidden="true">
+            <svg width={60} height={PROGRESS_CHART_HEIGHT} className="block">
+              {timeChart.ticks.map((tick) => <text key={tick.value} x={8} y={tick.y + 4} fill="#1d4ed8" fontSize={11}>{formatProgressTime(tick.value)}</text>)}
+            </svg>
+          </div>
+        )}
       </div>
       <output aria-live="polite" className="mt-3 flex min-h-6 flex-wrap items-center gap-x-3 gap-y-2 border-t border-line pt-4 text-xs tabular-nums text-muted">
         <span className="font-medium text-foreground">#{activePoint.attemptNumber}</span>
         <span className="text-sm font-semibold text-accent">{activePoint.percentage.toFixed(1)}%</span>
         <span>{activePoint.score} / {activePoint.maxScore}</span>
+        {timeEnabled && <span className="font-medium text-blue-700">Time {formatProgressTime(activePoint.timeTakenSeconds)}</span>}
         <time dateTime={activePoint.submittedAt}>{dateFormatter.format(new Date(activePoint.submittedAt))}</time>
       </output>
     </section>

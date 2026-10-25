@@ -225,13 +225,14 @@ export function createAttemptStore(database: Database, now: () => number = Date.
       if (!isUuid(testId) || !isUser(user)) throw new AttemptError("invalid", "Invalid score-history request.");
       const rows = await database.select({
         id: attempts.id, submittedAt: attempts.submittedAt, score: attempts.score,
+        timeTakenSeconds: attempts.timeTakenSeconds,
         correctCount: attempts.correctCount, wrongCount: attempts.wrongCount,
         skippedCount: attempts.skippedCount, snapshotMarksCorrect, marksCorrect: tests.marksCorrect,
       }).from(attempts).innerJoin(tests, eq(attempts.testId, tests.id))
         .where(and(eq(attempts.testId, testId), eq(attempts.takenBy, user), isNotNull(attempts.submittedAt)))
         .orderBy(asc(attempts.submittedAt), asc(attempts.id));
 
-      const history: { id: string; submittedAt: string; score: number; maxScore: number }[] = [];
+      const history: { id: string; submittedAt: string; score: number; maxScore: number; timeTakenSeconds?: number | null }[] = [];
       for (const row of rows) {
         const counts = [row.correctCount, row.wrongCount, row.skippedCount];
         if (!row.submittedAt || row.score === null || counts.some((count) => count === null || !Number.isSafeInteger(count) || count < 0)) continue;
@@ -240,7 +241,15 @@ export function createAttemptStore(database: Database, now: () => number = Date.
         const score = Number(row.score);
         const maxScore = count * Number(row.snapshotMarksCorrect ?? row.marksCorrect);
         if (!Number.isFinite(submittedAt) || !Number.isFinite(score) || !Number.isFinite(maxScore) || maxScore <= 0) continue;
-        history.push({ id: row.id, submittedAt: new Date(submittedAt).toISOString(), score, maxScore });
+        const point = { id: row.id, submittedAt: new Date(submittedAt).toISOString(), score, maxScore };
+        if (user === "JK") {
+          const timeTakenSeconds = row.timeTakenSeconds !== null && Number.isSafeInteger(row.timeTakenSeconds) && row.timeTakenSeconds >= 0
+            ? row.timeTakenSeconds
+            : null;
+          history.push({ ...point, timeTakenSeconds });
+        } else {
+          history.push(point);
+        }
       }
       return history;
     },

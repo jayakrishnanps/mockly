@@ -106,7 +106,7 @@ export default async function ResultPage({ params }: PageProps<"/result/[attempt
       </dl>
       </section>
 
-      <ResultProgress history={scoreHistory} currentAttemptId={attempt.id} />
+      <ResultProgress history={scoreHistory} currentAttemptId={attempt.id} allowTime={user === "JK"} />
 
       <h2 className="mt-8 text-xl font-semibold tracking-tight sm:mt-10">Review answers</h2>
       <ol aria-label="Questions review" className="mt-4 space-y-4">
