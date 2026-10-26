@@ -25,10 +25,10 @@ export default async function BankPage({ params, searchParams }: PageProps<"/u/[
 
   return <>
     <Link href="/u/JK/bank" className="inline-flex min-h-11 items-center text-sm text-accent">← Question bank</Link>
-    <div className="mb-7 mt-2 flex flex-wrap items-start justify-between gap-4">
-      <div className="min-w-0"><h1 className="break-words text-2xl font-semibold tracking-tight sm:text-3xl">{bank.title}</h1><p className="mt-2 text-sm text-muted">{bank.questionCount} saved {bank.questionCount === 1 ? "question" : "questions"}</p></div>
+    <div className="mb-8 mt-3 flex flex-wrap items-start justify-between gap-4 border-b border-black pb-6 sm:mb-10">
+      <div className="min-w-0"><h1 className="break-words text-3xl font-semibold leading-tight tracking-tight sm:text-4xl">{bank.title}</h1><p className="mt-3 text-sm text-muted">{bank.questionCount} saved {bank.questionCount === 1 ? "question" : "questions"}</p></div>
     </div>
-    <details className="mb-8 rounded-xl border border-line bg-white px-4 sm:px-6">
+    <details className="mb-8 rounded-md border border-black bg-white px-4 sm:px-6">
       <summary className="cursor-pointer py-5 text-base font-semibold text-accent">Create a mock from this bank</summary>
       <div className="pb-6"><BankMockForm bankId={bank.id} title={bank.title} questionCount={bank.questionCount} /></div>
     </details>
@@ -37,8 +37,8 @@ export default async function BankPage({ params, searchParams }: PageProps<"/u/[
       <h2 id="saved-bank-questions" className="text-xl font-semibold tracking-tight">Saved questions</h2>
       <p className="mt-2 text-sm text-muted">Questions here stay in the bank when you delete a mock.</p>
       {bank.questions.length === 0 ? <p className="py-6 text-sm text-muted">No saved questions on this page.</p> :
-        <ol className="mt-4 divide-y divide-line rounded-xl border border-line bg-white">
-          {bank.questions.map((question) => <li key={question.id} className="min-w-0 px-4 py-5 sm:p-6">
+        <ol className="mt-5 divide-y divide-black border-y border-black bg-white">
+          {bank.questions.map((question) => <li key={question.id} className="min-w-0 py-6 sm:py-8">
             <h3 className="mb-3 text-xs font-semibold text-muted">Question {question.position}</h3>
             <QuestionContent text={question.questionText} />
           </li>)}

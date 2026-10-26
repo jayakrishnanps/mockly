@@ -28,7 +28,7 @@ export const QuestionContent = memo(function QuestionContent({ text }: { text: s
         {text}
       </Markdown>
       <p className="math-warning mt-2 text-xs text-red-800" role="note">
-        Some math could not be rendered. Check the expression shown in red.
+        Some math could not be rendered. Check the expression <span className="jk-only">shown above.</span><span className="jk-hidden">shown in red.</span>
       </p>
     </div>
   );

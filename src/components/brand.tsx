@@ -18,7 +18,7 @@ export function Brand({ user }: { user?: User | null }) {
         height={48}
         sizes="(min-width: 640px) 44px, 40px"
         loading="eager"
-        className="size-10 shrink-0 object-contain sm:size-11"
+        className="brand-mark size-10 shrink-0 object-contain sm:size-11"
       />
       {user ? (
         <span className="identity-initials whitespace-nowrap text-xl" aria-hidden="true">

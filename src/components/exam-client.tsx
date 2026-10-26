@@ -28,6 +28,14 @@ const STATE_COLORS: Record<QuestionState, string> = {
   "answered-marked": "border-2 border-amber-400 bg-accent text-white",
 };
 
+const MONOCHROME_STATE_COLORS: Record<QuestionState, string> = {
+  "not-visited": "border border-dashed border-black bg-white text-black",
+  "not-answered": "border border-black bg-white text-black",
+  "answered": "border border-black bg-black text-white",
+  "marked": "border-4 border-double border-black bg-white text-black",
+  "answered-marked": "border border-black bg-black text-white shadow-[inset_0_0_0_2px_#fff]",
+};
+
 const STATE_LABELS: Record<QuestionState, string> = {
   "not-visited": "Not visited",
   "not-answered": "Not answered",
@@ -38,6 +46,8 @@ const STATE_LABELS: Record<QuestionState, string> = {
 
 function ExamWorkspace(props: ExamClientProps) {
   const { mockTitle, user, questions } = props;
+  const isJK = user === "JK";
+  const stateColors = isJK ? MONOCHROME_STATE_COLORS : STATE_COLORS;
   const { current, answers, timeLeft, submitting, saveError, handleSubmit, change } = useExam(props);
   const [showConfirm, setShowConfirm] = useState(false);
   const [showPalette, setShowPalette] = useState(false);
@@ -84,8 +94,8 @@ function ExamWorkspace(props: ExamClientProps) {
 
   if (showConfirm) {
     return (
-      <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
-        <section role="dialog" aria-modal="true" aria-labelledby="submit-heading" onKeyDown={(event) => { if (event.key === "Escape" && !submitting) setShowConfirm(false); }} className="max-h-[calc(100dvh-2rem)] w-full max-w-md overflow-y-auto rounded-2xl border border-line bg-white p-6 sm:p-8">
+      <div data-exam-workspace className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+        <section role="dialog" aria-modal="true" aria-labelledby="submit-heading" onKeyDown={(event) => { if (event.key === "Escape" && !submitting) setShowConfirm(false); }} className={`max-h-[calc(100dvh-2rem)] w-full max-w-md overflow-y-auto border border-line bg-white p-6 sm:p-8 ${isJK ? "rounded-md" : "rounded-2xl"}`}>
           <h2 id="submit-heading" className="text-xl font-semibold">Submit test?</h2>
           <p className="mt-2 text-sm text-muted">Review your progress before submitting. Submission is final.</p>
           <dl className="mt-5 grid grid-cols-2 gap-x-4 gap-y-5 border-y border-line py-5 text-sm">
@@ -93,10 +103,10 @@ function ExamWorkspace(props: ExamClientProps) {
             <div><dt className="text-muted">Answered</dt><dd className="font-semibold text-accent">{counts.answered + counts.answeredMarked}</dd></div>
             <div><dt className="text-muted">Unanswered</dt><dd className="font-semibold">{counts.notAnswered + counts.marked}</dd></div>
             <div><dt className="text-muted">Not visited</dt><dd className="font-semibold">{counts.notVisited}</dd></div>
-            <div><dt className="text-muted">Marked for review</dt><dd className="font-semibold text-amber-800">{counts.marked + counts.answeredMarked}</dd></div>
+            <div><dt className="text-muted">Marked for review</dt><dd className={`font-semibold ${isJK ? "text-black" : "text-amber-800"}`}>{counts.marked + counts.answeredMarked}</dd></div>
             <div><dt className="text-muted">Time left</dt><dd className="font-semibold">{timeStr}</dd></div>
           </dl>
-          {saveError && <p role="alert" className="mt-4 text-sm text-red-700">{saveError}</p>}
+          {saveError && <p role="alert" className={`mt-4 text-sm ${isJK ? "text-black" : "text-red-700"}`}>{saveError}</p>}
           <div className="mt-6 flex gap-3">
             <button autoFocus disabled={submitting} onClick={() => setShowConfirm(false)} className="flex-1 rounded-lg border border-line px-4 py-2.5 text-sm font-medium hover:bg-gray-50">Go back</button>
             <button onClick={() => handleSubmit()} disabled={submitting} className="min-h-11 flex-1 rounded-lg bg-accent px-4 py-2.5 text-sm font-medium text-white hover:bg-accent/90 disabled:opacity-50">
@@ -109,17 +119,17 @@ function ExamWorkspace(props: ExamClientProps) {
   }
 
   return (
-    <div className="flex min-h-svh min-w-0 flex-col bg-white pb-[calc(8rem+env(safe-area-inset-bottom))] lg:pb-0">
+    <div data-exam-workspace className="flex min-h-svh min-w-0 flex-col bg-white pb-[calc(8rem+env(safe-area-inset-bottom))] lg:pb-0">
       {/* Top bar */}
       <header className="sticky top-0 z-20 border-b border-line bg-white pt-[env(safe-area-inset-top)]">
         <div className="mx-auto flex min-h-16 max-w-7xl flex-col gap-1 px-4 py-2 sm:flex-row sm:items-center sm:justify-between sm:gap-6 sm:px-6 lg:px-8">
           <div className="flex min-w-0 items-center justify-between gap-4">
-            <h1 className="truncate text-sm font-semibold">{mockTitle}</h1>
-            <span className="shrink-0 rounded-full border border-accent/20 bg-white px-2.5 py-1 text-xs font-semibold text-accent">{user}</span>
+            <h1 className={`truncate font-semibold ${isJK ? "text-base tracking-tight" : "text-sm"}`}>{mockTitle}</h1>
+            <span className={`shrink-0 bg-white px-2.5 py-1 text-xs font-semibold text-accent ${isJK ? "border border-black" : "rounded-full border border-accent/20"}`}>{user}</span>
           </div>
           <div className="flex shrink-0 items-center justify-between gap-3">
             <span className="text-xs tabular-nums text-muted">{current + 1} of {questions.length}</span>
-            <div className={`rounded-lg border border-line bg-white px-3 py-1.5 font-mono text-lg font-semibold tabular-nums ${isUrgent ? "text-red-700" : "text-foreground"}`} role="timer" aria-label="Time remaining">
+            <div className={`rounded-lg border border-line px-3 py-1.5 font-mono text-lg font-semibold tabular-nums ${isJK ? isUrgent ? "bg-black text-white" : "bg-white text-black" : `bg-white ${isUrgent ? "text-red-700" : "text-foreground"}`}`} role="timer" aria-label="Time remaining">
               {timeStr}
             </div>
             <button disabled={submitting} onClick={() => { setShowPalette(false); setShowConfirm(true); }} className="min-h-11 rounded-lg bg-accent px-4 text-sm font-medium text-white transition-colors hover:bg-accent/90 disabled:opacity-50">
@@ -130,7 +140,7 @@ function ExamWorkspace(props: ExamClientProps) {
       </header>
 
       {saveError && (
-        <div role="alert" className="bg-yellow-50 px-4 py-2 text-center text-xs text-yellow-800">⚠ {saveError}</div>
+        <div role="alert" className={`px-4 py-2 text-center text-xs ${isJK ? "border-b border-black bg-white text-black" : "bg-yellow-50 text-yellow-800"}`}>⚠ {saveError}</div>
       )}
 
       <div className="mx-auto flex w-full max-w-7xl flex-1 flex-col lg:flex-row">
@@ -138,8 +148,8 @@ function ExamWorkspace(props: ExamClientProps) {
         <div className="min-w-0 flex-1 px-4 py-6 sm:px-6 sm:py-8 lg:p-8">
           <div className="mx-auto max-w-3xl">
             <div className="mb-5 flex flex-wrap items-center justify-between gap-2 border-b border-line pb-3">
-              <h2 className="text-sm font-semibold">Question {q.position}</h2>
-              {a.markedForReview && <span className="text-xs font-medium text-amber-800">Marked for review</span>}
+              <h2 className={`font-semibold ${isJK ? "text-xs tracking-[0.12em] uppercase" : "text-sm"}`}>Question {q.position}</h2>
+              {a.markedForReview && <span className={`text-xs font-medium ${isJK ? "text-black" : "text-amber-800"}`}>Marked for review</span>}
             </div>
             <QuestionContent text={q.questionText} />
 
@@ -149,7 +159,7 @@ function ExamWorkspace(props: ExamClientProps) {
                 return (
                   <label
                     key={index}
-                    className={`flex min-h-14 cursor-pointer items-start gap-3 rounded-xl border px-3 py-2 transition-colors sm:px-4 sm:py-2.5 ${selected ? "border-accent bg-accent-soft" : "border-line hover:border-accent/40 hover:bg-background/50"}`}
+                    className={`flex min-h-14 cursor-pointer items-start gap-3 border px-3 py-2 transition-colors sm:px-4 sm:py-2.5 ${isJK ? `rounded-md border-black bg-white ${selected ? "shadow-[inset_4px_0_0_#000]" : "hover:shadow-[inset_2px_0_0_#000]"}` : `rounded-xl ${selected ? "border-accent bg-accent-soft" : "border-line hover:border-accent/40 hover:bg-background/50"}`}`}
                   >
                     <input
                       type="radio"
@@ -197,7 +207,7 @@ function ExamWorkspace(props: ExamClientProps) {
                   onClick={() => navigateTo(i)}
                   aria-label={`Question ${i + 1}, ${STATE_LABELS[state]}`}
                   aria-current={i === current ? "true" : undefined}
-                  className={`flex size-10 items-center justify-center rounded text-xs font-medium transition-colors ${STATE_COLORS[state]} ${i === current ? "ring-2 ring-accent ring-offset-1" : ""}`}
+                  className={`flex size-10 items-center justify-center rounded text-xs font-medium transition-colors ${stateColors[state]} ${i === current ? "ring-2 ring-accent ring-offset-1" : ""}`}
                 >
                   {i + 1}
                 </button>
@@ -207,7 +217,7 @@ function ExamWorkspace(props: ExamClientProps) {
           <div className="mt-5 space-y-1.5 text-[11px]">
             {(Object.entries(STATE_LABELS) as [QuestionState, string][]).map(([key, label]) => (
               <div key={key} className="flex items-center gap-2">
-                <span className={`inline-block size-3.5 rounded ${STATE_COLORS[key]}`} />
+                <span className={`inline-block size-3.5 rounded ${stateColors[key]}`} />
                 <span className="text-muted">{label}</span>
               </div>
             ))}
@@ -233,7 +243,7 @@ function ExamWorkspace(props: ExamClientProps) {
                   onClick={() => { navigateTo(i); setShowPalette(false); }}
                   aria-label={`Question ${i + 1}, ${STATE_LABELS[state]}`}
                   aria-current={i === current ? "true" : undefined}
-                  className={`flex min-h-11 min-w-0 items-center justify-center rounded text-sm font-medium ${STATE_COLORS[state]} ${i === current ? "ring-2 ring-accent" : ""}`}
+                  className={`flex min-h-11 min-w-0 items-center justify-center rounded text-sm font-medium ${stateColors[state]} ${i === current ? "ring-2 ring-accent" : ""}`}
                 >
                   {i + 1}
                 </button>
@@ -241,7 +251,7 @@ function ExamWorkspace(props: ExamClientProps) {
             })}
             </div>
             <div className="mt-4 flex flex-wrap gap-3 text-[11px]">
-              {(Object.entries(STATE_LABELS) as [QuestionState, string][]).map(([key, label]) => <span key={key} className="flex items-center gap-1.5"><span aria-hidden="true" className={`size-3 rounded ${STATE_COLORS[key]}`} />{label}</span>)}
+              {(Object.entries(STATE_LABELS) as [QuestionState, string][]).map(([key, label]) => <span key={key} className="flex items-center gap-1.5"><span aria-hidden="true" className={`size-3 rounded ${stateColors[key]}`} />{label}</span>)}
             </div>
           </section>
         )}

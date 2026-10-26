@@ -20,11 +20,11 @@ export default async function BanksPage({ params }: PageProps<"/u/[user]/bank">)
   const banks = await bankStore.list();
 
   return <>
-    <div className="mb-7">
-      <h1 className="page-title text-3xl">Question bank</h1>
+    <div className="mb-8 border-b border-black pb-6 sm:mb-10">
+      <h1 className="page-title text-4xl sm:text-5xl">Question bank</h1>
     </div>
     <BankCreateForm />
-    <section className="mt-8" aria-label="Saved question banks">
+    <section className="mt-10 sm:mt-12" aria-label="Saved question banks">
       {banks.length === 0 ? <EmptyState title="No question banks here yet.">Create a bank, then paste your questions in the usual format.</EmptyState> :
         <BankList banks={banks.map((bank) => ({
           ...bank,

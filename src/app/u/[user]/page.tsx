@@ -35,8 +35,8 @@ export default async function MocksPage({ params }: PageProps<"/u/[user]">) {
 
   return (
     <>
-      <div className="mb-7">
-        <h1 className="page-title text-3xl">Your mocks</h1>
+      <div className={user === "JK" ? "mb-8 border-b border-black pb-6 sm:mb-10" : "mb-7"}>
+        <h1 className={user === "JK" ? "page-title text-4xl sm:text-5xl" : "page-title text-3xl"}>Your mocks</h1>
       </div>
 
       {mocks.length === 0 ? (
@@ -44,7 +44,7 @@ export default async function MocksPage({ params }: PageProps<"/u/[user]">) {
           Mocks assigned to {user} will appear here.
         </EmptyState>
       ) : (
-        <MockList searchable={user === "JK"} mocks={mocks.map((mock) => ({
+        <MockList user={user} searchable={user === "JK"} mocks={mocks.map((mock) => ({
           ...mock,
           createdAt: new Date(mock.createdAt).toISOString(),
           createdDate: mockCreatedDate(mock.createdAt),

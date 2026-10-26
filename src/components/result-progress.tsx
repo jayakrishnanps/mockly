@@ -49,20 +49,20 @@ export function ResultProgress({ history, currentAttemptId, allowTime = false }:
   if (!activePoint) return null;
 
   return (
-    <section aria-labelledby={`${chartId}-heading`} className="mt-6 min-w-0 rounded-xl border border-line bg-white p-4 sm:mt-8 sm:p-6">
+    <section data-result-chart aria-labelledby={`${chartId}-heading`} className={`mt-6 min-w-0 border border-line bg-white p-4 sm:mt-8 sm:p-6 ${allowTime ? "rounded-md" : "rounded-xl"}`}>
       {allowTime ? (
         <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
-          <h2 id={`${chartId}-heading`} className="identity-initials text-2xl text-foreground">{timeEnabled ? "Score & time" : "Score progress"}</h2>
+          <h2 id={`${chartId}-heading`} className="text-xl font-semibold tracking-tight text-foreground">{timeEnabled ? "Score & time" : "Score progress"}</h2>
           <button
             type="button"
             aria-pressed={timeEnabled}
             aria-label="Show total completion time"
             onClick={() => setTimeVisible((visible) => !visible)}
-            className={`inline-flex min-h-11 items-center gap-2 rounded-lg border px-3 text-sm font-medium text-blue-700 focus-visible:outline-blue-700 ${timeEnabled ? "border-blue-300 bg-blue-50" : "border-blue-200 bg-white hover:bg-blue-50"}`}
+            className={`inline-flex min-h-11 items-center gap-2 rounded-md border bg-white px-3 text-sm font-medium ${timeEnabled ? "border-[color:var(--chart-time)] text-[color:var(--chart-time)] focus-visible:outline-[color:var(--chart-time)]" : "border-line text-foreground hover:bg-accent-soft"}`}
           >
             <span aria-hidden="true" className="w-4 border-t-2 border-dashed border-current" />
             Time
-            <span aria-hidden="true" className={`h-2 w-2 rounded-full ${timeEnabled ? "bg-blue-600" : "border border-blue-300"}`} />
+            <span aria-hidden="true" className={`h-2 w-2 rounded-full ${timeEnabled ? "bg-[var(--chart-time)]" : "border border-current"}`} />
           </button>
         </div>
       ) : <h2 id={`${chartId}-heading`} className="sr-only">Score progress</h2>}
@@ -113,8 +113,8 @@ export function ResultProgress({ history, currentAttemptId, allowTime = false }:
 
       {timeEnabled && (
         <div className="mt-5 flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-muted" aria-hidden="true">
-          <span className="inline-flex items-center gap-2"><span className="w-4 border-t-2 border-accent" />Score · left axis</span>
-          <span className="inline-flex items-center gap-2 text-blue-700"><span className="w-4 border-t-2 border-dashed border-current" />Time · right axis</span>
+          <span className="inline-flex items-center gap-2"><span className="w-4 border-t-2 border-[color:var(--chart-score)]" />Score · left axis</span>
+          <span className="inline-flex items-center gap-2 text-[color:var(--chart-time)]"><span className="w-4 border-t-2 border-dashed border-current" />Time · right axis</span>
         </div>
       )}
       <div className={`relative min-w-0 ${timeEnabled ? "mt-2" : "mt-5"}`}>
@@ -127,8 +127,8 @@ export function ResultProgress({ history, currentAttemptId, allowTime = false }:
           <svg width={chartWidth} height={PROGRESS_CHART_HEIGHT} role="group" aria-label={`Score percentage by completed attempt, ${scale === "detail" ? "fitted" : "full"} scale from ${chart.minimum} to ${chart.maximum} percent${timeChart ? `; blue dashed line shows total completion time, right axis from ${formatProgressTime(timeChart.minimum)} at the top to ${formatProgressTime(timeChart.maximum)} at the bottom; faster attempts appear higher` : ""}`} className="block">
             <defs>
               <linearGradient id={`${chartId}-fill`} x1="0" x2="0" y1="0" y2="1">
-                <stop offset="0%" stopColor="var(--accent)" stopOpacity={0.12} />
-                <stop offset="100%" stopColor="var(--accent)" stopOpacity={0.01} />
+                <stop offset="0%" stopColor="var(--chart-score)" stopOpacity={0.12} />
+                <stop offset="100%" stopColor="var(--chart-score)" stopOpacity={0.01} />
               </linearGradient>
             </defs>
             {chart.ticks.map((tick) => (
@@ -137,9 +137,9 @@ export function ResultProgress({ history, currentAttemptId, allowTime = false }:
               </g>
             ))}
             {chart.points.length > 1 && <polygon points={area} fill={`url(#${chartId}-fill)`} aria-hidden="true" />}
-            <line x1={activePoint.x} x2={activePoint.x} y1={chart.plot.top} y2={chart.plot.bottom} stroke="var(--accent)" strokeOpacity={0.25} strokeDasharray="4 4" aria-hidden="true" />
-            {chart.points.length > 1 && <polyline points={line} fill="none" stroke="var(--accent)" strokeWidth={2.25} strokeLinejoin="round" strokeLinecap="round" aria-hidden="true" />}
-            {timeChart && <path d={timeChart.path} fill="none" stroke="#1d4ed8" strokeWidth={2.25} strokeDasharray="6 4" strokeLinejoin="round" strokeLinecap="round" aria-hidden="true" />}
+            <line x1={activePoint.x} x2={activePoint.x} y1={chart.plot.top} y2={chart.plot.bottom} stroke="var(--chart-score)" strokeOpacity={0.25} strokeDasharray="4 4" aria-hidden="true" />
+            {chart.points.length > 1 && <polyline points={line} fill="none" stroke="var(--chart-score)" strokeWidth={2.25} strokeLinejoin="round" strokeLinecap="round" aria-hidden="true" />}
+            {timeChart && <path d={timeChart.path} fill="none" stroke="var(--chart-time)" strokeWidth={2.25} strokeDasharray="6 4" strokeLinejoin="round" strokeLinecap="round" aria-hidden="true" />}
             {chart.points.map((point, index) => {
               const current = point.id === currentAttemptId;
               const active = point.id === activePoint.id;
@@ -166,17 +166,17 @@ export function ResultProgress({ history, currentAttemptId, allowTime = false }:
                   <title>{label}</title>
                   <rect x={point.x - 12} y={Math.min(point.y, timePoint?.y ?? point.y) - 22} width={24} height={Math.abs(point.y - (timePoint?.y ?? point.y)) + 44} fill="transparent" />
                   {timePoint?.y !== null && timePoint?.y !== undefined && <>
-                    {(current || active) && <circle cx={point.x} cy={timePoint.y} r={current ? 10 : 8} fill="#eff6ff" stroke="#1d4ed8" strokeWidth={1.5} />}
-                    <circle cx={point.x} cy={timePoint.y} r={current || active ? 5 : 3.5} fill={current || active ? "#1d4ed8" : "white"} stroke="#1d4ed8" strokeWidth={1.75} />
+                    {(current || active) && <circle cx={point.x} cy={timePoint.y} r={current ? 10 : 8} fill="white" stroke="var(--chart-time)" strokeWidth={1.5} />}
+                    <circle cx={point.x} cy={timePoint.y} r={current || active ? 5 : 3.5} fill={current || active ? "var(--chart-time)" : "white"} stroke="var(--chart-time)" strokeWidth={1.75} />
                   </>}
-                  {(current || active) && <circle cx={point.x} cy={point.y} r={current ? 10 : 8} fill="var(--accent-soft)" stroke="var(--accent)" strokeWidth={1.5} />}
-                  <circle cx={point.x} cy={point.y} r={current || active ? 5 : 3.5} fill={current || active ? "var(--accent)" : "white"} stroke="var(--accent)" strokeWidth={1.75} />
-                  {(chart.points.length <= 10 || current || index === 0 || index === chart.points.length - 1) && <text x={point.x} y={PROGRESS_CHART_HEIGHT - 12} textAnchor="middle" fill={current ? "var(--accent-strong)" : "var(--muted)"} fontSize={11}>{point.attemptNumber}</text>}
+                  {(current || active) && <circle cx={point.x} cy={point.y} r={current ? 10 : 8} fill="var(--chart-score-soft)" stroke="var(--chart-score)" strokeWidth={1.5} />}
+                  <circle cx={point.x} cy={point.y} r={current || active ? 5 : 3.5} fill={current || active ? "var(--chart-score)" : "white"} stroke="var(--chart-score)" strokeWidth={1.75} />
+                  {(chart.points.length <= 10 || current || index === 0 || index === chart.points.length - 1) && <text x={point.x} y={PROGRESS_CHART_HEIGHT - 12} textAnchor="middle" fill={current ? "var(--chart-score-strong)" : "var(--muted)"} fontSize={11}>{point.attemptNumber}</text>}
                 </g>
               );
             })}
             {viewedPoint && <g aria-hidden="true" pointerEvents="none" transform={`translate(${Math.max(chart.plot.left, Math.min(viewedPoint.x - 29, chart.plot.right - 58))}, ${Math.max(4, viewedPoint.y - 36)})`}>
-              <rect width={58} height={22} rx={6} fill="var(--accent-strong)" />
+              <rect width={58} height={22} rx={6} fill="var(--chart-score-strong)" />
               <text x={29} y={15} textAnchor="middle" fill="white" fontSize={11} fontWeight={600}>{viewedPoint.percentage.toFixed(1)}%</text>
             </g>}
           </svg>
@@ -184,16 +184,16 @@ export function ResultProgress({ history, currentAttemptId, allowTime = false }:
         {timeChart && (
           <div className="pointer-events-none absolute top-0 right-0 z-10 bg-white" aria-hidden="true">
             <svg width={60} height={PROGRESS_CHART_HEIGHT} className="block">
-              {timeChart.ticks.map((tick) => <text key={tick.value} x={8} y={tick.y + 4} fill="#1d4ed8" fontSize={11}>{formatProgressTime(tick.value)}</text>)}
+              {timeChart.ticks.map((tick) => <text key={tick.value} x={8} y={tick.y + 4} fill="var(--chart-time)" fontSize={11}>{formatProgressTime(tick.value)}</text>)}
             </svg>
           </div>
         )}
       </div>
       <output aria-live="polite" className="mt-3 flex min-h-6 flex-wrap items-center gap-x-3 gap-y-2 border-t border-line pt-4 text-xs tabular-nums text-muted">
         <span className="font-medium text-foreground">#{activePoint.attemptNumber}</span>
-        <span className="text-sm font-semibold text-accent">{activePoint.percentage.toFixed(1)}%</span>
+        <span className="text-sm font-semibold text-[color:var(--chart-score-strong)]">{activePoint.percentage.toFixed(1)}%</span>
         <span>{activePoint.score} / {activePoint.maxScore}</span>
-        {timeEnabled && <span className="font-medium text-blue-700">Time {formatProgressTime(activePoint.timeTakenSeconds)}</span>}
+        {timeEnabled && <span className="font-medium text-[color:var(--chart-time)]">Time {formatProgressTime(activePoint.timeTakenSeconds)}</span>}
         <time dateTime={activePoint.submittedAt}>{dateFormatter.format(new Date(activePoint.submittedAt))}</time>
       </output>
     </section>

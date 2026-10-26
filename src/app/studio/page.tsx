@@ -33,11 +33,11 @@ export default async function StudioPage({ searchParams }: PageProps<"/studio">)
         </div>
       </header>
       <main className="mx-auto w-full max-w-5xl flex-1 px-4 py-7 sm:px-8 sm:py-10">
-        <div className="mb-7">
+        <div className={user === "JK" ? "mb-8 border-b border-line pb-6 sm:mb-10 sm:pb-8" : "mb-7"}>
           <h1 className="text-2xl font-semibold tracking-tight sm:text-3xl">Studio</h1>
           <p className="mt-2 text-sm leading-6 text-muted">{target ? "Add questions to this mock." : "Prepare a mock and review the questions before saving."}</p>
         </div>
-        <div className="rounded-xl border border-line bg-white p-4 sm:p-7">
+        <div className={user === "JK" ? "border border-line bg-white p-4 sm:p-8" : "rounded-xl border border-line bg-white p-4 sm:p-7"}>
           <StudioWorkspace target={target} />
         </div>
       </main>

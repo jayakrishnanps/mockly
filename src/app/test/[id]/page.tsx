@@ -43,7 +43,7 @@ export default async function MockPage({ params }: PageProps<"/test/[id]">) {
       </div>
     </header>
     <main className="mx-auto w-full max-w-5xl flex-1 px-4 py-6 sm:px-8 sm:py-10">
-      <section className="rounded-xl border border-line bg-white p-5 sm:p-7">
+      <section className={user === "JK" ? "border-y border-line bg-white py-6 sm:py-8" : "rounded-xl border border-line bg-white p-5 sm:p-7"}>
         <div className="flex flex-col items-stretch justify-between gap-5 sm:flex-row sm:items-start sm:gap-8">
           <h1 className="min-w-0 flex-1 break-words text-2xl font-semibold leading-tight tracking-tight sm:text-3xl">{mock.title}</h1>
           <StartButton testId={mock.id} user={assigned ? user : null} activeAttemptId={active.find((attempt) => attempt.testId === id)?.id} />

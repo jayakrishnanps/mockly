@@ -26,7 +26,7 @@ export function BankList({ banks }: { banks: BankListItem[] }) {
   const visibleBanks = filtered.slice((currentPage - 1) * BANK_PAGE_SIZE, currentPage * BANK_PAGE_SIZE);
 
   return <>
-    <div role="search" aria-label="Find a question bank" className="mb-5 rounded-xl border border-line bg-white p-4 sm:p-5">
+    <div role="search" aria-label="Find a question bank" className="mb-8 border-b border-black bg-white pb-6 sm:mb-10">
       <div className="grid grid-cols-[minmax(0,1fr)_auto] items-end gap-3 sm:grid-cols-[minmax(0,1fr)_12rem_auto]">
         <div className="col-span-2 min-w-0 sm:col-span-1">
           <label htmlFor="bank-search" className="block text-xs font-medium text-muted">Search by title</label>
@@ -41,17 +41,17 @@ export function BankList({ banks }: { banks: BankListItem[] }) {
       <p role="status" aria-live="polite" aria-atomic="true" className="mt-3 text-xs text-muted">{hasFilters ? `${filtered.length} of ${banks.length}` : banks.length} {banks.length === 1 ? "question bank" : "question banks"}</p>
     </div>
     {filtered.length === 0 ? <EmptyState title="No matching question banks.">Try another title or creation date, or clear the filters.</EmptyState> :
-      <ul className="divide-y divide-line rounded-xl border border-line bg-white">
+      <ul className="divide-y divide-black border-y border-black bg-white">
         {visibleBanks.map((bank) => <li key={bank.id} className="min-w-0">
-          <Link href={`/u/JK/bank/${bank.id}`} className="group flex min-h-20 items-center justify-between gap-3 rounded-xl px-4 py-5 hover:bg-accent-soft/50 sm:gap-5 sm:px-6 sm:py-6">
+          <Link href={`/u/JK/bank/${bank.id}`} className="group flex min-h-28 items-center justify-between gap-4 py-6 sm:gap-6 sm:py-8">
             <div className="min-w-0 flex-1">
-              <h2 className="break-words text-base font-semibold leading-6 tracking-tight group-hover:text-accent sm:text-lg">{bank.title}</h2>
+              <h2 className="break-words text-lg font-semibold leading-7 tracking-tight underline-offset-4 group-hover:underline sm:text-xl">{bank.title}</h2>
               <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-1.5 text-xs text-muted">
                 <span className="font-medium tabular-nums text-foreground">{bank.questionCount} {bank.questionCount === 1 ? "question" : "questions"}</span>
                 <span>Created <time dateTime={bank.createdAt}>{bank.createdLabel}</time></span>
               </div>
             </div>
-            <span aria-hidden="true" className="flex size-8 shrink-0 items-center justify-center rounded-full bg-accent-soft text-accent">→</span>
+            <span aria-hidden="true" className="flex size-10 shrink-0 items-center justify-center rounded-md border border-black bg-white text-lg text-black transition-colors group-hover:bg-black group-hover:text-white">→</span>
           </Link>
         </li>)}
       </ul>}

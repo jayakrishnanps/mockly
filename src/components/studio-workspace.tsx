@@ -176,7 +176,7 @@ function StudioEditor({ context, target }: { context: StudioContext; target: Tar
           <summary className="min-h-11 w-fit cursor-pointer rounded-sm py-3 font-medium">Format guide &amp; example</summary>
           <p className="mt-3 leading-6">Options: (A), A) or A. · Answers: Ans: A, Answer: A or Correct: A. Lowercase letters also work. Question and option text can span multiple lines.</p>
           <pre className="mt-3 overflow-x-auto rounded-md border border-line bg-white p-4 text-xs leading-6">{example}</pre>
-          <p className="mt-3 leading-6">Use question, option and answer markers at the start of their own lines. Keep explanations before the answer. Unrenderable math is shown in red for review.</p>
+          <p className="mt-3 leading-6">Use question, option and answer markers at the start of their own lines. Keep explanations before the answer. Unrenderable math is shown <span className="jk-hidden">in red </span>for review.</p>
         </details>
       </section>
 

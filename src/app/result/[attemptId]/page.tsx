@@ -35,6 +35,7 @@ export default async function ResultPage({ params }: PageProps<"/result/[attempt
   if (!data) redirect(`/exam/${attemptId}`);
 
   const { attempt, mock, questions, allScores } = data;
+  const isJK = user === "JK";
   const scoreHistory = await attemptStore.getMockScoreHistory(attempt.testId, user);
   const scorePercent = Number(mock.marksCorrect) > 0 && questions.length > 0 
     ? (Number(attempt.score) / (questions.length * Number(mock.marksCorrect))) * 100 
@@ -58,22 +59,22 @@ export default async function ResultPage({ params }: PageProps<"/result/[attempt
         <Link href={`/u/${attempt.takenBy}/history`} className="flex min-h-11 shrink-0 items-center rounded-lg px-2 py-2 text-sm font-medium text-muted hover:bg-white/60 hover:text-accent">← History</Link>
       </div>
     </header>
-    <main className="mx-auto w-full max-w-5xl flex-1 px-4 py-6 sm:px-8 sm:py-10">
+    <main className={`mx-auto w-full max-w-5xl flex-1 px-4 sm:px-8 ${isJK ? "py-8 sm:py-12" : "py-6 sm:py-10"}`}>
       <div>
         <p className="text-sm text-muted">Mock result</p>
-        <h1 className="mt-2 break-words text-2xl font-semibold leading-tight tracking-tight sm:text-3xl">{mock.title}</h1>
+        <h1 className={`mt-2 break-words font-semibold leading-tight ${isJK ? "text-3xl tracking-[-0.04em] sm:text-5xl" : "text-2xl tracking-tight sm:text-3xl"}`}>{mock.title}</h1>
         <p className="mt-2 text-sm leading-6 text-muted">Completed by {attempt.takenBy} on {dateFormatter.format(new Date(attempt.submittedAt!))}</p>
       </div>
 
-      <section aria-label="Result summary" className="mt-6 rounded-xl border border-line bg-white sm:mt-8">
+      <section data-result-feedback aria-label="Result summary" className={`border border-line bg-white ${isJK ? "mt-8 overflow-hidden rounded-md" : "mt-6 rounded-xl sm:mt-8"}`}>
         <div className="grid sm:grid-cols-[1fr_2fr]">
-          <div className="min-w-0 border-b border-line px-5 py-6 sm:border-r sm:border-b-0 sm:p-7">
-            <h2 className="text-sm font-medium text-muted">Your score</h2>
+          <div className={`min-w-0 border-b border-line px-5 py-6 sm:border-r sm:border-b-0 sm:p-7 ${isJK ? "bg-black text-white" : ""}`}>
+            <h2 className={`text-sm font-medium ${isJK ? "text-white" : "text-muted"}`}>Your score</h2>
             <div className="mt-2 flex flex-wrap items-baseline gap-2 tabular-nums">
-              <span className="break-all text-4xl font-semibold tracking-tight text-accent sm:text-5xl">{attempt.score}</span>
-              <span className="text-lg text-muted">/ {questions.length * Number(mock.marksCorrect)}</span>
+              <span className={`break-all font-semibold tracking-tight ${isJK ? "text-5xl text-white sm:text-6xl" : "text-4xl text-accent sm:text-5xl"}`}>{attempt.score}</span>
+              <span className={`text-lg ${isJK ? "text-white" : "text-muted"}`}>/ {questions.length * Number(mock.marksCorrect)}</span>
             </div>
-            <p className="mt-2 text-sm text-muted">{scorePercent.toFixed(1)}%</p>
+            <p className={`mt-2 text-sm ${isJK ? "text-white" : "text-muted"}`}>{scorePercent.toFixed(1)}%</p>
           </div>
           <div className="grid min-w-0 grid-cols-2 gap-x-4 gap-y-6 px-5 py-5 sm:p-7 lg:grid-cols-3">
             <div>
@@ -98,8 +99,8 @@ export default async function ResultPage({ params }: PageProps<"/result/[attempt
 
       <dl className="grid grid-cols-2 gap-x-5 gap-y-5 border-t border-line px-5 py-5 tabular-nums sm:grid-cols-3 sm:p-7">
         <div><dt className="text-xs text-muted">Attempted</dt><dd className="mt-2 text-sm font-semibold">{attempted} / {questions.length}</dd></div>
-        <div><dt className="text-xs text-muted">Correct</dt><dd className="mt-2 text-sm font-semibold text-green-700">{attempt.correctCount}</dd></div>
-        <div><dt className="text-xs text-muted">Wrong</dt><dd className="mt-2 text-sm font-semibold text-red-600">{attempt.wrongCount}</dd></div>
+        <div><dt className="text-xs text-muted">Correct</dt><dd className={`mt-2 text-sm font-semibold ${isJK ? "text-green-900" : "text-green-700"}`}>{attempt.correctCount}</dd></div>
+        <div><dt className="text-xs text-muted">Wrong</dt><dd className={`mt-2 text-sm font-semibold ${isJK ? "text-red-900" : "text-red-600"}`}>{attempt.wrongCount}</dd></div>
         <div><dt className="text-xs text-muted">Accuracy</dt><dd className="mt-2 text-sm font-semibold">{accuracy.toFixed(1)}%</dd></div>
         <div><dt className="text-xs text-muted">Skipped</dt><dd className="mt-2 text-sm font-semibold">{attempt.skippedCount}</dd></div>
         <div><dt className="text-xs text-muted">Recorded time / attempted question</dt><dd className="mt-2 text-sm font-semibold">{attempted ? `${(averageAnswerTimeMs / 1000).toFixed(1)}s` : "—"}</dd></div>
@@ -109,15 +110,15 @@ export default async function ResultPage({ params }: PageProps<"/result/[attempt
       <ResultProgress history={scoreHistory} currentAttemptId={attempt.id} allowTime={user === "JK"} />
 
       <h2 className="mt-8 text-xl font-semibold tracking-tight sm:mt-10">Review answers</h2>
-      <ol aria-label="Questions review" className="mt-4 space-y-4">
+      <ol data-result-feedback aria-label="Questions review" className={`mt-4 ${isJK ? "space-y-6" : "space-y-4"}`}>
         {answerReview.map(({ question, answer: ans, status }) => {
           let statusBadge;
-          if (status === "skipped") statusBadge = <span className="rounded-md bg-background px-2 py-1 text-xs font-medium text-muted">Skipped</span>;
-          else if (status === "correct") statusBadge = <span className="rounded-md bg-green-50 px-2 py-1 text-xs font-medium text-green-800">Correct (+{mock.marksCorrect})</span>;
-          else statusBadge = <span className="rounded-md bg-red-50 px-2 py-1 text-xs font-medium text-red-700">Wrong (−{mock.marksWrong})</span>;
+          if (status === "skipped") statusBadge = <span className={`rounded-md px-2 py-1 text-xs font-medium text-muted ${isJK ? "border border-black bg-white" : "bg-background"}`}>Skipped</span>;
+          else if (status === "correct") statusBadge = <span className={`rounded-md px-2 py-1 text-xs font-medium ${isJK ? "border border-green-900 bg-white text-green-900" : "bg-green-50 text-green-800"}`}>Correct (+{mock.marksCorrect})</span>;
+          else statusBadge = <span className={`rounded-md px-2 py-1 text-xs font-medium ${isJK ? "border border-red-900 bg-white text-red-900" : "bg-red-50 text-red-700"}`}>Wrong (−{mock.marksWrong})</span>;
 
           return (
-            <li key={question.id} className="min-w-0 rounded-xl border border-line bg-white p-5 sm:p-7">
+            <li key={question.id} className={`min-w-0 border border-line bg-white p-5 sm:p-7 ${isJK ? "rounded-md" : "rounded-xl"}`}>
               <div className="mb-4 flex flex-wrap items-center justify-between gap-x-4 gap-y-2">
                 <h3 className="text-sm font-semibold">Question {question.position}</h3>
                 <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
@@ -136,24 +137,26 @@ export default async function ResultPage({ params }: PageProps<"/result/[attempt
                 {question.options.map((option, index) => {
                   const correct = index === question.correctIndex;
                   const selected = index === ans?.selectedIndex;
+                  const correctTextClass = isJK ? "text-green-900" : "text-green-800";
+                  const wrongTextClass = isJK ? "text-red-900" : "text-red-700";
                   let borderClass = "border-line";
                   let bgClass = "";
                   
                   if (correct) {
-                    borderClass = "border-green-300";
-                    bgClass = "bg-green-50";
+                    borderClass = isJK ? "border-green-900" : "border-green-300";
+                    bgClass = isJK ? "bg-white" : "bg-green-50";
                   } else if (selected && !correct) {
-                    borderClass = "border-red-400";
-                    bgClass = "bg-red-50";
+                    borderClass = isJK ? "border-red-900" : "border-red-400";
+                    bgClass = isJK ? "bg-white" : "bg-red-50";
                   }
 
                   return (
-                    <li key={index} className={`min-w-0 rounded-lg border px-3 py-3 sm:px-4 ${borderClass} ${bgClass}`}>
+                    <li key={index} className={`min-w-0 border px-3 py-3 sm:px-4 ${isJK ? "rounded-sm" : "rounded-lg"} ${borderClass} ${bgClass}`}>
                       <div className="mb-1 flex flex-wrap items-center justify-between gap-2 text-xs font-medium">
                         <span>{OPTION_LABELS[index]}</span>
                         <div className="flex flex-wrap gap-x-3 gap-y-1">
-                          {selected && <span className={correct ? "text-green-800" : "text-red-700"}>Your answer</span>}
-                          {correct && <span className="text-green-800">Correct answer</span>}
+                          {selected && <span className={correct ? correctTextClass : wrongTextClass}>Your answer</span>}
+                          {correct && <span className={correctTextClass}>Correct answer</span>}
                         </div>
                       </div>
                       <QuestionContent text={option} />

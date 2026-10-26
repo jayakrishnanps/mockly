@@ -21,8 +21,8 @@ export default async function HistoryPage({ params }: PageProps<"/u/[user]/histo
 
   return (
     <>
-      <div className="mb-6 sm:mb-8">
-        <h1 className="page-title text-3xl">History</h1>
+      <div className={user === "JK" ? "mb-8 border-b border-black pb-6 sm:mb-10" : "mb-6 sm:mb-8"}>
+        <h1 className={user === "JK" ? "page-title text-4xl sm:text-5xl" : "page-title text-3xl"}>History</h1>
         {history.length > 0 && <ClearHistory user={user} />}
       </div>
       
@@ -35,7 +35,7 @@ export default async function HistoryPage({ params }: PageProps<"/u/[user]/histo
           Once you complete mock tests, your practice history will appear here.
         </EmptyState>
       ) : (
-        <ul className="divide-y divide-line rounded-xl border border-line bg-white" aria-label="Completed attempts">
+        <ul className={user === "JK" ? "divide-y divide-black border-y border-black bg-white" : "divide-y divide-line rounded-xl border border-line bg-white"} aria-label="Completed attempts">
           {history.map((record) => {
             const scorePercent = Number(record.marksCorrect) > 0 && record.totalQuestions > 0 
               ? (Number(record.score) / (record.totalQuestions * Number(record.marksCorrect))) * 100 
@@ -44,9 +44,9 @@ export default async function HistoryPage({ params }: PageProps<"/u/[user]/histo
             
             return (
               <li key={record.id} className="min-w-0">
-                <Link href={`/result/${record.id}`} className="group grid grid-cols-[minmax(0,1fr)_4.25rem] items-start gap-3 rounded-xl px-4 py-5 hover:bg-accent-soft/50 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-center sm:gap-6 sm:px-6 sm:py-6">
+                <Link href={`/result/${record.id}`} className={user === "JK" ? "group grid grid-cols-[minmax(0,1fr)_4.25rem] items-start gap-3 py-6 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-center sm:gap-6 sm:py-8" : "group grid grid-cols-[minmax(0,1fr)_4.25rem] items-start gap-3 rounded-xl px-4 py-5 hover:bg-accent-soft/50 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-center sm:gap-6 sm:px-6 sm:py-6"}>
                   <div className="min-w-0 flex-1">
-                    <h2 className="break-words text-base font-semibold leading-6 tracking-tight group-hover:text-accent sm:text-lg">{record.mockTitle}</h2>
+                    <h2 className={user === "JK" ? "break-words text-lg font-semibold leading-7 tracking-tight underline-offset-4 group-hover:underline sm:text-xl" : "break-words text-base font-semibold leading-6 tracking-tight group-hover:text-accent sm:text-lg"}>{record.mockTitle}</h2>
                     <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1.5 text-xs leading-5 tabular-nums text-muted sm:gap-x-4">
                       <time dateTime={new Date(record.submittedAt!).toISOString()}>
                         {dateFormatter.format(new Date(record.submittedAt!))}
@@ -63,7 +63,7 @@ export default async function HistoryPage({ params }: PageProps<"/u/[user]/histo
                       <div className="text-xs text-muted">Score</div>
                     </div>
                     <div>
-                      <div className={`text-xl font-semibold ${grade === 'S' || grade.startsWith('A') ? 'text-green-800' : grade.startsWith('B') ? 'text-blue-800' : grade.startsWith('C') ? 'text-yellow-800' : 'text-red-800'}`}>
+                      <div className={`text-xl font-semibold ${user === "JK" ? "text-black" : grade === 'S' || grade.startsWith('A') ? 'text-green-800' : grade.startsWith('B') ? 'text-blue-800' : grade.startsWith('C') ? 'text-yellow-800' : 'text-red-800'}`}>
                         {grade}
                       </div>
                       <div className="text-xs text-muted">Grade</div>
