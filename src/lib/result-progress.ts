@@ -89,14 +89,14 @@ export function buildTimeProgressChart(chart: ReturnType<typeof buildProgressCha
   const step = ([1, 2, 3, 6, 10].find((factor) => factor * magnitude >= approximateStep) ?? 10) * magnitude;
   minimum = Math.floor(minimum / step) * step;
   maximum = Math.ceil(maximum / step) * step;
-  const y = (seconds: number) => chart.plot.top + (maximum - seconds) / (maximum - minimum) * (chart.plot.bottom - chart.plot.top);
+  const y = (seconds: number) => chart.plot.top + (seconds - minimum) / (maximum - minimum) * (chart.plot.bottom - chart.plot.top);
   const points = chart.points.map((point) => {
     const seconds = point.timeTakenSeconds;
     const valid = typeof seconds === "number" && Number.isSafeInteger(seconds) && seconds >= 0;
     return { id: point.id, x: point.x, seconds: valid ? seconds : null, y: valid ? y(seconds) : null };
   });
   const ticks = Array.from({ length: Math.round((maximum - minimum) / step) + 1 }, (_, index) => {
-    const value = maximum - index * step;
+    const value = minimum + index * step;
     return { value, y: y(value) };
   });
   let path = "";

@@ -126,7 +126,7 @@ test("time detail fits the selected range and full scale starts at zero", () => 
   assert.equal(full.minimum, 0);
   assert.ok(full.maximum >= 640);
   assert.ok(all.maximum >= 3600);
-  assert.ok(detail.points[0].y - detail.points[4].y > full.points[0].y - full.points[4].y);
+  assert.ok(detail.points[4].y - detail.points[0].y > full.points[4].y - full.points[0].y);
   assert.ok(detail.ticks.length <= 8);
   assert.ok(detail.ticks.every((tick) => Number.isSafeInteger(tick.value) && tick.value >= 0 && Number.isFinite(tick.y)));
 });
@@ -136,7 +136,7 @@ test("missing or invalid time leaves gaps instead of joining unrelated points or
   const chart = buildProgressChart(timedHistory, 0, 420, "detail", true);
   const time = buildTimeProgressChart(chart, "detail");
   assert.deepEqual(time.points.map((point) => point.seconds), [0, null, 50, 80, null, null, null, null, null, 100]);
-  assert.equal(time.points[0].y, chart.plot.bottom);
+  assert.equal(time.points[0].y, chart.plot.top);
   assert.equal((time.path.match(/M/g) ?? []).length, 3);
   assert.equal((time.path.match(/L/g) ?? []).length, 1);
   assert.doesNotMatch(time.path, /NaN|Infinity|null|undefined/);
@@ -174,6 +174,24 @@ test("long time histories retain every stored time and chronological attempt ali
   assert.ok(time.ticks.length <= 8);
   assert.ok(time.points.every((point) => point.y === null || point.y >= chart.plot.top && point.y <= chart.plot.bottom));
   assert.doesNotMatch(time.path, /NaN|Infinity|null|undefined/);
+});
+
+test("faster attempts rise and the time axis increases downward in every range and scale", () => {
+  const timedHistory = history.map((point, index) => ({ ...point, timeTakenSeconds: 600 - index * 10 }));
+  for (const scale of ["detail", "full"]) {
+    for (const range of [0, 1, 2, "all"]) {
+      const chart = buildProgressChart(timedHistory, range, 932, scale, true);
+      const originalScorePoints = structuredClone(chart.points);
+      const time = buildTimeProgressChart(chart, scale);
+      assert.ok(time.points[0].seconds > time.points.at(-1).seconds);
+      assert.ok(time.points[0].y > time.points.at(-1).y);
+      assert.deepEqual(time.ticks[0], { value: time.minimum, y: chart.plot.top });
+      assert.deepEqual(time.ticks.at(-1), { value: time.maximum, y: chart.plot.bottom });
+      assert.ok(time.ticks.slice(1).every((tick, index) => tick.value > time.ticks[index].value && tick.y > time.ticks[index].y));
+      assert.deepEqual(chart.points, originalScorePoints);
+      assert.ok(chart.points[0].y > chart.points.at(-1).y);
+    }
+  }
 });
 
 test("time labels distinguish valid zero and missing data and show minutes plus seconds", () => {

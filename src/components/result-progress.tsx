@@ -124,7 +124,7 @@ export function ResultProgress({ history, currentAttemptId, allowTime = false }:
           </svg>
         </div>
         <div ref={container} className="min-w-0 overflow-x-auto overscroll-x-contain">
-          <svg width={chartWidth} height={PROGRESS_CHART_HEIGHT} role="group" aria-label={`Score percentage by completed attempt, ${scale === "detail" ? "fitted" : "full"} scale from ${chart.minimum} to ${chart.maximum} percent${timeChart ? `; blue dashed line shows total completion time, right axis from ${formatProgressTime(timeChart.minimum)} to ${formatProgressTime(timeChart.maximum)}; lower time is faster` : ""}`} className="block">
+          <svg width={chartWidth} height={PROGRESS_CHART_HEIGHT} role="group" aria-label={`Score percentage by completed attempt, ${scale === "detail" ? "fitted" : "full"} scale from ${chart.minimum} to ${chart.maximum} percent${timeChart ? `; blue dashed line shows total completion time, right axis from ${formatProgressTime(timeChart.minimum)} at the top to ${formatProgressTime(timeChart.maximum)} at the bottom; faster attempts appear higher` : ""}`} className="block">
             <defs>
               <linearGradient id={`${chartId}-fill`} x1="0" x2="0" y1="0" y2="1">
                 <stop offset="0%" stopColor="var(--accent)" stopOpacity={0.12} />
