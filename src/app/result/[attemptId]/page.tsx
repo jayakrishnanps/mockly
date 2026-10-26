@@ -121,6 +121,11 @@ export default async function ResultPage({ params }: PageProps<"/result/[attempt
               <div className="mb-4 flex flex-wrap items-center justify-between gap-x-4 gap-y-2">
                 <h3 className="text-sm font-semibold">Question {question.position}</h3>
                 <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
+                  {user === "JK" && (
+                    <span className="text-xs whitespace-nowrap text-muted tabular-nums">
+                      Time spent: {ans ? `${(ans.timeSpentMs / 1000).toFixed(1)}s` : "—"}
+                    </span>
+                  )}
                   {ans?.markedForReview && <span className="text-xs font-medium text-muted">Marked for review</span>}
                   {statusBadge}
                 </div>
