@@ -1,0 +1,128 @@
+.panel {
+  --chart-surface: #fff;
+}
+
+.heading h2 {
+  letter-spacing: -0.035em;
+}
+
+.scaleControl button {
+  transition: background-color 150ms ease, color 150ms ease;
+}
+
+.rangeControls select {
+  font-variant-numeric: tabular-nums;
+}
+
+.plot {
+  border-radius: 0.75rem;
+  background: var(--chart-surface);
+}
+
+.axis {
+  background: var(--chart-surface);
+}
+
+.readout {
+  min-height: 3.5rem;
+}
+
+.attemptNumber {
+  display: inline-flex;
+  min-width: 2.25rem;
+  min-height: 2.25rem;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--line);
+  border-radius: 0.5rem;
+}
+
+.score {
+  font-size: 1.125rem;
+  letter-spacing: -0.025em;
+}
+
+:global(:root[data-user-theme="HE"]) .panel {
+  --chart-surface: #fffcf5;
+  box-shadow: 0 12px 32px -26px rgb(35 57 46 / 25%);
+}
+
+:global(:root[data-user-theme="HE"]) .toolbar {
+  border-bottom-color: #e4e5d8;
+}
+
+:global(:root[data-user-theme="HE"]) .scaleControl {
+  border: 1px solid #dde2d3;
+  background: #e9eddf;
+  border-radius: 999px;
+}
+
+:global(:root[data-user-theme="HE"]) .scaleControl button {
+  border-radius: 999px;
+}
+
+:global(:root[data-user-theme="HE"]) .scaleControl button[aria-pressed="true"] {
+  background: var(--accent-strong);
+  color: var(--he-paper);
+  box-shadow: none;
+}
+
+:global(:root[data-user-theme="HE"]) .rangeControls select {
+  border-radius: 999px;
+  padding-inline: 1rem;
+}
+
+:global(:root[data-user-theme="HE"]) .readout {
+  margin-top: 0.5rem;
+  border: 0;
+  border-radius: 1rem;
+  padding: 0.75rem 1rem;
+  background: #edf0e5;
+}
+
+:global(:root[data-user-theme="HE"]) .attemptNumber {
+  border: 0;
+  border-radius: 50%;
+  background: var(--accent-strong);
+  color: var(--he-paper);
+}
+
+:global(:root[data-user-theme="JK"]) .panel {
+  border-radius: 0.5rem;
+}
+
+:global(:root[data-user-theme="JK"]) .scaleControl {
+  border: 1px solid #000;
+  background: #fff;
+}
+
+:global(:root[data-user-theme="JK"]) .attemptNumber {
+  background: #000;
+  color: #fff;
+}
+
+@media (max-width: 479px) {
+  .toolbar {
+    align-items: stretch;
+    gap: 0.75rem;
+  }
+
+  .rangeControls {
+    width: 100%;
+    justify-content: space-between;
+  }
+
+  .rangeControls select {
+    margin-left: auto;
+  }
+
+  .readout {
+    column-gap: 0.65rem;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .scaleControl button {
+    transition: none;
+  }
+}

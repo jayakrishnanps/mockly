@@ -41,9 +41,9 @@ export function BankList({ banks }: { banks: BankListItem[] }) {
       <p role="status" aria-live="polite" aria-atomic="true" className="mt-3 text-xs text-muted">{hasFilters ? `${filtered.length} of ${banks.length}` : banks.length} {banks.length === 1 ? "question bank" : "question banks"}</p>
     </div>
     {filtered.length === 0 ? <EmptyState title="No matching question banks.">Try another title or creation date, or clear the filters.</EmptyState> :
-      <ul className="divide-y divide-black border-y border-black bg-white">
+      <ul className="practice-list divide-y divide-black border-y border-black bg-white">
         {visibleBanks.map((bank) => <li key={bank.id} className="min-w-0">
-          <Link href={`/u/JK/bank/${bank.id}`} className="group flex min-h-28 items-center justify-between gap-4 py-6 sm:gap-6 sm:py-8">
+          <Link href={`/u/JK/bank/${bank.id}`} className="practice-list-row group flex items-center justify-between gap-4 py-5 sm:gap-6 sm:py-6">
             <div className="min-w-0 flex-1">
               <h2 className="break-words text-lg font-semibold leading-7 tracking-tight underline-offset-4 group-hover:underline sm:text-xl">{bank.title}</h2>
               <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-1.5 text-xs text-muted">

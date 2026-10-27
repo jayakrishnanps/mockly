@@ -21,7 +21,7 @@ export default async function HistoryPage({ params }: PageProps<"/u/[user]/histo
 
   return (
     <>
-      <div className={user === "JK" ? "mb-8 sm:mb-10" : "mb-6 sm:mb-8"}>
+      <div data-page-heading className={user === "JK" ? "mb-8 sm:mb-10" : "mb-6 sm:mb-8"}>
         <h1 className={user === "JK" ? "page-title text-4xl sm:text-5xl" : "page-title text-3xl"}>History</h1>
         {history.length > 0 && <ClearHistory user={user} />}
       </div>
@@ -35,7 +35,7 @@ export default async function HistoryPage({ params }: PageProps<"/u/[user]/histo
           Once you complete mock tests, your practice history will appear here.
         </EmptyState>
       ) : (
-        <ul className={user === "JK" ? "divide-y divide-black border-y border-black bg-white" : "he-history-list space-y-3"} aria-label="Completed attempts">
+        <ul className={user === "JK" ? "practice-list divide-y divide-black border-y border-black bg-white" : "he-history-list space-y-3"} aria-label="Completed attempts">
           {history.map((record) => {
             const scorePercent = Number(record.marksCorrect) > 0 && record.totalQuestions > 0 
               ? (Number(record.score) / (record.totalQuestions * Number(record.marksCorrect))) * 100 
@@ -44,7 +44,7 @@ export default async function HistoryPage({ params }: PageProps<"/u/[user]/histo
             
             return (
               <li key={record.id} className="min-w-0">
-                <Link href={`/result/${record.id}`} className={user === "JK" ? "group grid grid-cols-[minmax(0,1fr)_4.25rem] items-start gap-3 py-6 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-center sm:gap-6 sm:py-8" : "he-history-card group grid grid-cols-[minmax(0,1fr)_4.25rem] items-start gap-3 px-4 py-5 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-center sm:gap-6 sm:px-6 sm:py-6"}>
+                <Link href={`/result/${record.id}`} className={user === "JK" ? "practice-list-row group grid grid-cols-[minmax(0,1fr)_4.25rem] items-start gap-3 py-5 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-center sm:gap-6 sm:py-6" : "he-history-card group grid grid-cols-[minmax(0,1fr)_4.25rem] items-start gap-3 px-4 py-4 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-center sm:gap-6 sm:px-6 sm:py-5"}>
                   <div className="min-w-0 flex-1">
                     <h2 className={user === "JK" ? "break-words text-lg font-semibold leading-7 tracking-tight underline-offset-4 group-hover:underline sm:text-xl" : "break-words text-base font-semibold leading-6 tracking-tight group-hover:text-accent sm:text-lg"}>{record.mockTitle}</h2>
                     <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1.5 text-xs leading-5 tabular-nums text-muted sm:gap-x-4">
@@ -57,7 +57,7 @@ export default async function HistoryPage({ params }: PageProps<"/u/[user]/histo
                       <span>{((record.correctCount ?? 0) + (record.wrongCount ?? 0)) ? ((record.correctCount ?? 0) / ((record.correctCount ?? 0) + (record.wrongCount ?? 0)) * 100).toFixed(1) : "0"}% accuracy</span>
                     </div>
                   </div>
-                  <div className="flex min-w-0 flex-col gap-3 border-l border-line pl-3 text-right tabular-nums sm:flex-row sm:items-baseline sm:gap-6 sm:pl-5">
+                  <div data-history-score className="flex min-w-0 flex-col gap-3 border-l border-line pl-3 text-right tabular-nums sm:flex-row sm:items-baseline sm:gap-6 sm:pl-5">
                     <div>
                       <div className="break-words text-lg font-semibold leading-6 tracking-tight sm:text-xl">{record.score}</div>
                       <div className="text-xs text-muted">Score</div>

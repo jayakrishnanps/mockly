@@ -14,7 +14,7 @@ export function UserStats({ stats, testId, user }: { stats: Stats | null; testId
   if (!stats) return <p className="mt-5 rounded-xl border border-line bg-white px-5 py-5 text-sm text-muted sm:px-7">No completed attempts yet.</p>;
 
   return (
-    <section className="mt-5 rounded-xl border border-line bg-white p-5 sm:p-7">
+    <section data-performance-summary className="mt-5 rounded-xl border border-line bg-white p-5 sm:p-7">
       <h2 className="text-lg font-semibold tracking-tight">Your performance</h2>
       <dl className="mt-5 grid grid-cols-2 gap-x-5 gap-y-5 tabular-nums sm:grid-cols-3 sm:gap-y-6">
         <div>

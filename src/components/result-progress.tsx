@@ -2,6 +2,7 @@
 
 import { useEffect, useId, useMemo, useRef, useState } from "react";
 import { buildProgressChart, buildTimeProgressChart, formatProgressTime, PROGRESS_CHART_HEIGHT, PROGRESS_WINDOW_SIZE, type ProgressScale, type ScoreHistoryPoint } from "@/lib/result-progress";
+import styles from "./result-progress.module.css";
 
 const dateFormatter = new Intl.DateTimeFormat("en-IN", {
   day: "numeric", month: "short", year: "numeric", timeZone: "Asia/Kolkata",
@@ -49,9 +50,9 @@ export function ResultProgress({ history, currentAttemptId, allowTime = false }:
   if (!activePoint) return null;
 
   return (
-    <section data-result-chart aria-labelledby={`${chartId}-heading`} className={`mt-6 min-w-0 border border-line bg-white p-4 sm:mt-8 sm:p-6 ${allowTime ? "rounded-md" : "rounded-xl"}`}>
+    <section data-result-chart aria-labelledby={`${chartId}-heading`} className={`${styles.panel} mt-6 min-w-0 border border-line bg-white p-4 sm:mt-8 sm:p-6 ${allowTime ? "rounded-md" : "rounded-xl"}`}>
       {allowTime ? (
-        <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
+        <div className={`${styles.heading} mb-4 flex flex-wrap items-center justify-between gap-3`}>
           <h2 id={`${chartId}-heading`} className="text-xl font-semibold tracking-tight text-foreground">{timeEnabled ? "Score & time" : "Score progress"}</h2>
           <button
             type="button"
@@ -66,10 +67,10 @@ export function ResultProgress({ history, currentAttemptId, allowTime = false }:
           </button>
         </div>
       ) : <h2 id={`${chartId}-heading`} className="sr-only">Score progress</h2>}
-      <div className="flex flex-wrap items-center justify-between gap-3 border-b border-line pb-4">
+      <div className={`${styles.toolbar} flex flex-wrap items-center justify-between gap-3 border-b border-line pb-4`}>
         <div className="flex flex-wrap items-center gap-3 sm:gap-5">
           <span className="text-xs tabular-nums text-muted">{chart.start + 1}–{chart.end} / {history.length}</span>
-          <div role="group" aria-label="Y-axis scale" className="inline-flex gap-1 rounded-lg bg-background p-1">
+          <div role="group" aria-label="Y-axis scale" className={`${styles.scaleControl} inline-flex gap-1 rounded-lg bg-background p-1`}>
             {(["detail", "full"] as const).map((value) => (
               <button
                 key={value}
@@ -81,7 +82,7 @@ export function ResultProgress({ history, currentAttemptId, allowTime = false }:
             ))}
           </div>
         </div>
-        <div className="flex flex-wrap items-center gap-2">
+        <div className={`${styles.rangeControls} flex flex-wrap items-center gap-2`}>
           {!currentVisible && currentIndex >= 0 && (
             <button
               type="button"
@@ -117,8 +118,8 @@ export function ResultProgress({ history, currentAttemptId, allowTime = false }:
           <span className="inline-flex items-center gap-2 text-[color:var(--chart-time)]"><span className="w-4 border-t-2 border-dashed border-current" />Time · right axis</span>
         </div>
       )}
-      <div className={`relative min-w-0 ${timeEnabled ? "mt-2" : "mt-5"}`}>
-        <div className="pointer-events-none absolute top-0 left-0 z-10 bg-white" aria-hidden="true">
+      <div className={`${styles.plot} relative min-w-0 ${timeEnabled ? "mt-2" : "mt-5"}`}>
+        <div className={`${styles.axis} pointer-events-none absolute top-0 left-0 z-10 bg-white`} aria-hidden="true">
           <svg width={44} height={PROGRESS_CHART_HEIGHT} className="block">
             {chart.ticks.map((tick) => <text key={tick.value} x={38} y={tick.y + 4} textAnchor="end" fill="var(--muted)" fontSize={11}>{axisFormatter.format(tick.value)}%</text>)}
           </svg>
@@ -133,7 +134,7 @@ export function ResultProgress({ history, currentAttemptId, allowTime = false }:
             </defs>
             {chart.ticks.map((tick) => (
               <g key={tick.value} aria-hidden="true">
-                <line x1={chart.plot.left} x2={chart.plot.right} y1={tick.y} y2={tick.y} stroke="var(--line)" strokeDasharray={tick.value === 0 ? undefined : "2 5"} />
+                <line x1={chart.plot.left} x2={chart.plot.right} y1={tick.y} y2={tick.y} stroke="var(--line)" strokeOpacity={0.6} strokeDasharray={tick.value === 0 ? undefined : "2 5"} />
               </g>
             ))}
             {chart.points.length > 1 && <polygon points={area} fill={`url(#${chartId}-fill)`} aria-hidden="true" />}
@@ -182,16 +183,16 @@ export function ResultProgress({ history, currentAttemptId, allowTime = false }:
           </svg>
         </div>
         {timeChart && (
-          <div className="pointer-events-none absolute top-0 right-0 z-10 bg-white" aria-hidden="true">
+          <div className={`${styles.axis} pointer-events-none absolute top-0 right-0 z-10 bg-white`} aria-hidden="true">
             <svg width={60} height={PROGRESS_CHART_HEIGHT} className="block">
               {timeChart.ticks.map((tick) => <text key={tick.value} x={8} y={tick.y + 4} fill="var(--chart-time)" fontSize={11}>{formatProgressTime(tick.value)}</text>)}
             </svg>
           </div>
         )}
       </div>
-      <output aria-live="polite" className="mt-3 flex min-h-6 flex-wrap items-center gap-x-3 gap-y-2 border-t border-line pt-4 text-xs tabular-nums text-muted">
-        <span className="font-medium text-foreground">#{activePoint.attemptNumber}</span>
-        <span className="text-sm font-semibold text-[color:var(--chart-score-strong)]">{activePoint.percentage.toFixed(1)}%</span>
+      <output aria-live="polite" className={`${styles.readout} mt-3 flex min-h-6 flex-wrap items-center gap-x-3 gap-y-2 border-t border-line pt-4 text-xs tabular-nums text-muted`}>
+        <span className={`${styles.attemptNumber} font-medium text-foreground`}>#{activePoint.attemptNumber}</span>
+        <span className={`${styles.score} text-sm font-semibold text-[color:var(--chart-score-strong)]`}>{activePoint.percentage.toFixed(1)}%</span>
         <span>{activePoint.score} / {activePoint.maxScore}</span>
         {timeEnabled && <span className="font-medium text-[color:var(--chart-time)]">Time {formatProgressTime(activePoint.timeTakenSeconds)}</span>}
         <time dateTime={activePoint.submittedAt}>{dateFormatter.format(new Date(activePoint.submittedAt))}</time>

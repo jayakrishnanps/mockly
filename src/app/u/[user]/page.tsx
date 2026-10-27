@@ -36,7 +36,7 @@ export default async function MocksPage({ params }: PageProps<"/u/[user]">) {
 
   return (
     <>
-      <div className={user === "JK" ? "mb-8 sm:mb-10" : "he-mocks-intro mb-7"}>
+      <div data-page-heading className={user === "JK" ? "mb-8 sm:mb-10" : "he-mocks-intro mb-7"}>
         <div className={user === "HE" ? "he-intro-copy" : undefined}>
           <h1 className={user === "JK" ? "page-title text-4xl sm:text-5xl" : "page-title text-3xl"}>Your mocks</h1>
           {user === "HE" && <>

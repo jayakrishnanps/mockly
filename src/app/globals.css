@@ -240,7 +240,7 @@ input:focus-visible, textarea:focus-visible, select:focus-visible {
 
 :root[data-user-theme="JK"] .page-title {
   font-family: var(--font-sans);
-  font-size: clamp(2.5rem, 6vw, 3.75rem);
+  font-size: clamp(2.35rem, 6vw, 3.4rem);
   font-weight: 700;
   letter-spacing: -0.055em;
   text-decoration: none;
@@ -251,6 +251,49 @@ input:focus-visible, textarea:focus-visible, select:focus-visible {
   font-weight: 700;
   font-style: normal;
   letter-spacing: -0.045em;
+}
+
+:root[data-user-theme="JK"] .practice-list-row {
+  padding-inline: 0.25rem;
+}
+
+:root[data-user-theme="JK"] .practice-list-row h2 {
+  letter-spacing: -0.035em;
+  line-height: 1.35;
+}
+
+:root[data-user-theme="JK"] .practice-list-row > span:last-child {
+  border-radius: 0.25rem;
+  background: #000;
+  color: #fff;
+}
+
+:root[data-user-theme="JK"] [data-history-score] {
+  border-left: 0;
+  border-radius: 0.25rem;
+  padding: 0.5rem;
+  background: #000;
+  color: #fff;
+}
+
+:root[data-user-theme="JK"] [data-history-score] :is(.text-black, .text-muted) {
+  color: #fff;
+}
+
+:root[data-user-theme="JK"] [data-history-score] .text-lg {
+  font-size: 1rem;
+}
+
+:root[data-user-theme="JK"] [data-performance-summary] h2 {
+  font-size: 0.8rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+:root[data-user-theme="JK"] [data-performance-summary] dd {
+  font-size: 1.4rem;
+  letter-spacing: -0.04em;
 }
 
 :root[data-user-theme="JK"] .brand-mark { filter: brightness(0); }
@@ -444,77 +487,58 @@ input:focus-visible, textarea:focus-visible, select:focus-visible {
 :root[data-user-theme="HE"] :is(.he-mock-card, .he-history-card) {
   border: 1px solid var(--line);
   border-radius: 1.5rem;
-  background: var(--he-paper);
+  background-color: var(--he-paper);
+  background-image: url("/he-sprig.svg");
+  background-repeat: no-repeat;
+  background-position: right center;
+  background-size: 8rem;
   box-shadow: 0 8px 24px -18px rgb(35 57 46 / 18%);
   transition: border-color 150ms ease, background-color 150ms ease;
 }
 
 :root[data-user-theme="HE"] :is(.he-mock-card, .he-history-card):hover {
   border-color: #9cab90;
-  background: #f9faef;
+  background-color: #f9faef;
 }
 
 :root[data-user-theme="HE"] .he-mock-card h2 {
   font-family: var(--he-serif);
-  font-size: 1.65rem;
+  font-size: 1.3rem;
   font-weight: 500;
   line-height: 1.2;
   letter-spacing: -0.035em;
 }
 
 :root[data-user-theme="HE"] .he-mock-card {
-  gap: 1.2rem;
-}
-
-:root[data-user-theme="HE"] .he-mock-card > div {
-  width: 100%;
-}
-
-:root[data-user-theme="HE"] .he-mock-card-top {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
+  gap: 0.85rem;
+  min-height: 6.5rem;
+  border-radius: 1.125rem;
 }
 
 :root[data-user-theme="HE"] .he-mock-symbol {
   display: grid;
-  width: 2.75rem;
-  height: 2.75rem;
+  width: 2.25rem;
+  height: 2.25rem;
+  flex-shrink: 0;
   place-items: center;
-  border-radius: 1rem;
+  border-radius: 0.75rem;
   background: #e9eddf;
   color: var(--accent);
 }
 
-:root[data-user-theme="HE"] .he-duration {
-  border: 1px solid var(--line);
-  border-radius: 999px;
-  padding: 0.35rem 0.7rem;
-  color: var(--muted);
-  font-size: 0.75rem;
-  font-variant-numeric: tabular-nums;
-}
-
 :root[data-user-theme="HE"] .he-mock-meta {
-  margin-top: 0.75rem;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.25rem 0.75rem;
+  margin-top: 0.5rem;
+  line-height: 1.5;
 }
 
 :root[data-user-theme="HE"] .he-mock-open {
-  display: flex;
-  width: 100%;
-  align-items: center;
-  justify-content: space-between;
-  border-top: 1px solid var(--line);
-  padding-top: 0.9rem;
-  color: var(--accent);
-  font-size: 0.75rem;
-  font-weight: 500;
-}
-
-:root[data-user-theme="HE"] .he-mock-open > span:last-child {
   display: grid;
-  width: 2rem;
-  height: 2rem;
+  width: 1.75rem;
+  height: 1.75rem;
+  flex-shrink: 0;
   place-items: center;
   border-radius: 50%;
   background: var(--accent-strong);
@@ -523,7 +547,8 @@ input:focus-visible, textarea:focus-visible, select:focus-visible {
 }
 
 :root[data-user-theme="HE"] .he-history-card {
-  border-left: 3px solid #99ad8c;
+  border-left: 2px solid #99ad8c;
+  border-radius: 1.125rem;
 }
 
 :root[data-user-theme="HE"] .he-history-card h2 {
@@ -531,6 +556,40 @@ input:focus-visible, textarea:focus-visible, select:focus-visible {
   font-size: 1.3rem;
   font-weight: 500;
   line-height: 1.3;
+}
+
+:root[data-user-theme="HE"] [data-history-score] {
+  gap: 0.6rem;
+  border-left: 0;
+  border-radius: 0.75rem;
+  padding: 0.6rem;
+  background: #edf0e5;
+  text-align: center;
+}
+
+:root[data-user-theme="HE"] :is([data-page-heading]:not(.he-mocks-intro), [data-result-heading]) {
+  background-image: url("/he-sprig.svg");
+  background-repeat: no-repeat;
+  background-position: right center;
+  background-size: 10rem;
+}
+
+:root[data-user-theme="HE"] :is([data-mock-overview], [data-performance-summary]) {
+  background-image: url("/he-sprig.svg");
+  background-repeat: no-repeat;
+  background-position: right top;
+  background-size: 11rem;
+}
+
+:root[data-user-theme="HE"] [data-review-heading] {
+  font-family: var(--he-serif);
+  font-size: 1.75rem;
+  font-weight: 500;
+}
+
+:root[data-user-theme="HE"] [aria-label="Questions review"] > li {
+  border-radius: 1.25rem;
+  box-shadow: 0 5px 16px -12px rgb(35 57 46 / 12%);
 }
 
 :root[data-user-theme="HE"] :is(section, ol, div).rounded-xl {
@@ -630,7 +689,7 @@ input:focus-visible, textarea:focus-visible, select:focus-visible {
   }
 
   :root[data-user-theme="HE"] .he-mocks-intro {
-    min-height: 24rem;
+    min-height: 16rem;
     align-items: flex-start;
     border-radius: 1.5rem;
     background-image: linear-gradient(180deg, #ede8d7 0%, rgb(237 232 215 / 96%) 30%, rgb(237 232 215 / 0%) 72%), url("/he-botanical.svg");
@@ -643,11 +702,27 @@ input:focus-visible, textarea:focus-visible, select:focus-visible {
   }
 
   :root[data-user-theme="HE"] .he-intro-links {
-    margin-top: 1.25rem;
+    gap: 0.65rem 1rem;
+    margin-top: 1rem;
   }
 
   :root[data-user-theme="HE"] .he-mock-card {
-    gap: 1rem;
+    gap: 0.7rem;
+    padding: 0.875rem;
+  }
+
+  :root[data-user-theme="HE"] .he-mock-card h2 {
+    font-size: 1.175rem;
+    line-height: 1.25;
+  }
+
+  :root[data-user-theme="HE"] .he-mocks-intro h1 {
+    font-size: 2.75rem;
+  }
+
+  :root[data-user-theme="HE"] .he-intro-note {
+    margin-top: 0.5rem;
+    font-size: 0.875rem;
   }
 
   :root[data-user-theme="HE"] .he-exam-paper {

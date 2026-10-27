@@ -39,28 +39,25 @@ export function MockList({ mocks, searchable, user }: { mocks: MockListItem[]; s
       <p role="status" aria-live="polite" aria-atomic="true" className="mt-3 text-xs text-muted">{hasFilters ? `${filtered.length} of ${mocks.length}` : mocks.length} {mocks.length === 1 ? "mock" : "mocks"}</p>
     </div>}
     {filtered.length === 0 ? <EmptyState title="No matching mocks.">Try another title or creation date, or clear the filters.</EmptyState> :
-      <ul className={isJK ? "divide-y divide-black border-y border-black bg-white" : "he-mock-grid"} aria-label="Assigned mocks">
+      <ul className={isJK ? "practice-list divide-y divide-black border-y border-black bg-white" : "he-mock-grid"} aria-label="Assigned mocks">
         {filtered.map((mock) => (
           <li key={mock.id} className="min-w-0">
-            <Link href={`/test/${mock.id}`} className={isJK ? "group flex min-h-28 items-center gap-4 py-6 sm:gap-6 sm:py-8" : "he-mock-card group flex h-full flex-col items-start px-5 py-6 sm:p-7"}>
-              {!isJK && <div className="he-mock-card-top">
-                <span className="he-mock-symbol" aria-hidden="true">
+            <Link href={`/test/${mock.id}`} className={isJK ? "practice-list-row group flex items-center gap-4 py-5 sm:gap-6 sm:py-6" : "he-mock-card group flex h-full items-center gap-3 px-4 py-4 sm:p-5"}>
+              {!isJK && <span className="he-mock-symbol" aria-hidden="true">
                   <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round">
                     <path d="M5 20V6a2 2 0 0 1 2-2h11v14H7a2 2 0 0 0 0 4h11" />
                     <path d="M5 20a2 2 0 0 1 2-2M9 8h5M9 12h7" />
                   </svg>
-                </span>
-                <span className="he-duration">{mock.durationMinutes} min</span>
-              </div>}
+              </span>}
               <div className="min-w-0 flex-1">
                 <h2 className={isJK ? "break-words text-lg font-semibold leading-7 tracking-tight underline-offset-4 group-hover:underline sm:text-xl" : "break-words text-base font-semibold leading-6 tracking-tight group-hover:text-accent sm:text-lg"}>{mock.title}</h2>
                 {mock.details && <p className="mt-1 line-clamp-2 break-words text-sm leading-6 text-muted">{mock.details}</p>}
                 <div className={isJK ? "mt-3 flex flex-wrap items-center gap-x-4 gap-y-1.5 text-xs text-muted" : "he-mock-meta text-xs text-muted"}>
-                  {isJK && <span className="font-medium tabular-nums text-foreground">{mock.durationMinutes} minutes</span>}
+                  <span className="font-medium tabular-nums text-foreground">{mock.durationMinutes} {isJK ? "minutes" : "min"}</span>
                   <span>Created <time dateTime={mock.createdAt}>{mock.createdLabel}</time></span>
                 </div>
               </div>
-              <span aria-hidden="true" className={isJK ? "flex size-10 shrink-0 items-center justify-center rounded-md border border-black bg-white text-lg text-black transition-colors group-hover:bg-black group-hover:text-white" : "he-mock-open"}>{!isJK && <span>View mock</span>}<span aria-hidden="true">→</span></span>
+              <span aria-hidden="true" className={isJK ? "flex size-10 shrink-0 items-center justify-center rounded-md border border-black bg-white text-lg text-black transition-colors group-hover:bg-black group-hover:text-white" : "he-mock-open"}>→</span>
             </Link>
           </li>
         ))}

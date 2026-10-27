@@ -60,7 +60,7 @@ export default async function ResultPage({ params }: PageProps<"/result/[attempt
       </div>
     </header>
     <main className={`mx-auto w-full max-w-5xl flex-1 px-4 sm:px-8 ${isJK ? "py-8 sm:py-12" : "py-6 sm:py-10"}`}>
-      <div>
+      <div data-result-heading>
         <p className="text-sm text-muted">Mock result</p>
         <h1 className={`mt-2 break-words font-semibold leading-tight ${isJK ? "text-3xl tracking-[-0.04em] sm:text-5xl" : "text-2xl tracking-tight sm:text-3xl"}`}>{mock.title}</h1>
         <p className="mt-2 text-sm leading-6 text-muted">Completed by {attempt.takenBy} on {dateFormatter.format(new Date(attempt.submittedAt!))}</p>
@@ -109,7 +109,7 @@ export default async function ResultPage({ params }: PageProps<"/result/[attempt
 
       <ResultProgress history={scoreHistory} currentAttemptId={attempt.id} allowTime={user === "JK"} />
 
-      <h2 className="mt-8 text-xl font-semibold tracking-tight sm:mt-10">Review answers</h2>
+      <h2 data-review-heading className="mt-8 text-xl font-semibold tracking-tight sm:mt-10">Review answers</h2>
       <ol data-result-feedback aria-label="Questions review" className={`mt-4 ${isJK ? "space-y-6" : "space-y-4"}`}>
         {answerReview.map(({ question, answer: ans, status }) => {
           let statusBadge;

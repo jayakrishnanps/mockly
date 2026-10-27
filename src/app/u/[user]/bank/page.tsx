@@ -20,7 +20,7 @@ export default async function BanksPage({ params }: PageProps<"/u/[user]/bank">)
   const banks = await bankStore.list();
 
   return <>
-    <div className="mb-8 sm:mb-10">
+    <div data-page-heading className="mb-8 sm:mb-10">
       <h1 className="page-title text-4xl sm:text-5xl">Question bank</h1>
     </div>
     <BankCreateForm />
