@@ -115,7 +115,7 @@ Return only the report below, adding zero to twelve table rows. No preamble, cod
 
 For each row:
 - Subject: exactly Math, Reasoning, GK, English or Other.
-- Area: one specific skill or question type in simple words, at most 100 characters. Plain text only; no links, Markdown, formulas or line breaks inside cells. Do not duplicate an area within a subject.
+- Area: say exactly what I need to practise in a short, everyday name, usually 3–9 words and at most 100 characters. Prefer a concrete operation or pattern such as "Multiplying 9 by 7", "Dividing by 9", "Reverse percentages" or "Combining work rates" only when supported. Avoid vague umbrella labels such as "One-step times-table multiplication and division facts". Separate multiplication, division or other distinct difficulties when the evidence distinguishes them; never invent a narrower issue. Plain text only; no links, Markdown, formulas or line breaks inside cells. Do not duplicate an area within a subject.
 - Focus: Accuracy for recurring mistakes, Speed for recurring slowness, or Both when both concerns are supported. One error or slow answer alone does not establish a pattern. Improvement in accuracy does not automatically resolve a separate speed concern.
 - Priority: High, Medium or Low, preserving the relative urgency supported in your existing findings. Put the most important current areas first. Do not add areas merely to fill the table.
 

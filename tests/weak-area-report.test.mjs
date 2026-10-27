@@ -79,6 +79,8 @@ test("the separate follow-up prompt binds its report to the mock and keeps the f
   assert.ok(prompt.includes(JSON.stringify('A title with "quotes"')));
   assert.ok(prompt.includes("fractions and decimals"));
   assert.ok(prompt.includes("do not infer causes"));
+  assert.ok(prompt.includes('"Multiplying 9 by 7"'));
+  assert.ok(prompt.includes("never invent a narrower issue"));
   assert.ok(prompt.split(/\s+/).length < 700);
   assert.throws(() => buildWeakAreaReportPrompt("invalid", "Mock"), /valid mock ID/);
 });

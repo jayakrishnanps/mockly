@@ -48,6 +48,7 @@ export async function deleteMock(id: unknown, expectedUser: unknown): Promise<{ 
   refreshMocks(id);
   revalidatePath("/u/JK/history");
   revalidatePath("/u/HE/history");
+  revalidatePath("/u/JK/weak-areas");
   revalidatePath("/result/[attemptId]", "page");
   revalidatePath("/exam/[attemptId]", "page");
   return { ok: true };

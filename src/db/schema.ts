@@ -112,6 +112,11 @@ export const weakAreaReports = pgTable("weak_area_reports", {
 }, (table) => [
 	index("weak_area_reports_imported_at_idx").on(table.importedAt.desc()),
 	index("weak_area_reports_source_test_idx").on(table.sourceTestId),
+	foreignKey({
+		columns: [table.sourceTestId],
+		foreignColumns: [tests.id],
+		name: "weak_area_reports_source_test_id_fkey",
+	}).onDelete("cascade"),
 	check("weak_area_reports_source_title_check", sql`length(trim(${table.sourceTitle})) BETWEEN 1 AND 200`),
 	check("weak_area_reports_areas_check", sql`CASE WHEN jsonb_typeof(${table.areas}) = 'array' THEN jsonb_array_length(${table.areas}) <= 12 ELSE false END`),
 ]);

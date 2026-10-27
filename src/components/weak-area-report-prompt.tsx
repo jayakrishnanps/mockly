@@ -6,16 +6,17 @@ import { buildWeakAreaReportPrompt } from "@/lib/weak-area-report";
 export function WeakAreaReportPrompt({ testId, title }: { testId: string; title: string }) {
   const id = useId();
   const text = useRef<HTMLTextAreaElement>(null);
-  const [expanded, setExpanded] = useState(false);
+  const [manualCopy, setManualCopy] = useState(false);
   const [message, setMessage] = useState("");
   const prompt = buildWeakAreaReportPrompt(testId, title);
 
   async function copy() {
     try {
       await navigator.clipboard.writeText(prompt);
-      setMessage("Copied. Use after the TXT analysis.");
+      setManualCopy(false);
+      setMessage("Copied");
     } catch {
-      setExpanded(true);
+      setManualCopy(true);
       setMessage("Select and copy the prompt below.");
       requestAnimationFrame(() => { text.current?.focus(); text.current?.select(); });
     }
@@ -30,10 +31,9 @@ export function WeakAreaReportPrompt({ testId, title }: { testId: string; title:
       <button type="button" onClick={copy} className="min-h-11 rounded-md border border-line bg-white px-4 py-2 text-sm font-medium hover:bg-black hover:text-white">Copy report prompt</button>
     </div>
     <p role="status" className="mt-2 text-xs text-muted empty:hidden">{message}</p>
-    <button type="button" aria-expanded={expanded} aria-controls={id} onClick={() => setExpanded(!expanded)} className="min-h-11 text-xs text-muted underline underline-offset-4">{expanded ? "Hide prompt" : "Read prompt"}</button>
-    <div id={id} hidden={!expanded}>
+    {manualCopy && <div id={id}>
       <label htmlFor={`${id}-text`} className="sr-only">Weak area report prompt</label>
       <textarea id={`${id}-text`} ref={text} readOnly value={prompt} rows={10} className="mt-2 w-full rounded-md border border-line bg-white p-3 text-base leading-6 sm:text-sm" />
-    </div>
+    </div>}
   </div>;
 }

@@ -1,16 +1,18 @@
 import assert from "node:assert/strict";
 import { randomUUID } from "node:crypto";
+import { readFile } from "node:fs/promises";
 import { test } from "node:test";
-import { eq } from "drizzle-orm";
-import { attempts, tests, weakAreaReports } from "../src/db/schema.ts";
+import { and, eq, sql } from "drizzle-orm";
+import { attempts, forestPlants, questionBanks, tests, weakAreaReports } from "../src/db/schema.ts";
 import { createAttemptStore } from "../src/server/attempt-store.ts";
 import { createMockStore } from "../src/server/mock-store.ts";
+import { createBankStore } from "../src/server/bank-store.ts";
 import { createWeakAreaReportStore } from "../src/server/weak-area-report-store.ts";
 import { createLocalDatabase } from "./helpers/local-database.mjs";
 
 const areas = [{ subject: "Math", area: "Reverse percentages", focus: "Accuracy", priority: "High" }];
 
-test("weak-area reports validate sources, keep retry IDs, and survive source deletion", async (t) => {
+test("weak-area reports validate sources, keep retry IDs, and follow JK's mock lifecycle", async (t) => {
   const { database, close } = await createLocalDatabase();
   t.after(close);
   const store = createWeakAreaReportStore(database);
@@ -42,21 +44,73 @@ test("weak-area reports validate sources, keep retry IDs, and survive source del
     await assert.rejects(store.save({ id: randomUUID(), sourceTestId: await source(), areas: [{ ...areas[0], focus: "guess" }] }), (error) => error.code === "invalid");
   });
 
-  await t.test("history and mock deletion keep imported reports and allow uncertain-save retries", async () => {
+  await t.test("clearing history or deleting HE's shared copy keeps JK reports", async () => {
     const sourceTestId = await source(["JK", "HE"]);
     const id = randomUUID();
-    await database.insert(attempts).values({ testId: sourceTestId, takenBy: "JK", submittedAt: "2026-10-27T11:00:00Z" });
+    await database.insert(attempts).values([
+      { testId: sourceTestId, takenBy: "JK", submittedAt: "2026-10-27T11:00:00Z" },
+      { testId: sourceTestId, takenBy: "HE", submittedAt: "2026-10-27T11:00:00Z" },
+    ]);
     await store.save({ id, sourceTestId, areas });
     await createAttemptStore(database).clearUserHistory("JK");
     assert.ok((await store.list()).some((report) => report.id === id));
     const mocks = createMockStore(database);
-    await mocks.remove(sourceTestId, "JK");
     await mocks.remove(sourceTestId, "HE");
-    assert.equal((await database.select().from(tests).where(eq(tests.id, sourceTestId))).length, 0);
     assert.deepEqual(await store.save({ id, sourceTestId, areas }), { id });
     const saved = (await store.list()).find((report) => report.id === id);
     assert.equal(saved.sourceTitle, "Saved source name");
     assert.deepEqual(saved.areas, areas);
+    assert.deepEqual((await database.select().from(tests).where(eq(tests.id, sourceTestId)))[0].forUsers, ["JK"]);
+    await mocks.remove(sourceTestId, "JK");
+    assert.equal((await database.select().from(weakAreaReports).where(eq(weakAreaReports.id, id))).length, 0);
+    await assert.rejects(store.save({ id, sourceTestId, areas }), (error) => error.code === "not-found");
+  });
+
+  await t.test("deleting JK's shared copy removes its reports and preserves HE's copy, history and plants", async () => {
+    const sourceTestId = await source(["JK", "HE"]);
+    const id = randomUUID();
+    const heAttemptId = randomUUID();
+    await database.insert(attempts).values([
+      { testId: sourceTestId, takenBy: "JK", submittedAt: "2026-10-27T11:00:00Z" },
+      { id: heAttemptId, testId: sourceTestId, takenBy: "HE", submittedAt: "2026-10-27T11:00:00Z" },
+    ]);
+    await store.save({ id, sourceTestId, areas });
+    const mocks = createMockStore(database);
+    await mocks.remove(sourceTestId, "JK");
+    await mocks.remove(sourceTestId, "JK");
+    assert.equal((await database.select().from(weakAreaReports).where(eq(weakAreaReports.id, id))).length, 0);
+    assert.deepEqual((await database.select().from(tests).where(eq(tests.id, sourceTestId)))[0].forUsers, ["HE"]);
+    assert.equal((await database.select().from(attempts).where(and(eq(attempts.testId, sourceTestId), eq(attempts.takenBy, "JK")))).length, 0);
+    assert.equal((await database.select().from(attempts).where(eq(attempts.id, heAttemptId))).length, 1);
+    assert.equal((await database.select().from(forestPlants).where(eq(forestPlants.attemptId, heAttemptId))).length, 1);
+    await assert.rejects(store.save({ id, sourceTestId, areas }), (error) => error.code === "not-found");
+    await mocks.remove(sourceTestId, "HE");
+    assert.equal((await database.select().from(forestPlants).where(eq(forestPlants.attemptId, heAttemptId))).length, 1);
+  });
+
+  await t.test("deleting a question bank removes linked reports while keeping Forest plants", async () => {
+    const bankId = randomUUID();
+    const sourceTestId = await source(["JK", "HE"], { sourceBankId: null });
+    const id = randomUUID();
+    const heAttemptId = randomUUID();
+    await database.insert(questionBanks).values({ id: bankId, title: "Report bank" });
+    await database.update(tests).set({ sourceBankId: bankId }).where(eq(tests.id, sourceTestId));
+    await database.insert(attempts).values({ id: heAttemptId, testId: sourceTestId, takenBy: "HE", submittedAt: "2026-10-27T11:00:00Z" });
+    await store.save({ id, sourceTestId, areas });
+    await createBankStore(database).remove(bankId);
+    assert.equal((await database.select().from(tests).where(eq(tests.id, sourceTestId))).length, 0);
+    assert.equal((await database.select().from(attempts).where(eq(attempts.id, heAttemptId))).length, 0);
+    assert.equal((await database.select().from(weakAreaReports).where(eq(weakAreaReports.id, id))).length, 0);
+    assert.equal((await database.select().from(forestPlants).where(eq(forestPlants.attemptId, heAttemptId))).length, 1);
+  });
+
+  await t.test("soft deletion removes reports and rejects new report saves", async () => {
+    const sourceTestId = await source();
+    const id = randomUUID();
+    await store.save({ id, sourceTestId, areas });
+    await database.update(tests).set({ deletedAt: "2026-10-27T11:00:00Z" }).where(eq(tests.id, sourceTestId));
+    assert.equal((await database.select().from(weakAreaReports).where(eq(weakAreaReports.id, id))).length, 0);
+    await assert.rejects(store.save({ id, sourceTestId, areas }), (error) => error.code === "not-found");
   });
 
   await t.test("empty assessments are valid and removing a report leaves the mock intact", async () => {
@@ -73,8 +127,31 @@ test("weak-area reports validate sources, keep retry IDs, and survive source del
 
   await t.test("invalid saved area metadata produces a read error", async () => {
     const id = randomUUID();
-    await database.insert(weakAreaReports).values({ id, sourceTestId: randomUUID(), sourceTitle: "Malformed fixture", areas: [{ area: "Missing fields" }] });
+    await database.insert(weakAreaReports).values({ id, sourceTestId: await source(), sourceTitle: "Malformed fixture", areas: [{ area: "Missing fields" }] });
     await assert.rejects(store.list(), (error) => error.code === "invalid");
     await database.delete(weakAreaReports).where(eq(weakAreaReports.id, id));
   });
+});
+
+test("report lifecycle migration removes unavailable reports and can be reapplied", async (t) => {
+  const { database, close } = await createLocalDatabase();
+  t.after(close);
+  await database.execute(sql`ALTER TABLE public.weak_area_reports DROP CONSTRAINT weak_area_reports_source_test_id_fkey`);
+  await database.execute(sql`DROP TRIGGER tests_remove_inaccessible_weak_area_reports ON public.tests`);
+  const validId = randomUUID();
+  const heOnlyId = randomUUID();
+  const deletedId = randomUUID();
+  await database.insert(tests).values([
+    { id: validId, title: "JK source", forUsers: ["JK"] },
+    { id: heOnlyId, title: "HE source", forUsers: ["HE"] },
+    { id: deletedId, title: "Deleted source", forUsers: ["JK"], deletedAt: "2026-10-27T11:00:00Z" },
+  ]);
+  const reportIds = [validId, heOnlyId, deletedId, randomUUID()].map((sourceTestId) => ({ id: randomUUID(), sourceTestId }));
+  await database.insert(weakAreaReports).values(reportIds.map((row) => ({ ...row, sourceTitle: "Saved name", areas })));
+  const migration = await readFile(new URL("../src/db/migrations/0006_weak_report_lifecycle.sql", import.meta.url), "utf8");
+  await database.$client.exec(migration);
+  await database.$client.exec(migration);
+  assert.deepEqual((await database.select().from(weakAreaReports)).map((row) => row.id), [reportIds[0].id]);
+  await database.delete(tests).where(eq(tests.id, validId));
+  assert.equal((await database.select().from(weakAreaReports)).length, 0);
 });

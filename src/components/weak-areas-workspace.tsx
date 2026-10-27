@@ -47,6 +47,11 @@ function Workspace({ reports, mocks }: { reports: SavedWeakAreaReport[]; mocks: 
     for (const report of orderedReports) if (!latest.has(report.sourceTestId)) latest.set(report.sourceTestId, report);
     return latest;
   }, [orderedReports]);
+  const reportCounts = useMemo(() => {
+    const counts = new Map<string, number>();
+    for (const report of orderedReports) counts.set(report.sourceTestId, (counts.get(report.sourceTestId) ?? 0) + 1);
+    return counts;
+  }, [orderedReports]);
   const sourceReports = sourceId ? orderedReports.filter((report) => report.sourceTestId === sourceId) : [];
   const selectedReport = sourceId ? sourceReports.find((report) => report.id === reportId) ?? sourceReports[0] : undefined;
   const selectedReports = selectedReport ? [selectedReport] : sourceId ? [] : [...latestByMock.values()];
@@ -171,16 +176,21 @@ function Workspace({ reports, mocks }: { reports: SavedWeakAreaReport[]; mocks: 
           {[...latestByMock.values()].map((report) => <option key={report.sourceTestId} value={report.sourceTestId}>{report.sourceTitle}</option>)}
         </select></label>
         <label><span>Subject</span><select value={subject} onChange={(event) => setSubject(event.target.value)}>{subjects.map((item) => <option key={item} value={item}>{item}</option>)}</select></label>
-        {sourceReports.length > 1 && <label><span>Report</span><select value={selectedReport?.id ?? ""} onChange={(event) => { setReportId(event.target.value); setConfirmDelete(false); }}>
+        {selectedReport && <label><span>Assessment</span><select value={selectedReport.id} onChange={(event) => { setReportId(event.target.value); setConfirmDelete(false); }}>
           {sourceReports.map((report, index) => <option key={report.id} value={report.id}>{index === 0 ? "Latest · " : ""}{reportDateFormatter.format(new Date(report.importedAt))}</option>)}
         </select></label>}
+      </div>
+
+      <div className={styles.scopeBar}>
+        <h2>{selectedReport ? selectedReport.id === sourceReports[0]?.id ? "Latest assessment" : "Earlier assessment" : "Latest reports"}</h2>
+        <span>{selectedReport ? `${sourceReports.length} saved ${sourceReports.length === 1 ? "report" : "reports"}` : `${latestByMock.size} ${latestByMock.size === 1 ? "mock" : "mocks"}`}</span>
       </div>
 
       <section className={styles.summary} aria-label="Reported focus areas">
         <FocusRing counts={counts} total={subjectRows.length} />
         <div className={styles.focusList}>
           {counts.map((item) => <button key={item.focus} type="button" className={styles.focusFilter} aria-pressed={focus === item.focus} onClick={() => setFocus(focus === item.focus ? "All" : item.focus)}>
-            <span className={`${styles.dot} ${styles[item.focus]}`} aria-hidden="true" /><span>{item.focus}</span><strong>{item.count}</strong>
+            <strong>{item.count}</strong><span className={styles.focusName}><span className={`${styles.dot} ${styles[item.focus]}`} aria-hidden="true" />{item.focus}</span>
           </button>)}
         </div>
       </section>
@@ -199,7 +209,13 @@ function Workspace({ reports, mocks }: { reports: SavedWeakAreaReport[]; mocks: 
           <div className={styles.cardTop}><span>{area.subject}</span><span className={styles.focusLabel}><span aria-hidden="true" className={`${styles.dot} ${styles[area.focus]}`} />{area.focus}</span></div>
           <h3>{area.area}</h3>
           <div className={styles.priority} aria-label={`${area.priority} priority`}><span aria-hidden="true" className={styles.priorityMeter}>{[0, 1, 2].map((dot) => <i key={dot} className={dot < priorityDots[area.priority] ? styles.filled : undefined} />)}</span><span>{area.priority} priority</span></div>
-          {!sourceId && <div className={styles.source}><span>{report.sourceTitle}</span><time dateTime={report.importedAt}>{dateFormatter.format(new Date(report.importedAt))}</time></div>}
+          {!sourceId && <div className={styles.source}>
+            <span>{report.sourceTitle}</span>
+            <div className={styles.sourceMeta}>
+              <time dateTime={report.importedAt}>{dateFormatter.format(new Date(report.importedAt))}</time>
+              {(reportCounts.get(report.sourceTestId) ?? 0) > 1 && <button type="button" onClick={() => { setSourceId(report.sourceTestId); setReportId(""); setConfirmDelete(false); }}>{reportCounts.get(report.sourceTestId)} reports <span aria-hidden="true">↗</span></button>}
+            </div>
+          </div>}
         </li>)}
       </ul>}
     </>}

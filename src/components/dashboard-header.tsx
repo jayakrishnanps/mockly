@@ -23,7 +23,7 @@ export function DashboardHeader({ user }: { user: User }) {
     { href: `/u/${user}`, label: "Mocks" },
     { href: `/u/${user}/history`, label: "History" },
     ...(user === "JK"
-      ? [{ href: "/u/JK/bank", label: "Question bank" }, { href: "/u/JK/weak-areas", label: "Weak areas" }]
+      ? [{ href: "/u/JK/bank", label: "Bank" }, { href: "/u/JK/weak-areas", label: "Weak" }]
       : [{ href: "/u/HE/forest", label: "Forest" }]),
   ];
 
@@ -58,10 +58,10 @@ export function DashboardHeader({ user }: { user: User }) {
             <Link
               key={href}
               href={href}
-              aria-current={pathname === href || (label === "Question bank" && pathname.startsWith(`${href}/`)) ? "page" : undefined}
+              aria-current={pathname === href || (href === "/u/JK/bank" && pathname.startsWith(`${href}/`)) ? "page" : undefined}
               className={user === "JK"
-                ? `min-h-11 shrink-0 rounded-md border px-4 py-3 text-sm font-medium whitespace-nowrap transition-colors ${pathname === href || (label === "Question bank" && pathname.startsWith(`${href}/`)) ? "border-black bg-black text-white" : "border-transparent bg-white text-black hover:border-black"}`
-                : `min-h-11 shrink-0 border-b-2 px-1 py-3 text-sm font-medium whitespace-nowrap transition-colors ${pathname === href || (label === "Question bank" && pathname.startsWith(`${href}/`)) ? "border-accent text-accent" : "border-transparent text-muted hover:text-foreground"}`}
+                ? `min-h-11 shrink-0 rounded-md border px-4 py-3 text-sm font-medium whitespace-nowrap transition-colors ${pathname === href || (href === "/u/JK/bank" && pathname.startsWith(`${href}/`)) ? "border-black bg-black text-white" : "border-transparent bg-white text-black hover:border-black"}`
+                : `min-h-11 shrink-0 border-b-2 px-1 py-3 text-sm font-medium whitespace-nowrap transition-colors ${pathname === href || (href === "/u/JK/bank" && pathname.startsWith(`${href}/`)) ? "border-accent text-accent" : "border-transparent text-muted hover:text-foreground"}`}
             >
               {label}
             </Link>
