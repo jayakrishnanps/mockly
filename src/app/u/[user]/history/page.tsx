@@ -21,7 +21,7 @@ export default async function HistoryPage({ params }: PageProps<"/u/[user]/histo
 
   return (
     <>
-      <div className={user === "JK" ? "mb-8 border-b border-black pb-6 sm:mb-10" : "mb-6 sm:mb-8"}>
+      <div className={user === "JK" ? "mb-8 sm:mb-10" : "mb-6 sm:mb-8"}>
         <h1 className={user === "JK" ? "page-title text-4xl sm:text-5xl" : "page-title text-3xl"}>History</h1>
         {history.length > 0 && <ClearHistory user={user} />}
       </div>

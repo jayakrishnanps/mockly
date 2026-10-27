@@ -26,7 +26,7 @@ export function BankList({ banks }: { banks: BankListItem[] }) {
   const visibleBanks = filtered.slice((currentPage - 1) * BANK_PAGE_SIZE, currentPage * BANK_PAGE_SIZE);
 
   return <>
-    <div role="search" aria-label="Find a question bank" className="mb-8 border-b border-black bg-white pb-6 sm:mb-10">
+    <div role="search" aria-label="Find a question bank" className="mb-8 bg-white sm:mb-10">
       <div className="grid grid-cols-[minmax(0,1fr)_auto] items-end gap-3 sm:grid-cols-[minmax(0,1fr)_12rem_auto]">
         <div className="col-span-2 min-w-0 sm:col-span-1">
           <label htmlFor="bank-search" className="block text-xs font-medium text-muted">Search by title</label>

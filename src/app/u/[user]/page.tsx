@@ -1,6 +1,7 @@
 import { and, arrayContains, desc, isNull } from "drizzle-orm";
 import { notFound } from "next/navigation";
 import { connection } from "next/server";
+import Link from "next/link";
 import { EmptyState } from "@/components/empty-state";
 import { MockList } from "@/components/mock-list";
 import { mockCreatedDate } from "@/lib/mock-filter";
@@ -35,8 +36,17 @@ export default async function MocksPage({ params }: PageProps<"/u/[user]">) {
 
   return (
     <>
-      <div className={user === "JK" ? "mb-8 border-b border-black pb-6 sm:mb-10" : "he-mocks-intro mb-7"}>
-        <h1 className={user === "JK" ? "page-title text-4xl sm:text-5xl" : "page-title text-3xl"}>Your mocks</h1>
+      <div className={user === "JK" ? "mb-8 sm:mb-10" : "he-mocks-intro mb-7"}>
+        <div className={user === "HE" ? "he-intro-copy" : undefined}>
+          <h1 className={user === "JK" ? "page-title text-4xl sm:text-5xl" : "page-title text-3xl"}>Your mocks</h1>
+          {user === "HE" && <>
+            <p className="he-intro-note">One question at a time.</p>
+            <div className="he-intro-links">
+              <span>{mocks.length} {mocks.length === 1 ? "mock" : "mocks"} available</span>
+              <Link href="/u/HE/history">View history <span aria-hidden="true">↗</span></Link>
+            </div>
+          </>}
+        </div>
       </div>
 
       {mocks.length === 0 ? (
