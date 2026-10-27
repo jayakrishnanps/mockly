@@ -162,10 +162,11 @@ export function ResultProgress({ history, currentAttemptId, allowTime = false }:
                       setActiveId(point.id);
                     }
                   }}
-                  className="cursor-pointer rounded-sm"
+                  className={`${styles.point} cursor-pointer`}
                 >
                   <title>{label}</title>
                   <rect x={point.x - 12} y={Math.min(point.y, timePoint?.y ?? point.y) - 22} width={24} height={Math.abs(point.y - (timePoint?.y ?? point.y)) + 44} fill="transparent" />
+                  <circle className={styles.focusRing} cx={point.x} cy={point.y} r={14} fill="none" stroke="var(--foreground)" strokeWidth={2} aria-hidden="true" pointerEvents="none" />
                   {timePoint?.y !== null && timePoint?.y !== undefined && <>
                     {(current || active) && <circle cx={point.x} cy={timePoint.y} r={current ? 10 : 8} fill="white" stroke="var(--chart-time)" strokeWidth={1.5} />}
                     <circle cx={point.x} cy={timePoint.y} r={current || active ? 5 : 3.5} fill={current || active ? "var(--chart-time)" : "white"} stroke="var(--chart-time)" strokeWidth={1.75} />

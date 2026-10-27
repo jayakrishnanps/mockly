@@ -22,7 +22,9 @@ export function DashboardHeader({ user }: { user: User }) {
   const links = [
     { href: `/u/${user}`, label: "Mocks" },
     { href: `/u/${user}/history`, label: "History" },
-    ...(user === "JK" ? [{ href: "/u/JK/bank", label: "Question bank" }] : []),
+    ...(user === "JK"
+      ? [{ href: "/u/JK/bank", label: "Question bank" }]
+      : [{ href: "/u/HE/forest", label: "Forest" }]),
   ];
 
   return (
