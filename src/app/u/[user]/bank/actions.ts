@@ -68,6 +68,7 @@ export async function deleteBank(id: unknown): Promise<BankActionResult> {
   revalidatePath("/u/JK/history");
   revalidatePath("/u/HE/history");
   revalidatePath("/u/JK/weak-areas");
+  revalidatePath("/u/HE/weak-areas");
   revalidatePath("/exam/[attemptId]", "page");
   revalidatePath("/result/[attemptId]", "page");
   revalidatePath("/studio");

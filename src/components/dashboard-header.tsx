@@ -24,7 +24,7 @@ export function DashboardHeader({ user }: { user: User }) {
     { href: `/u/${user}/history`, label: "History" },
     ...(user === "JK"
       ? [{ href: "/u/JK/bank", label: "Bank" }, { href: "/u/JK/weak-areas", label: "Weak" }]
-      : [{ href: "/u/HE/forest", label: "Forest" }]),
+      : [{ href: "/u/HE/forest", label: "Forest" }, { href: "/u/HE/weak-areas", label: "Weak" }]),
   ];
 
   return (

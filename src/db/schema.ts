@@ -120,3 +120,25 @@ export const weakAreaReports = pgTable("weak_area_reports", {
 	check("weak_area_reports_source_title_check", sql`length(trim(${table.sourceTitle})) BETWEEN 1 AND 200`),
 	check("weak_area_reports_areas_check", sql`CASE WHEN jsonb_typeof(${table.areas}) = 'array' THEN jsonb_array_length(${table.areas}) <= 12 ELSE false END`),
 ]);
+
+export const heWeakReports = pgTable("he_weak_reports", {
+	id: uuid().primaryKey().notNull(),
+	sourceTestId: uuid("source_test_id").notNull(),
+	sourceTitle: text("source_title").notNull(),
+	title: text().notNull(),
+	explanation: text().notNull(),
+	practice: text().notNull(),
+	importedAt: timestamp("imported_at", { withTimezone: true, mode: 'string' }).defaultNow().notNull(),
+}, (table) => [
+	index("he_weak_reports_imported_at_idx").on(table.importedAt.desc()),
+	index("he_weak_reports_source_test_idx").on(table.sourceTestId),
+	foreignKey({
+		columns: [table.sourceTestId],
+		foreignColumns: [tests.id],
+		name: "he_weak_reports_source_test_id_fkey",
+	}).onDelete("cascade"),
+	check("he_weak_reports_source_title_check", sql`length(trim(${table.sourceTitle})) BETWEEN 1 AND 200`),
+	check("he_weak_reports_title_check", sql`length(trim(${table.title})) BETWEEN 1 AND 120`),
+	check("he_weak_reports_explanation_check", sql`length(trim(${table.explanation})) BETWEEN 1 AND 3000`),
+	check("he_weak_reports_practice_check", sql`length(trim(${table.practice})) BETWEEN 1 AND 5000`),
+]);

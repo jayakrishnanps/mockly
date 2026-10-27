@@ -1,5 +1,6 @@
 import type { User } from "@/lib/users";
 import { WeakAreaReportPrompt } from "@/components/weak-area-report-prompt";
+import { HEWeakReportPrompt } from "@/components/he-weak-report-prompt";
 
 type Stats = {
   totalAttempts: number;
@@ -53,6 +54,7 @@ export function UserStats({ stats, testId, user, mockTitle }: { stats: Stats | n
         <p className="mt-1 max-w-xl text-xs leading-5 text-muted">Summaries for all {stats.totalAttempts} completed {stats.totalAttempts === 1 ? "attempt" : "attempts"}, with focused question histories from the latest 10.</p>
       </div>
       {user === "JK" && <WeakAreaReportPrompt testId={testId} title={mockTitle} />}
+      {user === "HE" && <HEWeakReportPrompt testId={testId} title={mockTitle} />}
     </section>
   );
 }

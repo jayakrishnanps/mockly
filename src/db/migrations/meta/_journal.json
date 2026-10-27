@@ -50,6 +50,13 @@
       "when": 1793112997908,
       "tag": "0006_weak_report_lifecycle",
       "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1793123518712,
+      "tag": "0007_he_weak_reports",
+      "breakpoints": true
     }
   ]
 }

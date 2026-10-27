@@ -6,6 +6,7 @@ import { deleteWeakAreaReport, saveWeakAreaReport } from "@/app/u/[user]/weak-ar
 import { parseWeakAreaReport, type SavedWeakAreaReport, type WeakArea, type WeakAreaFocus } from "@/lib/weak-area-report";
 import { emptyWeakAreaReportDraft, loadWeakAreaReportDraft, saveWeakAreaReportDraft, type WeakAreaReportDraft } from "@/lib/weak-area-report-draft";
 import styles from "./weak-areas-workspace.module.css";
+import { HEWeakImport } from "@/components/he-weak-import";
 
 type MockChoice = { id: string; title: string };
 type AreaRow = { area: WeakArea; report: SavedWeakAreaReport; index: number };
@@ -17,16 +18,17 @@ const subjects = ["All", "Math", "Reasoning", "GK", "English", "Other"] as const
 const dateFormatter = new Intl.DateTimeFormat("en-IN", { day: "numeric", month: "short", year: "numeric", timeZone: "Asia/Kolkata" });
 const reportDateFormatter = new Intl.DateTimeFormat("en-IN", { day: "numeric", month: "short", year: "numeric", hour: "numeric", minute: "2-digit", timeZone: "Asia/Kolkata" });
 
-export function WeakAreasWorkspace(props: { reports: SavedWeakAreaReport[]; mocks: MockChoice[] }) {
+export function WeakAreasWorkspace(props: { reports: SavedWeakAreaReport[]; mocks: MockChoice[]; heMocks: MockChoice[] }) {
   const hydrated = useSyncExternalStore(subscribe, () => true, () => false);
   return hydrated ? <Workspace {...props} /> : <p role="status" className="text-sm text-muted">Loading reports…</p>;
 }
 
-function Workspace({ reports, mocks }: { reports: SavedWeakAreaReport[]; mocks: MockChoice[] }) {
+function Workspace({ reports, mocks, heMocks }: { reports: SavedWeakAreaReport[]; mocks: MockChoice[]; heMocks: MockChoice[] }) {
   const router = useRouter();
   const id = useId();
   const [{ draft, warning }, setDraftState] = useState(() => loadWeakAreaReportDraft());
   const [importOpen, setImportOpen] = useState(() => reports.length === 0 || !!draft.source);
+  const [heOpen, setHEOpen] = useState(false);
   const [previewRequested, setPreviewRequested] = useState(() => draft.id !== null);
   const [sourceId, setSourceId] = useState("");
   const [reportId, setReportId] = useState("");
@@ -131,8 +133,13 @@ function Workspace({ reports, mocks }: { reports: SavedWeakAreaReport[]; mocks: 
   return <div className={styles.workspace}>
     <div className={styles.importBar}>
       <span className={styles.caption}>{latestByMock.size} {latestByMock.size === 1 ? "mock" : "mocks"}</span>
-      <button type="button" className={styles.primary} aria-expanded={importOpen} aria-controls={`${id}-import`} onClick={() => setImportOpen(!importOpen)}>Import report <span aria-hidden="true">{importOpen ? "−" : "+"}</span></button>
+      <div className={styles.actions}>
+        <button type="button" className={styles.control} aria-expanded={heOpen} aria-controls={`${id}-he-import`} onClick={() => setHEOpen(!heOpen)}>HE</button>
+        <button type="button" className={styles.primary} aria-expanded={importOpen} aria-controls={`${id}-import`} onClick={() => setImportOpen(!importOpen)}>Import report <span aria-hidden="true">{importOpen ? "−" : "+"}</span></button>
+      </div>
     </div>
+
+    <div id={`${id}-he-import`} hidden={!heOpen}><HEWeakImport mocks={heMocks} /></div>
 
     {importOpen && <section id={`${id}-import`} className={styles.importPanel} aria-labelledby={`${id}-import-title`}>
       <h2 id={`${id}-import-title`}>Paste your report</h2>

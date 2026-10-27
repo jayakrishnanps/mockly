@@ -1,5 +1,13 @@
 @import "tailwindcss";
 
+@font-face {
+  font-family: "Mockly Malayalam";
+  src: url("/fonts/noto-sans-malayalam/NotoSansMalayalam.ttf") format("truetype");
+  font-style: normal;
+  font-weight: 100 900;
+  font-display: swap;
+}
+
 :root {
   --background: #f5f6f3;
   --foreground: #202b25;
@@ -13,6 +21,7 @@
   --chart-score-soft: var(--accent-soft);
   --chart-score-strong: var(--accent-strong);
   --chart-time: #1d4ed8;
+  --font-malayalam: "Mockly Malayalam";
   color-scheme: light;
 }
 
@@ -98,6 +107,23 @@ body {
   color: var(--foreground);
   font-family: var(--font-sans);
   line-height: 1.5;
+}
+
+.he-malayalam-content {
+  min-width: 0;
+  font-family: var(--font-malayalam), "Nirmala UI", Kartika, sans-serif;
+  line-height: 2;
+  letter-spacing: normal;
+  overflow-wrap: anywhere;
+}
+
+.he-malayalam-content .question-content {
+  max-width: 100%;
+  overflow-x: auto;
+  padding-block: .25rem;
+  font-family: inherit;
+  line-height: inherit;
+  letter-spacing: normal;
 }
 
 h1 {
@@ -410,6 +436,16 @@ input:focus-visible, textarea:focus-visible, select:focus-visible {
 :root[data-user-theme="HE"] [data-dashboard-header] nav a[aria-current="page"] {
   background: var(--accent-strong);
   color: var(--he-paper);
+}
+
+@media (max-width: 639px) {
+  :root[data-user-theme="HE"] [data-dashboard-header] nav { width: 100%; }
+  :root[data-user-theme="HE"] [data-dashboard-header] nav a {
+    flex: 1;
+    min-width: 0;
+    padding-inline: .5rem;
+    font-size: .82rem;
+  }
 }
 
 :root[data-user-theme="HE"] .he-mocks-intro {
