@@ -39,10 +39,10 @@ export function MockList({ mocks, searchable, user }: { mocks: MockListItem[]; s
       <p role="status" aria-live="polite" aria-atomic="true" className="mt-3 text-xs text-muted">{hasFilters ? `${filtered.length} of ${mocks.length}` : mocks.length} {mocks.length === 1 ? "mock" : "mocks"}</p>
     </div>}
     {filtered.length === 0 ? <EmptyState title="No matching mocks.">Try another title or creation date, or clear the filters.</EmptyState> :
-      <ul className={isJK ? "divide-y divide-black border-y border-black bg-white" : "divide-y divide-line rounded-xl border border-line bg-white"} aria-label="Assigned mocks">
+      <ul className={isJK ? "divide-y divide-black border-y border-black bg-white" : "he-mock-grid"} aria-label="Assigned mocks">
         {filtered.map((mock) => (
           <li key={mock.id} className="min-w-0">
-            <Link href={`/test/${mock.id}`} className={isJK ? "group flex min-h-28 items-center gap-4 py-6 sm:gap-6 sm:py-8" : "group flex items-center gap-3 rounded-xl px-4 py-5 hover:bg-accent-soft/50 sm:gap-5 sm:px-6 sm:py-6"}>
+            <Link href={`/test/${mock.id}`} className={isJK ? "group flex min-h-28 items-center gap-4 py-6 sm:gap-6 sm:py-8" : "he-mock-card group flex h-full items-center gap-3 px-5 py-6 sm:gap-5 sm:p-6"}>
               <div className="min-w-0 flex-1">
                 <h2 className={isJK ? "break-words text-lg font-semibold leading-7 tracking-tight underline-offset-4 group-hover:underline sm:text-xl" : "break-words text-base font-semibold leading-6 tracking-tight group-hover:text-accent sm:text-lg"}>{mock.title}</h2>
                 {mock.details && <p className="mt-1 line-clamp-2 break-words text-sm leading-6 text-muted">{mock.details}</p>}

@@ -68,7 +68,7 @@ export default async function ResultPage({ params }: PageProps<"/result/[attempt
 
       <section data-result-feedback aria-label="Result summary" className={`border border-line bg-white ${isJK ? "mt-8 overflow-hidden rounded-md" : "mt-6 rounded-xl sm:mt-8"}`}>
         <div className="grid sm:grid-cols-[1fr_2fr]">
-          <div className={`min-w-0 border-b border-line px-5 py-6 sm:border-r sm:border-b-0 sm:p-7 ${isJK ? "bg-black text-white" : ""}`}>
+          <div className={`he-score-panel min-w-0 border-b border-line px-5 py-6 sm:border-r sm:border-b-0 sm:p-7 ${isJK ? "bg-black text-white" : ""}`}>
             <h2 className={`text-sm font-medium ${isJK ? "text-white" : "text-muted"}`}>Your score</h2>
             <div className="mt-2 flex flex-wrap items-baseline gap-2 tabular-nums">
               <span className={`break-all font-semibold tracking-tight ${isJK ? "text-5xl text-white sm:text-6xl" : "text-4xl text-accent sm:text-5xl"}`}>{attempt.score}</span>

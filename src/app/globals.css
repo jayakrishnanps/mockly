@@ -57,14 +57,28 @@
 }
 
 :root[data-user-theme="HE"] {
-  --background: #f8efff;
-  --foreground: #302339;
-  --muted: #75677e;
-  --accent: #ad42f5;
-  --accent-strong: #7e22b5;
-  --accent-soft: #f0dcfc;
-  --line: #e0c5ee;
-  --selection: #e9cbfa;
+  --background: #f3f0e7;
+  --foreground: #23392e;
+  --muted: #626b5e;
+  --accent: #345b45;
+  --accent-strong: #203e2e;
+  --accent-soft: #e5e9dc;
+  --line: #dcded0;
+  --selection: #d4dfc7;
+  --color-green-50: #edf2e7;
+  --color-green-300: #a8bda0;
+  --color-green-700: #345b45;
+  --color-green-800: #294832;
+  --color-red-50: #faeee8;
+  --color-red-400: #c18c7a;
+  --color-red-600: #a34836;
+  --color-red-700: #8a3b2d;
+  --color-amber-50: #f6edda;
+  --color-amber-300: #c9ae72;
+  --color-amber-400: #b49450;
+  --color-amber-800: #725523;
+  --color-amber-900: #61451c;
+  --color-gray-50: #f3f0e7;
 }
 
 @theme inline {
@@ -287,4 +301,229 @@ input:focus-visible, textarea:focus-visible, select:focus-visible {
   font-weight: 600;
   letter-spacing: 0.14em;
   line-height: 1.5;
+}
+
+:root[data-user-theme="HE"] {
+  --he-paper: #fffcf5;
+  --he-serif: "Palatino Linotype", "Book Antiqua", Palatino, Georgia, serif;
+}
+
+:root[data-user-theme="HE"] .bg-white {
+  background-color: var(--he-paper);
+}
+
+:root[data-user-theme="HE"] header {
+  background: var(--background);
+  box-shadow: none;
+}
+
+:root[data-user-theme="HE"] :is(.page-title, main h1) {
+  font-family: var(--he-serif);
+  font-weight: 500;
+  font-size: clamp(2rem, 5vw, 3rem);
+  letter-spacing: -0.045em;
+  line-height: 1.12;
+  text-decoration: none;
+}
+
+:root[data-user-theme="HE"] .identity-initials {
+  font-family: var(--he-serif);
+  font-style: normal;
+  letter-spacing: -0.04em;
+}
+
+:root[data-user-theme="HE"] .brand-mark {
+  filter: grayscale(1) brightness(0.5) sepia(0.5) hue-rotate(65deg);
+}
+
+:root[data-user-theme="HE"] .brand-letter { animation: none; }
+
+:root[data-user-theme="HE"] [data-dashboard-header] {
+  border-bottom: 0;
+  padding-top: 0.5rem;
+}
+
+:root[data-user-theme="HE"] [data-dashboard-header] nav {
+  width: fit-content;
+  max-width: 100%;
+  gap: 0.25rem;
+  margin-top: 0.75rem;
+  margin-bottom: 0;
+  padding: 0.3rem;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: var(--he-paper);
+}
+
+:root[data-user-theme="HE"] [data-dashboard-header] nav a {
+  min-width: 6rem;
+  padding: 0.7rem 1.5rem;
+  border: 0;
+  border-radius: 999px;
+  text-align: center;
+}
+
+:root[data-user-theme="HE"] [data-dashboard-header] nav a[aria-current="page"] {
+  background: var(--accent-strong);
+  color: var(--he-paper);
+}
+
+:root[data-user-theme="HE"] .he-mocks-intro {
+  display: flex;
+  align-items: center;
+  min-height: 15rem;
+  padding: clamp(1.5rem, 5vw, 3rem);
+  overflow: hidden;
+  border-radius: 1.75rem;
+  background-color: var(--accent-strong);
+  background-image: url("/he-botanical.svg");
+  background-repeat: no-repeat;
+  background-position: right bottom;
+  background-size: auto 115%;
+  color: var(--he-paper);
+}
+
+:root[data-user-theme="HE"] .he-mocks-intro h1 {
+  max-width: 48%;
+  font-size: clamp(2.5rem, 6vw, 4.25rem);
+}
+
+:root[data-user-theme="HE"] .he-mock-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1rem;
+}
+
+:root[data-user-theme="HE"] :is(.he-mock-card, .he-history-card) {
+  border: 1px solid var(--line);
+  border-radius: 1.5rem;
+  background: var(--he-paper);
+  box-shadow: 0 4px 18px rgb(35 57 46 / 0.025);
+  transition: border-color 150ms ease, background-color 150ms ease;
+}
+
+:root[data-user-theme="HE"] :is(.he-mock-card, .he-history-card):hover {
+  border-color: #9cab90;
+  background: #f9faef;
+}
+
+:root[data-user-theme="HE"] .he-mock-card h2 {
+  font-family: var(--he-serif);
+  font-size: 1.45rem;
+  font-weight: 500;
+  line-height: 1.3;
+}
+
+:root[data-user-theme="HE"] .he-mock-card > span {
+  width: 2.5rem;
+  height: 2.5rem;
+  background: var(--accent-strong);
+  color: var(--he-paper);
+}
+
+:root[data-user-theme="HE"] :is(section, ol, div).rounded-xl {
+  border-radius: 1.5rem;
+}
+
+:root[data-user-theme="HE"] :is(button, a).bg-accent {
+  border-radius: 999px;
+}
+
+:root[data-user-theme="HE"] [data-mock-overview] {
+  border-top: 5px solid var(--accent);
+  padding-top: 1.75rem;
+}
+
+:root[data-user-theme="HE"] [data-result-feedback][aria-label="Result summary"] {
+  overflow: hidden;
+}
+
+:root[data-user-theme="HE"] .he-score-panel {
+  background: var(--accent-strong);
+  color: var(--he-paper);
+}
+
+:root[data-user-theme="HE"] .he-score-panel :is(.text-muted, .text-accent) {
+  color: var(--he-paper);
+}
+
+:root[data-user-theme="HE"] [data-result-chart] {
+  border-radius: 1.5rem;
+}
+
+:root[data-user-theme="HE"] [data-exam-workspace].flex {
+  background: var(--background);
+}
+
+:root[data-user-theme="HE"] [data-exam-workspace] header {
+  background: var(--accent-strong);
+  color: var(--he-paper);
+  border-bottom: 0;
+}
+
+:root[data-user-theme="HE"] [data-exam-workspace] header .text-muted {
+  color: #d7decc;
+}
+
+:root[data-user-theme="HE"] [data-exam-workspace] header button {
+  background: var(--accent-soft);
+  color: var(--accent-strong);
+}
+
+:root[data-user-theme="HE"] [data-exam-workspace] header h1 {
+  font-family: var(--he-serif);
+  font-size: 1.15rem;
+  font-weight: 500;
+}
+
+:root[data-user-theme="HE"] .he-exam-paper {
+  padding: clamp(1rem, 3vw, 2rem);
+  border: 1px solid var(--line);
+  border-radius: 1.75rem;
+  background: var(--he-paper);
+}
+
+:root[data-user-theme="HE"] .he-exam-paper fieldset label {
+  border-radius: 1rem;
+  padding-top: 0.75rem;
+  padding-bottom: 0.75rem;
+}
+
+:root[data-user-theme="HE"] .he-exam-paper fieldset label:has(input:checked) {
+  border-color: var(--accent);
+  background: var(--accent-soft);
+  box-shadow: inset 3px 0 var(--accent);
+}
+
+:root[data-user-theme="HE"] [aria-label="Question palette"] {
+  margin: 2rem 1rem 2rem 0;
+  height: fit-content;
+  border: 1px solid var(--line);
+  border-radius: 1.5rem;
+}
+
+:root[data-user-theme="HE"] [aria-label="Mobile exam controls"] {
+  border-radius: 1.25rem 1.25rem 0 0;
+  box-shadow: 0 -4px 20px rgb(35 57 46 / 0.06);
+}
+
+:root[data-user-theme="HE"] [role="dialog"] {
+  border-radius: 1.75rem;
+}
+
+@media (max-width: 639px) {
+  :root[data-user-theme="HE"] .he-mock-grid {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 0.75rem;
+  }
+
+  :root[data-user-theme="HE"] .he-mocks-intro {
+    min-height: 12rem;
+    background-size: auto 100%;
+    background-position: calc(100% + 3rem) bottom;
+  }
+
+  :root[data-user-theme="HE"] .he-exam-paper {
+    border-radius: 1.25rem;
+  }
 }

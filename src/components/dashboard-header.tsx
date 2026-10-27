@@ -26,7 +26,7 @@ export function DashboardHeader({ user }: { user: User }) {
   ];
 
   return (
-    <header className="border-b border-line bg-white">
+    <header data-dashboard-header className="border-b border-line bg-white">
       <div className="mx-auto max-w-5xl px-4 sm:px-8">
         <div className={user === "JK" ? "flex min-h-20 flex-wrap items-center justify-between gap-x-2 gap-y-3 py-4 sm:py-5" : "flex min-h-18 flex-wrap items-center justify-between gap-x-2 gap-y-1 py-2 sm:py-3"}>
           <Brand user={user} />
