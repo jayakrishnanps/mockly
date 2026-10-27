@@ -165,6 +165,16 @@ input:focus-visible, textarea:focus-visible, select:focus-visible {
   input:not([type="checkbox"]):not([type="radio"]), textarea { font-size: 16px; }
 }
 
+@media (pointer: coarse) {
+  [data-page-heading] h1,
+  [data-mock-overview] :is(h1, dt, dd),
+  [data-performance-summary] :is(h2, dt, dd),
+  [data-static-label] {
+    -webkit-user-select: none;
+    user-select: none;
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { transition-duration: 0s !important; }
 }

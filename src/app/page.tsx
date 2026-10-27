@@ -22,7 +22,7 @@ export default function Home() {
       </header>
 
       <main className={styles.main}>
-        <h1 className={styles.heading}>
+        <h1 data-static-label className={styles.heading}>
           Who are you?
         </h1>
         <div className={styles.choices}>

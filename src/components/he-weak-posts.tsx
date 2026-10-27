@@ -71,7 +71,7 @@ export function HEWeakPosts({ reports }: { reports: SavedHEWeakReport[] }) {
 
   return <div className={styles.workspace}>
     <div className={styles.toolbar}>
-      <span className={styles.count}>{reports.length} {reports.length === 1 ? "note" : "notes"}</span>
+      <span data-static-label className={styles.count}>{reports.length} {reports.length === 1 ? "note" : "notes"}</span>
       {reports.length > 0 && <button
         type="button"
         className={styles.clear}
@@ -100,7 +100,7 @@ export function HEWeakPosts({ reports }: { reports: SavedHEWeakReport[] }) {
             ><svg aria-hidden="true" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M4 7h16M9 7V4h6v3M6 7l1 13h10l1-13M10 11v5m4-5v5" /></svg></button>
           </div>
           <div lang="ml" className={styles.malayalam}>
-            <h2 id={`${id}-${report.id}`} className={styles.title}>{report.title}</h2>
+            <h2 data-static-label id={`${id}-${report.id}`} className={styles.title}>{report.title}</h2>
             <div className={styles.explanation}><QuestionContent text={report.explanation} /></div>
             <section className={styles.practice} aria-labelledby={`${id}-${report.id}-practice`}>
               <h3 id={`${id}-${report.id}-practice`}>പരിശീലിക്കാം</h3>

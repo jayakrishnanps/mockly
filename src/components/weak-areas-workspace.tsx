@@ -177,7 +177,7 @@ function Workspace({ reports, mocks, heMocks }: { reports: SavedWeakAreaReport[]
 
   return <div className={styles.workspace}>
     <div className={styles.importBar}>
-      <span className={styles.caption}>{latestByMock.size} {latestByMock.size === 1 ? "mock" : "mocks"}</span>
+      <span data-static-label className={styles.caption}>{latestByMock.size} {latestByMock.size === 1 ? "mock" : "mocks"}</span>
       <div className={styles.actions}>
         <button type="button" className={styles.control} aria-expanded={heOpen} aria-controls={`${id}-he-import`} onClick={() => setHEOpen(!heOpen)}>HE</button>
         <button type="button" className={styles.primary} aria-expanded={importOpen} aria-controls={`${id}-import`} onClick={() => setImportOpen(!importOpen)}>Import report <span aria-hidden="true">{importOpen ? "−" : "+"}</span></button>
@@ -234,7 +234,7 @@ function Workspace({ reports, mocks, heMocks }: { reports: SavedWeakAreaReport[]
       </div>
 
       <div className={styles.scopeBar}>
-        <h2 ref={summaryTitle} tabIndex={-1}>{selectedReport ? selectedReport.id === sourceReports[0]?.id ? "Latest assessment" : "Earlier assessment" : "Latest reports"}</h2>
+        <h2 data-static-label ref={summaryTitle} tabIndex={-1}>{selectedReport ? selectedReport.id === sourceReports[0]?.id ? "Latest assessment" : "Earlier assessment" : "Latest reports"}</h2>
         <span>{selectedReport ? `${sourceReports.length} saved ${sourceReports.length === 1 ? "report" : "reports"}` : `${latestByMock.size} ${latestByMock.size === 1 ? "mock" : "mocks"}`}</span>
       </div>
 
@@ -264,7 +264,7 @@ function Workspace({ reports, mocks, heMocks }: { reports: SavedWeakAreaReport[]
           return <li key={key} className={`${styles.card} ${checking && completion?.leaving ? styles.leaving : ""}`}>
           <div className={styles.cardTop}><span>{area.subject}</span><span className={styles.focusLabel}><span aria-hidden="true" className={`${styles.dot} ${styles[area.focus]}`} />{area.focus}</span></div>
           <div className={styles.areaHeading}>
-            <h3>{area.area}</h3>
+            <h3 data-static-label>{area.area}</h3>
             <button type="button" data-weak-check className={styles.check} disabled={pending !== null} aria-label={`Check off and remove ${area.area}`} aria-pressed={checking} aria-busy={checking && !completion?.leaving} title="Check off this area" onClick={(event) => void checkArea(row, event.currentTarget)}>
               <svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m5 12 4 4L19 6" /></svg>
             </button>
