@@ -1,4 +1,5 @@
 import type { User } from "@/lib/users";
+import { WeakAreaReportPrompt } from "@/components/weak-area-report-prompt";
 
 type Stats = {
   totalAttempts: number;
@@ -10,7 +11,7 @@ type Stats = {
   scoreIsPercent?: boolean;
 };
 
-export function UserStats({ stats, testId, user }: { stats: Stats | null; testId: string; user: User }) {
+export function UserStats({ stats, testId, user, mockTitle }: { stats: Stats | null; testId: string; user: User; mockTitle: string }) {
   if (!stats) return <p className="mt-5 rounded-xl border border-line bg-white px-5 py-5 text-sm text-muted sm:px-7">No completed attempts yet.</p>;
 
   return (
@@ -51,6 +52,7 @@ export function UserStats({ stats, testId, user }: { stats: Stats | null; testId
         </a>
         <p className="mt-1 max-w-xl text-xs leading-5 text-muted">Summaries for all {stats.totalAttempts} completed {stats.totalAttempts === 1 ? "attempt" : "attempts"}, with focused question histories from the latest 10.</p>
       </div>
+      {user === "JK" && <WeakAreaReportPrompt testId={testId} title={mockTitle} />}
     </section>
   );
 }

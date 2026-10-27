@@ -64,7 +64,7 @@ export default async function MockPage({ params }: PageProps<"/test/[id]">) {
         </dl>
       </section>
 
-      {assigned && <UserStats stats={stats} testId={mock.id} user={user} />}
+      {assigned && <UserStats stats={stats} testId={mock.id} user={user} mockTitle={mock.title} />}
 
       <div className="mb-4 mt-8 flex flex-col items-start justify-between gap-4 sm:mt-10 sm:flex-row">
         <div className="min-w-0 max-w-2xl"><h2 className="text-lg font-semibold tracking-tight">{mock.sourceBankId ? "Question bank preview" : "Questions"}</h2><p className="mt-1 text-sm leading-6 text-muted">{previewDescription}</p></div>

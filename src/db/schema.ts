@@ -102,3 +102,16 @@ export const forestPlants = pgTable("forest_plants", {
 }, (table) => [
 	index("forest_plants_planted_at_idx").on(table.plantedAt),
 ]);
+
+export const weakAreaReports = pgTable("weak_area_reports", {
+	id: uuid().primaryKey().notNull(),
+	sourceTestId: uuid("source_test_id").notNull(),
+	sourceTitle: text("source_title").notNull(),
+	areas: jsonb().notNull(),
+	importedAt: timestamp("imported_at", { withTimezone: true, mode: 'string' }).defaultNow().notNull(),
+}, (table) => [
+	index("weak_area_reports_imported_at_idx").on(table.importedAt.desc()),
+	index("weak_area_reports_source_test_idx").on(table.sourceTestId),
+	check("weak_area_reports_source_title_check", sql`length(trim(${table.sourceTitle})) BETWEEN 1 AND 200`),
+	check("weak_area_reports_areas_check", sql`CASE WHEN jsonb_typeof(${table.areas}) = 'array' THEN jsonb_array_length(${table.areas}) <= 12 ELSE false END`),
+]);

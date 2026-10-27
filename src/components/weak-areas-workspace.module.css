@@ -1,0 +1,80 @@
+.workspace { display: grid; gap: 1.5rem; min-width: 0; }
+.importBar, .actions, .previewHeading, .reportBar, .cardTop, .priority { display: flex; flex-wrap: wrap; align-items: center; gap: .75rem; }
+.importBar, .previewHeading, .reportBar, .cardTop { justify-content: space-between; }
+.primary, .control, .quiet { min-height: 2.75rem; border-radius: .25rem; padding: .65rem 1rem; font-size: .8rem; font-weight: 600; }
+.primary { display: inline-flex; justify-content: center; align-items: center; gap: 1.5rem; border: 1px solid #000; background: #000; color: #fff; }
+.control { border: 1px solid #000; background: #fff; color: #000; }
+.quiet { padding-inline: .25rem; font-size: .75rem; font-weight: 400; text-decoration: underline; text-underline-offset: .2em; }
+.primary:disabled, .control:disabled, .quiet:disabled { opacity: .4; }
+.caption, .reportBar, .previewHeading > span { font-size: .75rem; line-height: 1.5; }
+.importPanel { min-width: 0; border: 1px solid #000; border-radius: .5rem; padding: 1rem; }
+.importPanel > h2 { margin-bottom: 1rem; font-size: 1.05rem; font-weight: 650; letter-spacing: -.025em; }
+.importPanel textarea { display: block; width: 100%; min-width: 0; border: 1px solid #000; border-radius: .25rem; padding: .875rem; font-family: var(--font-mono); font-size: 1rem; line-height: 1.65; resize: vertical; }
+.importPanel > .actions { margin-top: 1rem; }
+.feedback { padding-left: .75rem; border-left: 3px solid #000; font-size: .8rem; line-height: 1.6; }
+.importPanel .feedback { margin-top: .75rem; }
+.notice { font-size: .8rem; }
+.notice:empty { display: none; }
+.confirm { border: 1px solid #000; border-radius: .25rem; padding: 1rem; }
+.importPanel .confirm { margin-top: 1rem; }
+.confirm h3 { font-size: .95rem; font-weight: 650; }
+.confirm p { margin-top: .5rem; font-size: .8rem; line-height: 1.6; }
+.confirm .actions { margin-top: 1rem; }
+.preview { margin-top: 1.5rem; padding-top: 1.25rem; border-top: 1px solid #000; }
+.previewHeading { margin-bottom: 1rem; }
+.previewHeading h3 { min-width: 0; overflow-wrap: anywhere; font-size: .95rem; font-weight: 650; }
+.previewList { margin-bottom: 1.25rem; }
+.previewList li { display: flex; flex-wrap: wrap; justify-content: space-between; gap: .25rem 1rem; border-top: 1px solid #000; padding-block: .65rem; font-size: .85rem; }
+.previewList li > span:first-child { min-width: 0; overflow-wrap: anywhere; }
+.filters { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: .75rem; }
+.filters label { display: flex; flex-direction: column; gap: .45rem; min-width: 0; font-size: .7rem; }
+.filters label:first-child { grid-column: 1 / -1; }
+.filters select { width: 100%; max-width: 100%; min-width: 0; min-height: 2.75rem; border: 1px solid #000; border-radius: .25rem; padding: .6rem .75rem; background: #fff; color: #000; font-size: 1rem; }
+.summary { display: grid; grid-template-columns: 8rem minmax(0, 1fr); align-items: center; gap: 1.5rem; border-block: 1px solid #000; padding-block: 1.5rem; }
+.ring { position: relative; width: 8rem; height: 8rem; }
+.ring svg { display: block; width: 100%; height: 100%; }
+.ring > div { position: absolute; inset: 0; display: flex; flex-direction: column; justify-content: center; align-items: center; }
+.ring strong { font-size: 2rem; line-height: 1.1; letter-spacing: -.06em; font-weight: 650; }
+.ring > div > span { margin-top: .25rem; font-size: .7rem; }
+.focusList { display: grid; gap: .25rem; }
+.focusFilter { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; align-items: center; gap: .65rem; min-height: 2.75rem; border: 1px solid transparent; border-radius: .25rem; padding: .55rem .65rem; text-align: left; font-size: .8rem; }
+.focusFilter[aria-pressed="true"] { border-color: #000; }
+.focusFilter strong { font-variant-numeric: tabular-nums; }
+.dot { display: inline-block; width: .5rem; height: .5rem; flex-shrink: 0; border-radius: 50%; background: currentColor; }
+.Accuracy { color: #991b1b; }
+.Speed { color: #1e40af; }
+.Both { color: #000; }
+.cards { display: grid; gap: .875rem; grid-template-columns: minmax(0, 1fr); }
+.card { min-width: 0; border: 1px solid #000; border-radius: .5rem; padding: 1.1rem; }
+.cardTop { gap: .5rem; font-size: .65rem; }
+.cardTop > span:first-child { font-weight: 650; letter-spacing: .06em; text-transform: uppercase; }
+.focusLabel { display: inline-flex; align-items: center; gap: .35rem; }
+.card h3 { margin-top: .9rem; font-size: 1.2rem; font-weight: 650; line-height: 1.3; letter-spacing: -.035em; overflow-wrap: anywhere; }
+.priority { margin-top: 1rem; gap: .5rem; font-size: .7rem; }
+.priorityMeter { display: inline-flex; gap: .2rem; }
+.priorityMeter i { width: .5rem; height: .5rem; border: 1px solid #000; border-radius: 50%; }
+.priorityMeter .filled { background: #000; }
+.source { display: flex; flex-wrap: wrap; justify-content: space-between; gap: .35rem 1rem; margin-top: 1rem; padding-top: .75rem; border-top: 1px solid #000; font-size: .65rem; line-height: 1.5; }
+.source > span { min-width: 0; overflow-wrap: anywhere; }
+.source time { white-space: nowrap; }
+.empty { border: 1px solid #000; border-radius: .5rem; padding: 2rem 1.25rem; }
+.empty > span { display: block; margin-bottom: 1rem; font-size: 2rem; line-height: 1; }
+.empty h2 { font-size: 1.1rem; font-weight: 650; letter-spacing: -.025em; }
+.empty p { max-width: 26rem; margin-top: .6rem; font-size: .8rem; line-height: 1.6; }
+@media (min-width: 640px) {
+  .importPanel { padding: 1.5rem; }
+  .filters { grid-template-columns: minmax(0, 1.5fr) minmax(0, .8fr) minmax(0, 1fr); }
+  .filters label:first-child { grid-column: auto; }
+  .filters select, .importPanel textarea { font-size: .875rem; }
+  .summary { grid-template-columns: 10rem minmax(0, 1fr); gap: 2rem; padding-block: 2rem; }
+  .ring { width: 10rem; height: 10rem; }
+  .ring strong { font-size: 2.5rem; }
+  .focusList { max-width: 20rem; }
+  .cards { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .card { padding: 1.35rem; }
+}
+@media (max-width: 359px) {
+  .summary { grid-template-columns: 6.5rem minmax(0, 1fr); gap: .65rem; }
+  .ring { width: 6.5rem; height: 6.5rem; }
+  .focusFilter { padding-inline: .3rem; gap: .4rem; font-size: .75rem; }
+}

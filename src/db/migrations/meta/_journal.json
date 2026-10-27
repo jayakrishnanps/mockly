@@ -36,6 +36,13 @@
       "when": 1793079116194,
       "tag": "0004_forest_plants",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1793111071244,
+      "tag": "0005_weak_area_reports",
+      "breakpoints": true
     }
   ]
 }
