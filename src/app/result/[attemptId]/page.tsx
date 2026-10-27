@@ -9,9 +9,9 @@ import { gradeFromPercentage } from "@/lib/grades";
 import { averageAnsweredTime, calculatePercentile } from "@/lib/scoring";
 import { buildAnswerReview } from "@/lib/result-review";
 import { Brand } from "@/components/brand";
-import { OPTION_LABELS } from "@/lib/parser";
-import { QuestionContent } from "@/components/question-content";
 import { ResultProgress } from "@/components/result-progress";
+import { AnswerReview } from "@/components/answer-review";
+import { SharedMockComparison } from "@/components/shared-mock-comparison";
 import "katex/dist/katex.min.css";
 import "@/app/studio/studio.css";
 
@@ -36,6 +36,7 @@ export default async function ResultPage({ params }: PageProps<"/result/[attempt
 
   const { attempt, mock, questions, allScores } = data;
   const isJK = user === "JK";
+  const isShared = mock.forUsers.includes("JK") && mock.forUsers.includes("HE");
   const scoreHistory = await attemptStore.getMockScoreHistory(attempt.testId, user);
   const scorePercent = Number(mock.marksCorrect) > 0 && questions.length > 0 
     ? (Number(attempt.score) / (questions.length * Number(mock.marksCorrect))) * 100 
@@ -110,64 +111,8 @@ export default async function ResultPage({ params }: PageProps<"/result/[attempt
       <ResultProgress history={scoreHistory} currentAttemptId={attempt.id} allowTime={user === "JK"} />
 
       <h2 data-review-heading className="mt-8 text-xl font-semibold tracking-tight sm:mt-10">Review answers</h2>
-      <ol data-result-feedback aria-label="Questions review" className={`mt-4 ${isJK ? "space-y-6" : "space-y-4"}`}>
-        {answerReview.map(({ question, answer: ans, status }) => {
-          let statusBadge;
-          if (status === "skipped") statusBadge = <span className={`rounded-md px-2 py-1 text-xs font-medium text-muted ${isJK ? "border border-black bg-white" : "bg-background"}`}>Skipped</span>;
-          else if (status === "correct") statusBadge = <span className={`rounded-md px-2 py-1 text-xs font-medium ${isJK ? "border border-green-900 bg-white text-green-900" : "bg-green-50 text-green-800"}`}>Correct (+{mock.marksCorrect})</span>;
-          else statusBadge = <span className={`rounded-md px-2 py-1 text-xs font-medium ${isJK ? "border border-red-900 bg-white text-red-900" : "bg-red-50 text-red-700"}`}>Wrong (−{mock.marksWrong})</span>;
-
-          return (
-            <li key={question.id} className={`min-w-0 border border-line bg-white p-5 sm:p-7 ${isJK ? "rounded-md" : "rounded-xl"}`}>
-              <div className="mb-4 flex flex-wrap items-center justify-between gap-x-4 gap-y-2">
-                <h3 className="text-sm font-semibold">Question {question.position}</h3>
-                <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
-                  {user === "JK" && (
-                    <span className="text-xs whitespace-nowrap text-muted tabular-nums">
-                      Time spent: {ans ? `${(ans.timeSpentMs / 1000).toFixed(1)}s` : "—"}
-                    </span>
-                  )}
-                  {ans?.markedForReview && <span className="text-xs font-medium text-muted">Marked for review</span>}
-                  {statusBadge}
-                </div>
-              </div>
-              <QuestionContent text={question.questionText} />
-              
-              <ol className="mt-4 space-y-2">
-                {question.options.map((option, index) => {
-                  const correct = index === question.correctIndex;
-                  const selected = index === ans?.selectedIndex;
-                  const correctTextClass = isJK ? "text-green-900" : "text-green-800";
-                  const wrongTextClass = isJK ? "text-red-900" : "text-red-700";
-                  let borderClass = "border-line";
-                  let bgClass = "";
-                  
-                  if (correct) {
-                    borderClass = isJK ? "border-green-900" : "border-green-300";
-                    bgClass = isJK ? "bg-white" : "bg-green-50";
-                  } else if (selected && !correct) {
-                    borderClass = isJK ? "border-red-900" : "border-red-400";
-                    bgClass = isJK ? "bg-white" : "bg-red-50";
-                  }
-
-                  return (
-                    <li key={index} className={`min-w-0 border px-3 py-3 sm:px-4 ${isJK ? "rounded-sm" : "rounded-lg"} ${borderClass} ${bgClass}`}>
-                      <div className="mb-1 flex flex-wrap items-center justify-between gap-2 text-xs font-medium">
-                        <span>{OPTION_LABELS[index]}</span>
-                        <div className="flex flex-wrap gap-x-3 gap-y-1">
-                          {selected && <span className={correct ? correctTextClass : wrongTextClass}>Your answer</span>}
-                          {correct && <span className={correctTextClass}>Correct answer</span>}
-                        </div>
-                      </div>
-                      <QuestionContent text={option} />
-                    </li>
-                  );
-                })}
-              </ol>
-            </li>
-          );
-        })}
-      </ol>
+      <AnswerReview key={attempt.id} user={user} entries={answerReview} marksCorrect={mock.marksCorrect} marksWrong={mock.marksWrong} />
+      {isShared && <SharedMockComparison key={attempt.id} attemptId={attempt.id} user={user} />}
     </main>
   </>;
 }
