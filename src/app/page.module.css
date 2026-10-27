@@ -1,0 +1,166 @@
+.page {
+  display: flex;
+  flex-direction: column;
+  min-height: 100svh;
+  background: #f6f5ef;
+  color: #171c18;
+}
+
+.header {
+  width: 100%;
+  max-width: 72rem;
+  margin-inline: auto;
+  padding: 1.25rem 1.5rem;
+}
+
+.main {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  justify-content: center;
+  width: 100%;
+  max-width: 59rem;
+  margin-inline: auto;
+  padding: 2rem 1.5rem 3.5rem;
+}
+
+.heading {
+  width: fit-content;
+  margin-bottom: 1.8rem;
+  font-size: clamp(2.5rem, 6vw, 4rem);
+  font-weight: 600;
+  line-height: 1.12;
+  letter-spacing: -.065em;
+}
+
+.heading::after {
+  display: block;
+  width: 2rem;
+  height: 2px;
+  margin-top: 1rem;
+  background: currentColor;
+  content: "";
+}
+
+.choices {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 1rem;
+}
+
+.card {
+  position: relative;
+  isolation: isolate;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  min-width: 0;
+  min-height: 10.5rem;
+  overflow: hidden;
+  border: 1px solid;
+  border-radius: 1.25rem;
+  padding: 1.35rem 1.5rem 1rem;
+  transition: border-color 180ms ease, box-shadow 180ms ease;
+}
+
+.card::before {
+  position: absolute;
+  z-index: -1;
+  pointer-events: none;
+  content: "";
+}
+
+.jk {
+  border-color: #000;
+  background: #000;
+  color: #fff;
+}
+
+.jk::before {
+  right: -4.25rem;
+  top: -3.5rem;
+  width: 13rem;
+  height: 13rem;
+  border: 1px solid rgb(255 255 255 / 15%);
+  border-radius: 50%;
+  box-shadow: 0 0 0 1.5rem rgb(255 255 255 / 4%);
+}
+
+.he {
+  border-color: #cbd4c1;
+  background: #eeeede;
+  color: #294832;
+}
+
+.he::before {
+  right: -.75rem;
+  top: -2.75rem;
+  width: 15rem;
+  height: 15rem;
+  background: url("/he-sprig.svg") no-repeat center / contain;
+}
+
+.initials {
+  display: block;
+  width: fit-content;
+  margin-bottom: 1.5rem;
+  font-size: 3.75rem;
+  font-weight: 650;
+  line-height: 1;
+  letter-spacing: -.075em;
+}
+
+.he .initials {
+  font-family: "Palatino Linotype", "Book Antiqua", Palatino, Georgia, serif;
+  font-weight: 500;
+  font-style: italic;
+  letter-spacing: -.045em;
+}
+
+.footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  border-top: 1px solid rgb(255 255 255 / 24%);
+  padding-top: .7rem;
+  font-size: .875rem;
+  font-weight: 500;
+}
+
+.he .footer { border-color: rgb(41 72 50 / 20%); }
+
+.arrow {
+  display: grid;
+  flex-shrink: 0;
+  place-items: center;
+  width: 2.25rem;
+  height: 2.25rem;
+  border: 1px solid rgb(255 255 255 / 30%);
+  border-radius: 50%;
+  font-size: 1.15rem;
+  line-height: 1;
+}
+
+.he .arrow { border-color: rgb(41 72 50 / 25%); }
+.jk:is(:hover, :focus-visible) { box-shadow: 0 8px 24px -14px rgb(0 0 0 / 60%); }
+.he:is(:hover, :focus-visible) { border-color: #345b45; box-shadow: 0 8px 24px -14px rgb(41 72 50 / 45%); }
+.card:focus-visible { outline: 2px solid currentColor; outline-offset: 4px; }
+.jk:focus-visible { outline-color: #000; }
+
+@media (min-width: 640px) {
+  .header { padding: 1.75rem 2rem; }
+  .main { padding: 2.5rem 2rem 6rem; }
+  .heading { margin-bottom: 2.5rem; }
+  .choices { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1.25rem; }
+  .card { min-height: 19rem; border-radius: 1.5rem; padding: 2rem 2rem 1.5rem; }
+  .initials { font-size: 5.5rem; }
+  .jk::before { top: -1rem; right: -5rem; width: 19rem; height: 19rem; }
+  .he::before { top: -1rem; right: -1rem; width: 21rem; height: 21rem; }
+  .footer { padding-top: 1rem; font-size: .95rem; }
+  .arrow { width: 2.5rem; height: 2.5rem; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .card { transition: none; }
+}

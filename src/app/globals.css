@@ -201,47 +201,6 @@ input:focus-visible, textarea:focus-visible, select:focus-visible {
   }
 }
 
-.identity-card[data-picker-user="JK"] {
-  --identity-color: #bd0202;
-  --identity-border: #fc0303;
-  --identity-soft: #fff2f1;
-  --identity-line: #efc9c4;
-}
-
-.identity-card[data-picker-user="HE"] {
-  --identity-color: #7e22b5;
-  --identity-border: #ad42f5;
-  --identity-soft: #f8efff;
-  --identity-line: #e0c5ee;
-}
-
-.identity-card {
-  border-color: var(--identity-line);
-  background: white;
-  box-shadow: 0 2px 4px rgb(32 43 37 / 0.025);
-  transition: background-color 150ms ease, border-color 150ms ease, box-shadow 150ms ease;
-}
-
-.identity-card .identity-initials {
-  color: var(--identity-color);
-}
-
-.identity-arrow {
-  border-color: var(--identity-line);
-  color: var(--identity-color);
-}
-
-.identity-card:is(:hover, :focus-visible, :active) {
-  border-color: var(--identity-border);
-  background: var(--identity-soft);
-  color: var(--identity-color);
-  box-shadow: 0 6px 18px rgb(32 43 37 / 0.05);
-}
-
-.identity-card:focus-visible {
-  outline-color: var(--identity-border);
-}
-
 .jk-only { display: none; }
 
 :root[data-user-theme="JK"] .jk-only { display: inline; }

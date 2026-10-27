@@ -1,7 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { isUuid } from "@/lib/mock-validation";
+import { isRecord, isUuid } from "@/lib/mock-validation";
 import { getRememberedUserFromCookies } from "@/lib/server-user";
 import { WeakAreaReportError } from "@/server/weak-area-report-store";
 import { weakAreaReportStore } from "@/server/weak-area-reports";
@@ -29,4 +29,16 @@ export async function deleteWeakAreaReport(id: unknown): Promise<WeakAreaActionR
   catch (error) { return failure(error); }
   revalidatePath("/u/JK/weak-areas");
   return { ok: true, id };
+}
+
+export async function completeWeakArea(input: unknown): Promise<WeakAreaActionResult> {
+  if (await getRememberedUserFromCookies() !== "JK") return { ok: false, error: "Switch to JK to check a weak area." };
+  if (!isRecord(input) || !isUuid(input.reportId)) return { ok: false, error: "This weak area has an invalid report ID." };
+  try { await weakAreaReportStore.removeArea(input); }
+  catch (error) {
+    if (error instanceof WeakAreaReportError) return { ok: false, error: error.message };
+    return { ok: false, uncertain: true, error: "The check could not be confirmed. Please retry; checking again is safe." };
+  }
+  revalidatePath("/u/JK/weak-areas");
+  return { ok: true, id: input.reportId.toLowerCase() };
 }

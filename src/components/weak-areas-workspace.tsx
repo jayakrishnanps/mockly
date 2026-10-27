@@ -2,7 +2,7 @@
 
 import { useId, useMemo, useRef, useState, useSyncExternalStore } from "react";
 import { useRouter } from "next/navigation";
-import { deleteWeakAreaReport, saveWeakAreaReport } from "@/app/u/[user]/weak-areas/actions";
+import { completeWeakArea, deleteWeakAreaReport, saveWeakAreaReport } from "@/app/u/[user]/weak-areas/actions";
 import { parseWeakAreaReport, type SavedWeakAreaReport, type WeakArea, type WeakAreaFocus } from "@/lib/weak-area-report";
 import { emptyWeakAreaReportDraft, loadWeakAreaReportDraft, saveWeakAreaReportDraft, type WeakAreaReportDraft } from "@/lib/weak-area-report-draft";
 import styles from "./weak-areas-workspace.module.css";
@@ -17,6 +17,10 @@ const focuses: WeakAreaFocus[] = ["Accuracy", "Speed", "Both"];
 const subjects = ["All", "Math", "Reasoning", "GK", "English", "Other"] as const;
 const dateFormatter = new Intl.DateTimeFormat("en-IN", { day: "numeric", month: "short", year: "numeric", timeZone: "Asia/Kolkata" });
 const reportDateFormatter = new Intl.DateTimeFormat("en-IN", { day: "numeric", month: "short", year: "numeric", hour: "numeric", minute: "2-digit", timeZone: "Asia/Kolkata" });
+
+function areaKey(reportId: string, area: WeakArea): string {
+  return JSON.stringify([reportId, area.subject, area.area.toLowerCase()]);
+}
 
 export function WeakAreasWorkspace(props: { reports: SavedWeakAreaReport[]; mocks: MockChoice[]; heMocks: MockChoice[] }) {
   const hydrated = useSyncExternalStore(subscribe, () => true, () => false);
@@ -34,7 +38,9 @@ function Workspace({ reports, mocks, heMocks }: { reports: SavedWeakAreaReport[]
   const [reportId, setReportId] = useState("");
   const [subject, setSubject] = useState<string>("All");
   const [focus, setFocus] = useState<WeakAreaFocus | "All">("All");
-  const [pending, setPending] = useState<"save" | "delete" | null>(null);
+  const [pending, setPending] = useState<"save" | "delete" | "complete" | null>(null);
+  const [completion, setCompletion] = useState<{ key: string; row: AreaRow; leaving: boolean } | null>(null);
+  const [completedAreas, setCompletedAreas] = useState<Set<string>>(() => new Set());
   const [error, setError] = useState("");
   const [notice, setNotice] = useState("");
   const [confirmReset, setConfirmReset] = useState(false);
@@ -42,6 +48,8 @@ function Workspace({ reports, mocks, heMocks }: { reports: SavedWeakAreaReport[]
   const busy = useRef(false);
   const resetButton = useRef<HTMLButtonElement>(null);
   const deleteButton = useRef<HTMLButtonElement>(null);
+  const cardList = useRef<HTMLUListElement>(null);
+  const summaryTitle = useRef<HTMLHeadingElement>(null);
 
   const orderedReports = useMemo(() => [...reports].sort((a, b) => Date.parse(b.importedAt) - Date.parse(a.importedAt) || b.id.localeCompare(a.id)), [reports]);
   const latestByMock = useMemo(() => {
@@ -57,7 +65,11 @@ function Workspace({ reports, mocks, heMocks }: { reports: SavedWeakAreaReport[]
   const sourceReports = sourceId ? orderedReports.filter((report) => report.sourceTestId === sourceId) : [];
   const selectedReport = sourceId ? sourceReports.find((report) => report.id === reportId) ?? sourceReports[0] : undefined;
   const selectedReports = selectedReport ? [selectedReport] : sourceId ? [] : [...latestByMock.values()];
-  const rows: AreaRow[] = selectedReports.flatMap((report) => report.areas.map((area, index) => ({ area, report, index })));
+  const reportRows: AreaRow[] = selectedReports.flatMap((report) => {
+    const displayedReport = completion?.row.report.id === report.id ? completion.row.report : report;
+    return displayedReport.areas.map((area, index) => ({ area, report: displayedReport, index }));
+  });
+  const rows = reportRows.filter(({ report, area }) => !completedAreas.has(areaKey(report.id, area)));
   const subjectRows = rows.filter(({ area }) => subject === "All" || area.subject === subject);
   const visibleRows = subjectRows.filter(({ area }) => focus === "All" || area.focus === focus)
     .sort((a, b) => priorities[a.area.priority] - priorities[b.area.priority] || Date.parse(b.report.importedAt) - Date.parse(a.report.importedAt) || a.index - b.index);
@@ -130,6 +142,39 @@ function Workspace({ reports, mocks, heMocks }: { reports: SavedWeakAreaReport[]
     }
   }
 
+  async function checkArea(row: AreaRow, button: HTMLButtonElement) {
+    if (busy.current) return;
+    const hadFocus = document.activeElement === button;
+    busy.current = true;
+    setPending("complete");
+    setError("");
+    setNotice("");
+    const key = areaKey(row.report.id, row.area);
+    setCompletion({ key, row, leaving: false });
+    let moveFocus = false;
+    try {
+      const result = await completeWeakArea({ reportId: row.report.id, subject: row.area.subject, area: row.area.area });
+      if (!result.ok) { setError(result.error); return; }
+      setCompletion({ key, row, leaving: true });
+      await new Promise<void>((resolve) => window.setTimeout(resolve, 200));
+      moveFocus = hadFocus && (document.activeElement === button || document.activeElement === document.body);
+      setCompletedAreas((previous) => new Set(previous).add(key));
+      setNotice("Area checked off.");
+      router.refresh();
+    } catch {
+      setError("This check could not be confirmed. Please retry safely.");
+    } finally {
+      setCompletion(null);
+      setPending(null);
+      busy.current = false;
+      if (moveFocus) requestAnimationFrame(() => {
+        const next = cardList.current?.querySelector<HTMLButtonElement>("button[data-weak-check]:not(:disabled)");
+        if (next) next.focus();
+        else summaryTitle.current?.focus();
+      });
+    }
+  }
+
   return <div className={styles.workspace}>
     <div className={styles.importBar}>
       <span className={styles.caption}>{latestByMock.size} {latestByMock.size === 1 ? "mock" : "mocks"}</span>
@@ -189,7 +234,7 @@ function Workspace({ reports, mocks, heMocks }: { reports: SavedWeakAreaReport[]
       </div>
 
       <div className={styles.scopeBar}>
-        <h2>{selectedReport ? selectedReport.id === sourceReports[0]?.id ? "Latest assessment" : "Earlier assessment" : "Latest reports"}</h2>
+        <h2 ref={summaryTitle} tabIndex={-1}>{selectedReport ? selectedReport.id === sourceReports[0]?.id ? "Latest assessment" : "Earlier assessment" : "Latest reports"}</h2>
         <span>{selectedReport ? `${sourceReports.length} saved ${sourceReports.length === 1 ? "report" : "reports"}` : `${latestByMock.size} ${latestByMock.size === 1 ? "mock" : "mocks"}`}</span>
       </div>
 
@@ -211,10 +256,19 @@ function Workspace({ reports, mocks, heMocks }: { reports: SavedWeakAreaReport[]
         <div className={styles.actions}><button ref={(node) => { node?.focus(); }} type="button" disabled={pending !== null} className={styles.control} onClick={() => { setConfirmDelete(false); deleteButton.current?.focus(); }}>Cancel</button><button type="button" disabled={pending !== null} className={styles.primary} onClick={() => void removeReport()}>{pending === "delete" ? "Deleting…" : "Delete report"}</button></div>
       </div>}
 
-      {visibleRows.length === 0 ? <section className={styles.empty}><h2>{rows.length === 0 ? "No areas listed." : "No matching areas."}</h2></section> : <ul className={styles.cards} aria-label="Reported weak areas">
-        {visibleRows.map(({ area, report, index }) => <li key={`${report.id}-${index}`} className={styles.card}>
+      {visibleRows.length === 0 ? <section className={styles.empty}><h2>{rows.length === 0 ? "No areas listed." : "No matching areas."}</h2></section> : <ul ref={cardList} className={styles.cards} aria-label="Reported weak areas">
+        {visibleRows.map((row) => {
+          const { area, report } = row;
+          const key = areaKey(report.id, area);
+          const checking = completion?.key === key;
+          return <li key={key} className={`${styles.card} ${checking && completion?.leaving ? styles.leaving : ""}`}>
           <div className={styles.cardTop}><span>{area.subject}</span><span className={styles.focusLabel}><span aria-hidden="true" className={`${styles.dot} ${styles[area.focus]}`} />{area.focus}</span></div>
-          <h3>{area.area}</h3>
+          <div className={styles.areaHeading}>
+            <h3>{area.area}</h3>
+            <button type="button" data-weak-check className={styles.check} disabled={pending !== null} aria-label={`Check off and remove ${area.area}`} aria-pressed={checking} aria-busy={checking && !completion?.leaving} title="Check off this area" onClick={(event) => void checkArea(row, event.currentTarget)}>
+              <svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m5 12 4 4L19 6" /></svg>
+            </button>
+          </div>
           <div className={styles.priority} aria-label={`${area.priority} priority`}><span aria-hidden="true" className={styles.priorityMeter}>{[0, 1, 2].map((dot) => <i key={dot} className={dot < priorityDots[area.priority] ? styles.filled : undefined} />)}</span><span>{area.priority} priority</span></div>
           {!sourceId && <div className={styles.source}>
             <span>{report.sourceTitle}</span>
@@ -223,7 +277,8 @@ function Workspace({ reports, mocks, heMocks }: { reports: SavedWeakAreaReport[]
               {(reportCounts.get(report.sourceTestId) ?? 0) > 1 && <button type="button" onClick={() => { setSourceId(report.sourceTestId); setReportId(""); setConfirmDelete(false); }}>{reportCounts.get(report.sourceTestId)} reports <span aria-hidden="true">↗</span></button>}
             </div>
           </div>}
-        </li>)}
+          </li>;
+        })}
       </ul>}
     </>}
   </div>;

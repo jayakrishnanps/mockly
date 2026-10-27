@@ -72,5 +72,30 @@ export function createWeakAreaReportStore(database: typeof db) {
       if (!isUuid(id)) throw new WeakAreaReportError("invalid", "This report ID is invalid.");
       await database.delete(weakAreaReports).where(eq(weakAreaReports.id, id.toLowerCase()));
     },
+
+    async removeArea(input: unknown): Promise<void> {
+      if (!isRecord(input) || !isUuid(input.reportId) ||
+          Object.keys(input).some((key) => !["reportId", "subject", "area"].includes(key))) {
+        throw new WeakAreaReportError("invalid", "This weak area could not be identified. Reload the page and try again.");
+      }
+      const checked = validateWeakAreaReportInput({
+        sourceTestId: input.reportId,
+        areas: [{ subject: input.subject, area: input.area, focus: "Accuracy", priority: "Low" }],
+      });
+      if (!checked.ok) throw new WeakAreaReportError("invalid", checked.error);
+      const target = checked.value.areas[0];
+      const reportId = input.reportId.toLowerCase();
+
+      await database.transaction(async (tx) => {
+        const [row] = await tx.select().from(weakAreaReports)
+          .where(eq(weakAreaReports.id, reportId)).for("update");
+        if (!row) return;
+        const saved = readReport(row);
+        const remaining = saved.areas.filter((area) =>
+          area.subject !== target.subject || area.area.toLowerCase() !== target.area.toLowerCase());
+        if (remaining.length === saved.areas.length) return;
+        await tx.update(weakAreaReports).set({ areas: remaining }).where(eq(weakAreaReports.id, reportId));
+      });
+    },
   };
 }
