@@ -5,8 +5,6 @@ import { getRememberedUserFromCookies } from "@/lib/server-user";
 import { attemptStore } from "@/server/attempts";
 import { AttemptError } from "@/server/attempt-store";
 import { ExamClient } from "@/components/exam-client";
-import "katex/dist/katex.min.css";
-import "@/app/studio/studio.css";
 
 export const dynamic = "force-dynamic";
 export const metadata = { title: "Exam" };

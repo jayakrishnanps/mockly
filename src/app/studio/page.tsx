@@ -6,8 +6,6 @@ import { getRememberedUserFromCookies } from "@/lib/server-user";
 import { mockStore } from "@/server/mocks";
 import { Brand } from "@/components/brand";
 import { StudioWorkspace } from "@/components/studio-workspace";
-import "katex/dist/katex.min.css";
-import "./studio.css";
 
 export const metadata: Metadata = { title: "Studio" };
 

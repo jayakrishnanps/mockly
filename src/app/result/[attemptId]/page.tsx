@@ -12,8 +12,6 @@ import { Brand } from "@/components/brand";
 import { ResultProgress } from "@/components/result-progress";
 import { AnswerReview } from "@/components/answer-review";
 import { SharedMockComparison } from "@/components/shared-mock-comparison";
-import "katex/dist/katex.min.css";
-import "@/app/studio/studio.css";
 
 export const metadata = { title: "Result" };
 const dateFormatter = new Intl.DateTimeFormat("en-IN", { day: "numeric", month: "short", year: "numeric", hour: "numeric", minute: "numeric", timeZone: "Asia/Kolkata" });

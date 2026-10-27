@@ -7,8 +7,6 @@ import { BankWorkspace } from "@/components/bank-workspace";
 import { BankMockForm } from "@/components/bank-mock-form";
 import { BankDeleteButton } from "@/components/bank-delete-button";
 import { QuestionContent } from "@/components/question-content";
-import "katex/dist/katex.min.css";
-import "@/app/studio/studio.css";
 
 export const metadata = { title: "Question bank" };
 

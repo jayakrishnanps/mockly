@@ -10,8 +10,6 @@ import { isUuid } from "@/lib/mock-validation";
 import { mockStore } from "@/server/mocks";
 import { StartButton } from "./start-button";
 import { UserStats } from "./user-stats";
-import "katex/dist/katex.min.css";
-import "@/app/studio/studio.css";
 
 export const metadata = { title: "Mock details" };
 const dateFormatter = new Intl.DateTimeFormat("en-IN", { day: "numeric", month: "short", year: "numeric", timeZone: "Asia/Kolkata" });

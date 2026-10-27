@@ -5,6 +5,8 @@ import Markdown from "react-markdown";
 import remarkMath from "remark-math";
 import rehypeKatex from "rehype-katex";
 import { remarkStatementBreaks } from "@/lib/remark-statement-breaks";
+import "katex/dist/katex.min.css";
+import "./question-content.css";
 
 // Memoization keeps a large draft from re-rendering every formula on each keystroke.
 export const QuestionContent = memo(function QuestionContent({ text }: { text: string }) {
