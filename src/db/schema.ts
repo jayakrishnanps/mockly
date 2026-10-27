@@ -95,3 +95,10 @@ export const attempts = pgTable("attempts", {
 		}).onDelete("cascade"),
 	check("attempts_taken_by_check", sql`taken_by = ANY (ARRAY['JK'::text, 'HE'::text])`),
 ]);
+
+export const forestPlants = pgTable("forest_plants", {
+	attemptId: uuid("attempt_id").primaryKey().notNull(),
+	plantedAt: timestamp("planted_at", { withTimezone: true, mode: 'string' }).notNull(),
+}, (table) => [
+	index("forest_plants_planted_at_idx").on(table.plantedAt),
+]);

@@ -30,13 +30,15 @@ export function ForestGarden({ counts }: { counts: ForestCounts }) {
   return (
     <section aria-label="Your forest" className={styles.panel}>
       <div className={styles.controls}>
-        <label htmlFor={`${id}-period`}>View</label>
-        <select id={`${id}-period`} value={period} onChange={(event) => {
-          const selected = FOREST_PERIODS.find((option) => option.value === event.target.value);
-          if (selected) setPeriod(selected.value);
-        }}>
-          {FOREST_PERIODS.map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}
-        </select>
+        <div role="group" aria-label="Forest period" className={styles.periods}>
+          {FOREST_PERIODS.map((option) => <button
+            key={option.value}
+            type="button"
+            aria-pressed={period === option.value}
+            onClick={() => setPeriod(option.value)}
+            className={styles.period}
+          >{option.label}</button>)}
+        </div>
       </div>
 
       <div className={styles.scene}>
