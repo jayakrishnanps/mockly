@@ -8,12 +8,13 @@ import { arrayContains, eq, inArray } from "drizzle-orm";
 import * as schema from "../src/db/schema.ts";
 import { createMockStore } from "../src/server/mock-store.ts";
 import { createAttemptStore } from "../src/server/attempt-store.ts";
-import { defaultMetadata, validateSaveInput } from "../src/lib/mock-validation.ts";
+import { defaultMetadata, validateMetadata } from "../src/lib/mock-validation.ts";
+import { insertLegacyMockFixture } from "./helpers/legacy-mock-fixture.mjs";
 import { parseQuestions } from "../src/lib/parser.ts";
 
 // Opt in: $env:MOCKLY_INTEGRATION_TESTS='1'; npm test
 // Only temporary mocks allocated below and their cascaded questions/attempts are deleted.
-test("Neon mock transactions, retries, assignments, append and cascade deletion", { skip: process.env.MOCKLY_INTEGRATION_TESTS !== "1" }, async (t) => {
+test("existing mocks retain assignments, question reads and per-person deletion", { skip: process.env.MOCKLY_INTEGRATION_TESTS !== "1" }, async (t) => {
   config({ path: ".env.local", quiet: true });
   assert.ok(process.env.DATABASE_URL);
   const url = new URL(process.env.DATABASE_URL);
@@ -43,15 +44,15 @@ Ans: D`).valid.map((question) => ({ ...question, id: randomUUID() }));
   function request(users = ["JK"], overrides = {}) {
     const testId = randomUUID();
     ids.push(testId);
-    const checked = validateSaveInput({ mode: "create", testId, metadata: { ...defaultMetadata(), title: `[Stage 3 verification] ${testId}`, forUsers: users, ...overrides }, questions: batch() });
+    const checked = validateMetadata({ ...defaultMetadata(), title: `[Legacy mock verification] ${testId}`, forUsers: users, ...overrides });
     assert.ok(checked.value);
-    return checked.value;
+    return { testId, metadata: checked.value, questions: batch() };
   }
   const jk = request();
   const he = request(["HE"], { durationMinutes: "35", marksCorrect: "3.25", marksWrong: "0.75" });
   const shared = request(["JK", "HE"]);
-  await t.test("JK-only, HE-only and shared saves use actual rows and dashboard predicates", async () => {
-    for (const input of [jk, he, shared]) await store.save(input);
+  await t.test("JK-only, HE-only and shared legacy mocks retain their existing question data", async () => {
+    for (const input of [jk, he, shared]) await insertLegacyMockFixture(db, input);
     for (const [user, expected] of [["JK", [jk.testId, shared.testId]], ["HE", [he.testId, shared.testId]]]) {
       const rows = await db.select({ id: schema.tests.id }).from(schema.tests).where(arrayContains(schema.tests.forUsers, [user]));
       assert.deepEqual(rows.filter((row) => ids.includes(row.id)).map((row) => row.id).sort(), expected.sort());
@@ -67,43 +68,8 @@ Ans: D`).valid.map((question) => ({ ...question, id: randomUUID() }));
     assert.equal(loaded.questions[0].questionText, he.questions[0].questionText);
     assert.deepEqual(loaded.questions[0].options, he.questions[0].options);
   });
-  await t.test("double create and a later retry produce one test and one question batch", async () => {
-    const input = request();
-    await Promise.all([store.save(input), store.save(input)]);
-    assert.equal((await store.get(input.testId)).questions.length, 2);
-    assert.equal((await store.save(input)).alreadySaved, true);
-    await assert.rejects(store.save({ ...input, metadata: { ...input.metadata, title: "changed" } }), { code: "conflict" });
-  });
-  await t.test("a failed question insert rolls back the parent and the entire batch", async () => {
-    const input = request();
-    input.questions[1].options.push("invalid fifth option");
-    await assert.rejects(store.save(input));
-    assert.equal(await store.get(input.testId), null);
-    assert.equal((await db.select().from(schema.questions).where(eq(schema.questions.testId, input.testId))).length, 0);
-  });
-  await t.test("concurrent appends continue positions and leave old questions intact; retry is safe", async () => {
-    const before = (await store.get(jk.testId)).questions;
-    const append = { mode: "append", testId: jk.testId, questions: batch() };
-    const second = { ...append, questions: batch() };
-    await Promise.all([store.save(append), store.save(append), store.save(second)]);
-    const loaded = await store.get(jk.testId);
-    assert.deepEqual(loaded.questions.map((q) => q.position), [1, 2, 3, 4, 5, 6]);
-    assert.deepEqual(loaded.questions.slice(0, 2), before);
-    assert.equal((await store.save(jk)).alreadySaved, true, "original create can be retried after an append");
-    assert.equal((await store.get(jk.testId)).questions.length, 6);
-  });
-  await t.test("append failure and mixed previously-saved IDs cannot partially save", async () => {
-    const before = (await store.get(jk.testId)).questions;
-    const invalid = batch();
-    invalid[1].correctIndex = 8;
-    await assert.rejects(store.save({ mode: "append", testId: jk.testId, questions: invalid }));
-    await assert.rejects(store.save({ mode: "append", testId: jk.testId, questions: [jk.questions[0], ...batch()] }), { code: "conflict" });
-    assert.deepEqual((await store.get(jk.testId)).questions, before);
-  });
-  await t.test("missing reads/appends and parent deletion honor the existing cascade", async () => {
-    const missing = randomUUID();
-    assert.equal(await store.get(missing), null);
-    await assert.rejects(store.save({ mode: "append", testId: missing, questions: batch() }), { code: "not-found" });
+  await t.test("missing reads and parent deletion honor the existing cascade", async () => {
+    assert.equal(await store.get(randomUUID()), null);
     await store.remove(jk.testId, "JK");
     await store.remove(jk.testId, "JK");
     assert.equal(await store.get(jk.testId), null);

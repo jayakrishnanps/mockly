@@ -154,15 +154,26 @@ function parseSubtaskReport(lines: string[], sourceTestId: string): WeakAreaRepo
   const areas = [];
   let cursor = 2;
   while (cursor < lines.length) {
-    const area = structuralLine(lines[cursor++]).match(/^##[ \t]+(.+)$/)?.[1];
-    const subject = structuralLine(lines[cursor++]).match(/^Subject:[ \t]*(.+)$/)?.[1];
-    const focus = structuralLine(lines[cursor++]).match(/^Focus:[ \t]*(.+)$/)?.[1];
-    const priority = structuralLine(lines[cursor++]).match(/^Priority:[ \t]*(.+)$/)?.[1];
+    const titleLine = structuralLine(lines[cursor++]);
+    const area = titleLine.startsWith("#") ? titleLine.match(/^##[ \t]+(.+)$/)?.[1] : titleLine;
+    const metadata = structuralLine(lines[cursor]);
+    const combined = metadata.match(/^Subject:[ \t]*(.+?)[ \t]+Focus:[ \t]*(.+?)[ \t]+Priority:[ \t]*(.+)$/);
+    let subject: string | undefined;
+    let focus: string | undefined;
+    let priority: string | undefined;
+    if (combined) {
+      [, subject, focus, priority] = combined;
+      cursor++;
+    } else {
+      subject = structuralLine(lines[cursor++]).match(/^Subject:[ \t]*(.+)$/)?.[1];
+      focus = structuralLine(lines[cursor++]).match(/^Focus:[ \t]*(.+)$/)?.[1];
+      priority = structuralLine(lines[cursor++]).match(/^Priority:[ \t]*(.+)$/)?.[1];
+    }
     if (!area || !subject || !focus || !priority) {
       return { ok: false, error: "Each area needs ## its name, then Subject:, Focus: and Priority: lines." };
     }
     const subtasks = [];
-    while (cursor < lines.length && !/^##[ \t]+/.test(lines[cursor])) {
+    while (cursor < lines.length && /^-[ \t]+/.test(lines[cursor])) {
       const bullet = lines[cursor++].match(/^-[ \t]+(.+)$/)?.[1].trim();
       const task = bullet?.startsWith("[") ? bullet.match(/^\[ \][ \t]+(.+)$/)?.[1] : bullet;
       if (!task) return { ok: false, error: "Use one - practice step or unchecked - [ ] step per line, with no extra headings or descriptions." };
@@ -182,7 +193,7 @@ Use the 80/20 rule as a focus heuristic: choose the smallest set of high-impact 
 
 Each step must name the exact operands, number range, confusion or question pattern supported by the record, say what to do, and give a finite completion condition. For example, only when supported: "Recall 9 × 7 and 7 × 9 in 10 mixed trials; record any mistakes." For nonnumeric subjects, name the specific relationship, fact group or language pattern and a bounded exercise. Do not invent an unsupported narrower problem or arbitrary time target. Prefer an accuracy step, a targeted repeated exercise and a check against the person's recorded pace when relevant; avoid several versions of the same task. Completing steps records practice, not proof of mastery.
 
-Return only the format below, repeating its area block for zero to twelve current areas. If none is supported, return just the report header and Mock line. No preamble, code fence, tables, extra headings, explanations, answers, progress claims, invented scores, links or HTML. Put the most important areas first. A question type absent from the record is unassessed.
+Return the format below inside one fenced markdown code block, with nothing outside it. Preserve every # marker and line break so the block can be copied on mobile. Repeat its area block for zero to twelve current areas. If none is supported, include just the report header and Mock line inside the block. No preamble, tables, extra headings, explanations, answers, progress claims, invented scores, links or HTML. Put the most important areas first. A question type absent from the record is unassessed.
 
 For each area:
 - Name: short everyday skill, usually 3–9 words, at most 100 characters. Examples: "Multiplying 9 by 7", "Dividing by 9", "Reverse percentages", "Combining work rates". Use these only when supported; never invent a narrower issue. Distinguish separate difficulties rather than vague combined chapter labels.

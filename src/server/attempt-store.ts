@@ -132,7 +132,6 @@ export function createAttemptStore(database: Database, now: () => number = Date.
     async startOrResume(testId: string, user: User, requestedCount?: unknown) {
       if (!isUuid(testId) || !isUser(user)) throw new AttemptError("invalid", "Invalid start request.");
       return database.transaction(async (tx) => {
-        // Coordinates duplicate starts with Studio's append/delete operations.
         const [mock] = await tx.select().from(tests).where(eq(tests.id, testId)).for("update");
         if (!mock || mock.deletedAt) throw new AttemptError("not-found", "This mock does not exist.");
         if (!mock.forUsers.includes(user)) throw new AttemptError("forbidden", "This mock is not assigned to you.");

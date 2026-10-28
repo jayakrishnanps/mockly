@@ -1,6 +1,6 @@
 export const FORMATTING_PROMPT = String.raw`Convert the questions I provide separately into Mockly's import format. Do not generate a topic, sample questions, or additional questions. If I have not supplied questions yet, ask me to send them.
 
-Output only the formatted questions as plain text, without a preamble, Markdown code fence, headings, explanations, or a separate answer key.
+Output all formatted questions inside one fenced markdown code block, with nothing outside it. Preserve every marker and line break so the block can be copied on mobile. Do not add a preamble, headings, explanations, or a separate answer key.
 
 For each question:
 - Start a new line with Q followed by its sequential number and a period, then the question text.

@@ -1,4 +1,4 @@
-import { isRecord, isUuid, validateMetadata, validateSaveInput } from "./mock-validation.ts";
+import { isRecord, isUuid, validateMetadata, validateQuestionBatch } from "./mock-validation.ts";
 import type { MetadataErrors, QuestionInput, SavedMetadata } from "./mock-validation";
 
 export const BANK_PAGE_SIZE = 25;
@@ -27,9 +27,9 @@ export function validateBankAppend(input: unknown): Validation<BankAppendInput> 
   if (!isRecord(input) || !isUuid(input.bankId)) {
     return { value: null, error: "This bank request is invalid. Reload and try again." };
   }
-  const checked = validateSaveInput({ mode: "append", testId: input.bankId, questions: input.questions });
+  const checked = validateQuestionBatch(input.questions);
   if (!checked.value) return checked;
-  return { value: { bankId: checked.value.testId, questions: checked.value.questions } };
+  return { value: { bankId: input.bankId.toLowerCase(), questions: checked.value } };
 }
 
 export function validateBankMock(input: unknown): Validation<BankMockInput> {

@@ -5,8 +5,9 @@ import { usePathname, useRouter } from "next/navigation";
 import { useEffect } from "react";
 import { Brand } from "@/components/brand";
 import { forgetUser, rememberUser, type User } from "@/lib/users";
+import styles from "./dashboard-header.module.css";
 
-export function DashboardHeader({ user }: { user: User }) {
+export function DashboardHeader({ user, jkLevel = 1 }: { user: User; jkLevel?: number }) {
   const pathname = usePathname();
   const router = useRouter();
 
@@ -33,20 +34,10 @@ export function DashboardHeader({ user }: { user: User }) {
         <div className={user === "JK" ? "flex min-h-20 flex-wrap items-center justify-between gap-x-2 gap-y-3 py-4 sm:py-5" : "flex min-h-18 flex-wrap items-center justify-between gap-x-2 gap-y-1 py-2 sm:py-3"}>
           <Brand user={user} />
           <div className="flex items-center gap-2 sm:gap-4">
-            {user === "JK" && (
-              <Link
-                href="/studio"
-                aria-label="Open Studio"
-                title="Studio"
-                className="flex size-11 items-center justify-center rounded-md border border-black bg-white text-2xl text-black transition-colors hover:bg-black hover:text-white"
-              >
-                <span aria-hidden="true">+</span>
-              </Link>
-            )}
             <div className="flex items-center gap-2 sm:gap-3">
-              <span className={user === "JK" ? "border-r border-black pr-3 text-sm font-semibold leading-none tracking-wide text-black sm:pr-4" : "identity-initials border-r border-accent/20 pr-3 text-lg leading-none text-accent sm:pr-4"} aria-label={`Current user: ${user}`}>
-                {user}
-              </span>
+              {user === "JK" ? <Link href="/u/JK/progress" className={styles.profileLink} aria-label={`JK progress, level ${jkLevel}`} aria-current={pathname === "/u/JK/progress" ? "page" : undefined}>
+                <span>JK</span><span className={styles.level} aria-hidden="true">{jkLevel}</span>
+              </Link> : <span className="identity-initials border-r border-accent/20 pr-3 text-lg leading-none text-accent sm:pr-4" aria-label="Current user: HE">HE</span>}
               <button type="button" onClick={switchUser} className="min-h-11 rounded-md px-1 text-xs font-medium text-muted transition-colors hover:text-foreground">
                 Switch user
               </button>

@@ -57,6 +57,13 @@
       "when": 1793123518712,
       "tag": "0007_he_weak_reports",
       "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "7",
+      "when": 1793172500825,
+      "tag": "0008_jk_progress",
+      "breakpoints": true
     }
   ]
 }

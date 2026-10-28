@@ -72,6 +72,8 @@ test("HE follow-up prompt asks for beginner spoken Malayalam and renderer-compat
   assert.ok(prompt.includes("\\frac{a}{b}"));
   assert.ok(prompt.includes("### Understand"));
   assert.ok(prompt.includes("### Practise"));
+  assert.ok(prompt.includes("one fenced markdown code block, with nothing outside it"));
+  assert.ok(prompt.includes("Preserve every # marker and line break"));
   assert.ok(prompt.split(/\s+/).length < 650);
   assert.throws(() => buildHEWeakReportPrompt("invalid", "Mock"), /valid mock ID/);
 });

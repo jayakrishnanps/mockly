@@ -176,6 +176,8 @@ function parseBlock(raw: string): ParsedQuestion | InvalidQuestion {
 
 /** Pure parser: no storage, rendering, IDs, or database access. */
 export function parseQuestions(source: string): ParseResult {
+  const fenced = source.match(/^[ \t\r\n]*(`{3,}|~{3,})(?:markdown|md|text)?[ \t]*(?:\r\n|\r|\n)([\s\S]*?)(?:\r\n|\r|\n)\1[ \t\r\n]*$/i);
+  if (fenced) source = fenced[2];
   const result: ParseResult = { total: 0, valid: [], invalid: [] };
   const starts = linesOf(source)
     .filter((line) => QUESTION_HEADER.test(line.text))

@@ -95,6 +95,8 @@ test("the separate follow-up prompt binds its report to the mock and keeps the f
   assert.ok(prompt.includes("do not infer causes"));
   assert.ok(prompt.includes('"Multiplying 9 by 7"'));
   assert.ok(prompt.includes("never invent a narrower issue"));
+  assert.ok(prompt.includes("one fenced markdown code block, with nothing outside it"));
+  assert.ok(prompt.includes("Preserve every # marker and line break"));
   assert.ok(prompt.split(/\s+/).length < 700);
   assert.throws(() => buildWeakAreaReportPrompt("invalid", "Mock"), /valid mock ID/);
 });
@@ -116,6 +118,33 @@ test("v2 accepts empty reports, complete fences, case-normalised categories and 
   assert.deepEqual(parseWeakAreaReport(`\`\`\`md\n${report}\n\`\`\``.replaceAll("\n", "\r\n")), {
     ok: true, value: { sourceTestId: mockId, areas: [taskArea()] },
   });
+});
+
+test("mobile copies keep bare area titles and collapsed metadata unambiguous", () => {
+  const sourceTestId = "48877d82-b59a-4c96-8ade-700ea4267d8a";
+  const tasks = [
+    "Recall 4 × 7 and 7 × 4 in 10 mixed trials; answer every trial and record any mistakes.",
+    "Complete 10 alternating prompts of 4 × 7 and 7 × 4 without checking an earlier answer; finish all 10 and record the time for each.",
+    "Complete a final 10 mixed trials of 4 × 7 and 7 × 4; compare the recorded times with the recent attempt times of 7.16s for 4 × 7 and 7.05s for 7 × 4.",
+  ];
+  const mobile = `Mockly Weak Areas v2\n\nMock: ${sourceTestId}\n\nMultiplying 4 by 7 and 7 by 4\n\nSubject: Math Focus: Speed Priority: High\n\n${tasks.map((text) => `- [ ] ${text}`).join("\n")}`;
+  const expected = {
+    ok: true,
+    value: { sourceTestId, areas: [{ subject: "Math", area: "Multiplying 4 by 7 and 7 by 4", focus: "Speed", priority: "High", subtasks: tasks.map((text) => ({ text, completed: false })) }] },
+  };
+  assert.deepEqual(parseWeakAreaReport(mobile), expected);
+  assert.deepEqual(parseWeakAreaReport(`\`\`\`markdown\n${mobile}\n\`\`\``), expected);
+  const second = mobile.slice(mobile.indexOf("Multiplying 4 by 7")).replace("Multiplying 4 by 7 and 7 by 4", "Multiplying 4 by 8 and 8 by 4");
+  const multiple = parseWeakAreaReport(`${mobile}\n\n${second}`);
+  assert.equal(multiple.ok, true);
+  assert.deepEqual(multiple.value.areas.map((area) => area.area), ["Multiplying 4 by 7 and 7 by 4", "Multiplying 4 by 8 and 8 by 4"]);
+  for (const malformed of [
+    mobile.replace("Subject: Math Focus: Speed Priority: High", "Subject: Science Focus: Speed Priority: High"),
+    mobile.replace("Subject: Math Focus: Speed Priority: High", "Subject: Math Priority: High"),
+    mobile.replace("Subject: Math Focus: Speed Priority: High", "Subject: Math Focus: Speed Priority: High extra"),
+    mobile.replace("- [ ] Recall", "- [x] Recall"),
+    `${mobile}\nHere are some extra tips.`,
+  ]) assert.equal(parseWeakAreaReport(malformed).ok, false, malformed);
 });
 
 test("pasted v2 reports accept plain practice bullets and Markdown metadata line breaks", () => {

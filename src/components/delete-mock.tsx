@@ -2,7 +2,7 @@
 
 import { useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import { deleteMock } from "@/app/studio/actions";
+import { deleteMock } from "@/app/test/actions";
 import type { User } from "@/lib/users";
 
 const focusCancel = (node: HTMLButtonElement | null) => { node?.focus(); };

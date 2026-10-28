@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
 import { parseQuestions } from "../src/lib/parser.ts";
+import { FORMATTING_PROMPT } from "../src/lib/formatting-prompt.ts";
 
 function question(number = 1, { syntax = "parentheses", answer = "Ans: A", prompt = "Choose the correct answer." } = {}) {
   const marker = (letter) => syntax === "parentheses" ? `(${letter})` : `${letter}${syntax === "dot" ? "." : ")"}`;
@@ -21,6 +22,28 @@ test("valid batch keeps nonsequential and repeated source numbers", () => {
   assert.equal(result.invalid.length, 0);
   assert.deepEqual(result.valid.map((item) => item.sourceNumber), ["9", "2", "9"]);
   assert.deepEqual(result.valid[0].options, ["Option 1", "Option 2", "Option 3", "Option 4"]);
+});
+
+test("question formatting requests one copyable code block with intact import markers", () => {
+  assert.ok(FORMATTING_PROMPT.includes("one fenced markdown code block, with nothing outside it"));
+  assert.ok(FORMATTING_PROMPT.includes("Preserve every marker and line break"));
+  assert.ok(FORMATTING_PROMPT.includes("Statement I:"));
+  assert.ok(FORMATTING_PROMPT.includes("single literal backslash"));
+});
+
+test("complete copied code blocks unwrap without changing question content or validation", () => {
+  const source = [question(1, { prompt: "Calculate $\\frac{1}{2}$.  \r\nStatement I: First.\r\nStatement II: Second." }), question(2)].join("\r\n\r\n");
+  for (const fence of ["```", "~~~", "````"]) {
+    for (const language of ["", "markdown", "md", "text"]) {
+      assert.deepEqual(parseQuestions(` \r\n${fence}${language}\r\n${source}\r\n${fence}\r\n `), parseQuestions(source));
+    }
+  }
+  const nested = question(1, { prompt: "Read this code:\n```text\nA) Not an option\n```" });
+  assert.deepEqual(parseQuestions(`\`\`\`\`markdown\n${nested}\n\`\`\`\``), parseQuestions(nested));
+  const invalid = question(1).replace("(D) Option 4\n", "");
+  assert.deepEqual(parseQuestions(`\`\`\`markdown\n${invalid}\n\`\`\``), parseQuestions(invalid));
+  const malformed = parseQuestions(`\`\`\`markdown\n${question(1)}\n~~~`);
+  assert.ok(malformed.invalid.length > 0);
 });
 
 for (const syntax of ["parentheses", "paren", "dot"]) {

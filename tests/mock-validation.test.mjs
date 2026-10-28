@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import { randomUUID } from "node:crypto";
 import { test } from "node:test";
-import { defaultMetadata, validateMetadata, validateSaveInput, isUuid } from "../src/lib/mock-validation.ts";
+import { defaultMetadata, validateMetadata, validateQuestionBatch, isUuid } from "../src/lib/mock-validation.ts";
 
 const metadata = () => ({ ...defaultMetadata(), title: "  SSC practice  ", forUsers: ["JK"] });
 const question = () => ({ id: randomUUID(), questionText: "**Simplify** $\\frac{3}{4}$", options: ["1", "2", "3", "4"], correctIndex: 2 });
@@ -34,21 +34,19 @@ for (const [field, values] of Object.entries({
 
 test("server validation permits only explicit, valid question fields", () => {
   const q = question();
-  const id = randomUUID();
-  const result = validateSaveInput({ mode: "create", testId: id.toUpperCase(), metadata: metadata(), questions: [{ ...q, raw: "do not save", errors: ["do not save"], position: 99, testId: "untrusted" }] });
-  assert.equal(result.value.testId, id);
-  assert.deepEqual(result.value.questions, [q]);
+  const result = validateQuestionBatch([{ ...q, id: q.id.toUpperCase(), raw: "do not save", errors: ["do not save"], position: 99, testId: "untrusted" }]);
+  assert.deepEqual(result.value, [q]);
 });
 
 test("server validation rejects tampered and incomplete question data", () => {
   const q = question();
   for (const questions of [[], [q, q], [null], [{ ...q, id: "bad" }], [{ ...q, questionText: " " }], [{ ...q, options: ["1", "2", "3"] }], [{ ...q, options: ["1", " ", "3", "4"] }], [{ ...q, correctIndex: -1 }], [{ ...q, correctIndex: 4 }], [{ ...q, correctIndex: 0.5 }]]) {
-    assert.equal(validateSaveInput({ mode: "append", testId: randomUUID(), questions }).value, null);
+    assert.equal(validateQuestionBatch(questions).value, null);
   }
 });
 
-test("append skips metadata; invalid route/request identities are rejected", () => {
-  assert.ok(validateSaveInput({ mode: "append", testId: randomUUID(), questions: [question()] }).value);
-  for (const input of [null, {}, { mode: "delete" }, { mode: "append", testId: "abc" }]) assert.equal(validateSaveInput(input).value, null);
+test("question batches require an array and path-like identities are rejected", () => {
+  assert.deepEqual(validateQuestionBatch([question()]).value.length, 1);
+  for (const input of [null, {}, { mode: "create" }, "questions"]) assert.equal(validateQuestionBatch(input).value, null);
   assert.equal(isUuid("../../../etc"), false);
 });

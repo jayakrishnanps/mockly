@@ -5,7 +5,7 @@ import {
   emptyBankForm, emptyBankMock, loadBankForm, saveBankForm, loadBankMock, saveBankMock,
   loadBankQuestions, saveBankQuestions, nextBankBatch, retryBankBatch,
 } from "../src/lib/bank-draft.ts";
-import { appendParsedBatch, emptyStudioDraft, saveStudioDraft, loadStudioDraft } from "../src/lib/studio-draft.ts";
+import { appendParsedBatch, emptyQuestionDraft } from "../src/lib/question-draft.ts";
 import { parseQuestions } from "../src/lib/parser.ts";
 
 const source = "Q1. What is 2 + 2?\nA) 3\nB) 4\nC) 5\nD) 6\nAns: B";
@@ -15,17 +15,16 @@ function memoryStorage() {
   return { values, getItem: (key) => values.get(key) ?? null, setItem: (key, value) => values.set(key, value) };
 }
 
-test("bank question drafts stay separate from Studio and other banks", () => {
+test("bank question drafts stay separate from removed Studio storage and other banks", () => {
   const storage = memoryStorage();
   const bankId = randomUUID();
   const otherId = randomUUID();
-  const context = { kind: "append", testId: bankId };
-  const draft = appendParsedBatch(emptyStudioDraft(context), parseQuestions(source), randomUUID);
+  const draft = appendParsedBatch(emptyQuestionDraft(bankId), parseQuestions(source), randomUUID);
   draft.input = "Unfinished paste";
   saveBankQuestions(bankId, draft, () => storage);
-  saveStudioDraft({ ...draft, input: "Studio paste" }, () => storage);
+  storage.setItem(`mockly:studio-draft:v2:test:${bankId}`, "Old standalone draft");
   assert.deepEqual(loadBankQuestions(bankId, () => storage).draft, { ...draft, pendingQuestionIds: null });
-  assert.equal(loadStudioDraft(() => storage, context).draft.input, "Studio paste");
+  assert.equal(storage.getItem(`mockly:studio-draft:v2:test:${bankId}`), "Old standalone draft");
   assert.equal(loadBankQuestions(otherId, () => storage).draft.questions.length, 0);
 });
 
@@ -55,7 +54,7 @@ test("corrupt bank forms remain untouched on load and blocked storage is reporte
   const denied = () => { throw new Error("Unavailable"); };
   assert.ok(saveBankForm(emptyBankForm(), denied));
   assert.ok(loadBankMock(bankId, "Bank", 30, denied).storageError);
-  assert.ok(saveBankQuestions(bankId, emptyStudioDraft(), denied));
+  assert.ok(saveBankQuestions(bankId, emptyQuestionDraft(bankId), denied));
 });
 
 test("bounded question batches preserve IDs, ordering, and Unicode payload limits", () => {
@@ -80,8 +79,7 @@ test("bounded question batches preserve IDs, ordering, and Unicode payload limit
 test("a lost response retains the exact batch through refresh and later imports", () => {
   const storage = memoryStorage();
   const bankId = randomUUID();
-  const context = { kind: "append", testId: bankId };
-  const original = appendParsedBatch(emptyStudioDraft(context), parseQuestions(source), randomUUID);
+  const original = appendParsedBatch(emptyQuestionDraft(bankId), parseQuestions(source), randomUUID);
   const pendingQuestionIds = original.questions.map((question) => question.id);
   const draft = { ...original, pendingQuestionIds };
   const submitted = retryBankBatch(draft);

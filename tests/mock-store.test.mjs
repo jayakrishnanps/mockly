@@ -1,0 +1,32 @@
+import assert from "node:assert/strict";
+import { randomUUID } from "node:crypto";
+import { test } from "node:test";
+import { eq } from "drizzle-orm";
+import { attempts, questions, tests } from "../src/db/schema.ts";
+import { createMockStore } from "../src/server/mock-store.ts";
+import { createLocalDatabase } from "./helpers/local-database.mjs";
+import { insertLegacyMockFixture } from "./helpers/legacy-mock-fixture.mjs";
+
+test("removing standalone creation preserves existing shared mocks and per-person history deletion", async (t) => {
+  const { database, close } = await createLocalDatabase();
+  t.after(close);
+  const store = createMockStore(database);
+  const testId = randomUUID();
+  const question = { id: randomUUID(), questionText: "An existing question", options: ["one", "two", "three", "four"], correctIndex: 1 };
+  await insertLegacyMockFixture(database, { testId, metadata: { title: "Existing shared mock", forUsers: ["JK", "HE"] }, questions: [question] });
+  for (const takenBy of ["JK", "HE"]) await database.insert(attempts).values({ id: randomUUID(), testId, takenBy, submittedAt: "2026-10-28T07:00:00Z" });
+  const original = await store.get(testId);
+  assert.equal(original.questionCount, 1);
+  assert.equal(original.questions[0].questionText, question.questionText);
+  await store.remove(testId, "JK");
+  await store.remove(testId, "JK");
+  const remaining = await store.get(testId);
+  assert.deepEqual(remaining.forUsers, ["HE"]);
+  assert.deepEqual(remaining.questions, original.questions);
+  assert.deepEqual((await database.select().from(attempts).where(eq(attempts.testId, testId))).map((attempt) => attempt.takenBy), ["HE"]);
+  await store.remove(testId, "HE");
+  assert.equal(await store.get(testId), null);
+  assert.equal((await database.select().from(tests).where(eq(tests.id, testId))).length, 0);
+  assert.equal((await database.select().from(questions).where(eq(questions.testId, testId))).length, 0);
+  assert.equal((await database.select().from(attempts).where(eq(attempts.testId, testId))).length, 0);
+});

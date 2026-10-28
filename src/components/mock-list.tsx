@@ -5,6 +5,7 @@ import { useState } from "react";
 import { EmptyState } from "@/components/empty-state";
 import { matchesMockFilter } from "@/lib/mock-filter";
 import type { User } from "@/lib/users";
+import styles from "./mock-list.module.css";
 
 type MockListItem = {
   id: string;
@@ -40,9 +41,10 @@ export function MockList({ mocks, searchable, user }: { mocks: MockListItem[]; s
     </div>}
     {filtered.length === 0 ? <EmptyState title="No matching mocks.">Try another title or creation date, or clear the filters.</EmptyState> :
       <ul className={isJK ? "practice-list divide-y divide-black border-y border-black bg-white" : "he-mock-grid"} aria-label="Assigned mocks">
-        {filtered.map((mock) => (
+        {filtered.map((mock, index) => (
           <li key={mock.id} className="min-w-0">
-            <Link href={`/test/${mock.id}`} className={isJK ? "practice-list-row group flex items-center gap-4 py-5 sm:gap-6 sm:py-6" : "he-mock-card group flex h-full items-center gap-3 px-4 py-4 sm:p-5"}>
+            <Link href={`/test/${mock.id}`} className={isJK ? `practice-list-row group flex items-center gap-4 py-5 sm:gap-6 sm:py-6 ${styles.jkRow}` : "he-mock-card group flex h-full items-center gap-3 px-4 py-4 sm:p-5"}>
+              {isJK && <span className={styles.ordinal} aria-hidden="true">{String(index + 1).padStart(2, "0")}</span>}
               {!isJK && <span className="he-mock-symbol" aria-hidden="true">
                   <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round">
                     <path d="M5 20V6a2 2 0 0 1 2-2h11v14H7a2 2 0 0 0 0 4h11" />

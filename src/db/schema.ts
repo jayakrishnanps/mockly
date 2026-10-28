@@ -1,4 +1,4 @@
-import { pgTable, check, uuid, text, integer, numeric, timestamp, foreignKey, unique, smallint, index, jsonb } from "drizzle-orm/pg-core"
+import { pgTable, check, uuid, text, integer, numeric, timestamp, foreignKey, unique, smallint, index, jsonb, bigint } from "drizzle-orm/pg-core"
 import { sql } from "drizzle-orm"
 
 
@@ -101,6 +101,20 @@ export const forestPlants = pgTable("forest_plants", {
 	plantedAt: timestamp("planted_at", { withTimezone: true, mode: 'string' }).notNull(),
 }, (table) => [
 	index("forest_plants_planted_at_idx").on(table.plantedAt),
+]);
+
+export const jkPracticeRecords = pgTable("jk_practice_records", {
+	attemptId: uuid("attempt_id").primaryKey().notNull(),
+	completedAt: timestamp("completed_at", { withTimezone: true, mode: "string" }).notNull(),
+	correctCount: integer("correct_count").notNull(),
+	wrongCount: integer("wrong_count").notNull(),
+	skippedCount: integer("skipped_count").notNull(),
+	timeTakenSeconds: integer("time_taken_seconds").notNull(),
+	xp: bigint("xp", { mode: "number" }).generatedAlwaysAs(sql`10::bigint * correct_count + floor(20.0 * (correct_count::bigint + wrong_count) / (correct_count::bigint + wrong_count + skipped_count))::bigint`),
+}, (table) => [
+	index("jk_practice_records_completed_at_idx").on(table.completedAt),
+	check("jk_practice_records_counts_check", sql`${table.correctCount} >= 0 AND ${table.wrongCount} >= 0 AND ${table.skippedCount} >= 0 AND ${table.correctCount}::bigint + ${table.wrongCount} + ${table.skippedCount} > 0`),
+	check("jk_practice_records_time_check", sql`${table.timeTakenSeconds} >= 0`),
 ]);
 
 export const weakAreaReports = pgTable("weak_area_reports", {

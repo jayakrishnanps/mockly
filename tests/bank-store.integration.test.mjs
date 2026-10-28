@@ -10,6 +10,7 @@ import { createBankStore } from "../src/server/bank-store.ts";
 import { createMockStore } from "../src/server/mock-store.ts";
 import { createAttemptStore } from "../src/server/attempt-store.ts";
 import { defaultMetadata } from "../src/lib/mock-validation.ts";
+import { insertLegacyMockFixture } from "./helpers/legacy-mock-fixture.mjs";
 import { validateBankMock } from "../src/lib/bank-validation.ts";
 
 // Opt-in integration checks allocate and clean up only the UUIDs created here.
@@ -94,7 +95,6 @@ test("bank transactions, linked mocks, pagination and retry safety", { skip: pro
     const ids = new Set(bankQuestions.map((q) => q.id));
     assert.ok(loaded.questions.every((q) => ids.has(q.id)));
     assert.equal((await database.select().from(schema.questions).where(eq(schema.questions.testId, input.testId))).length, 0);
-    await assert.rejects(mockStore.save({ mode: "append", testId: input.testId, questions: questions() }), { code: "conflict" });
     await assert.rejects(store.createMock({ ...input, questionLimit: 4 }), { code: "conflict" });
     await assert.rejects(store.createMock({ ...input, metadata: { ...input.metadata, title: "changed" } }), { code: "conflict" });
     const tooMany = mockRequest(bank.id, 31);
@@ -127,7 +127,7 @@ test("bank transactions, linked mocks, pagination and retry safety", { skip: pro
       await attemptStore.startOrResume(shared.testId, user);
     }
     const legacy = mockRequest();
-    await mockStore.save({ mode: "create", testId: legacy.testId, metadata: legacy.metadata, questions: questions(4) });
+    await insertLegacyMockFixture(database, { testId: legacy.testId, metadata: legacy.metadata, questions: questions(4) });
     // Old bank mocks have a copied pool and a count setting, but no source link.
     await database.update(schema.tests).set({ questionLimit: 3 }).where(eq(schema.tests.id, legacy.testId));
     const unlinkedBefore = await mockStore.get(legacy.testId);

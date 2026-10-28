@@ -7,7 +7,7 @@ import { FormattingPrompt } from "@/components/formatting-prompt";
 import { QuestionPreview } from "@/components/question-preview";
 import { loadBankQuestions, retryBankBatch, saveBankQuestions, type BankQuestionDraft } from "@/lib/bank-draft";
 import { parseQuestions } from "@/lib/parser";
-import { appendParsedBatch, emptyStudioDraft, prepareDraftSave, type DraftProblem } from "@/lib/studio-draft";
+import { appendParsedBatch, emptyQuestionDraft, prepareQuestionDraft, type DraftProblem } from "@/lib/question-draft";
 
 const subscribe = () => () => {};
 const clientSnapshot = () => true;
@@ -56,7 +56,7 @@ function BankEditor({ bankId }: { bankId: string }) {
   }
 
   function clearDraft() {
-    commit({ ...emptyStudioDraft(draft.context), input: draft.input, pendingQuestionIds: null });
+    commit({ ...emptyQuestionDraft(bankId), input: draft.input, pendingQuestionIds: null });
     cancelClear();
     setNotice("Draft questions and unresolved blocks cleared. The paste box and saved bank questions were kept.");
   }
@@ -68,7 +68,7 @@ function BankEditor({ bankId }: { bankId: string }) {
     setError("");
     let saved = 0;
     try {
-      let remaining: BankQuestionDraft = { ...prepareDraftSave(draft, () => crypto.randomUUID()), pendingQuestionIds: draft.pendingQuestionIds };
+      let remaining: BankQuestionDraft = { ...prepareQuestionDraft(draft, () => crypto.randomUUID()), pendingQuestionIds: draft.pendingQuestionIds };
       commit(remaining);
       while (remaining.questions.length) {
         const batch = retryBankBatch(remaining);

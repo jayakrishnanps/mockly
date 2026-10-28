@@ -1,31 +1,25 @@
 import { defaultMetadata, isMetadata, isRecord, isUuid, type MockMetadata, type QuestionInput } from "./mock-validation.ts";
-import { loadStudioDraft, saveStudioDraft, STORAGE_WARNING, type StudioDraft, type DraftQuestion } from "./studio-draft.ts";
+import { emptyQuestionDraft, isQuestionDraft, STORAGE_WARNING, type QuestionDraft, type DraftQuestion } from "./question-draft.ts";
 
 type DraftStorage = Pick<Storage, "getItem" | "setItem">;
 type StorageProvider = () => DraftStorage;
 const browserStorage: StorageProvider = () => window.localStorage;
 const unreadableDraft = "The saved form could not be read. Your next edit will start a new browser draft.";
-export type BankQuestionDraft = StudioDraft & { pendingQuestionIds: string[] | null };
-
-function questionStorage(bankId: string, getStorage: StorageProvider): StorageProvider {
-  return () => {
-    const storage = getStorage();
-    const key = `mockly:bank-questions:v1:${bankId}`;
-    return { getItem: () => storage.getItem(key), setItem: (_key, value) => storage.setItem(key, value) };
-  };
-}
+export type BankQuestionDraft = QuestionDraft & { pendingQuestionIds: string[] | null };
 
 export function loadBankQuestions(bankId: string, getStorage = browserStorage) {
-  const loaded = loadStudioDraft(questionStorage(bankId, getStorage), { kind: "append", testId: bankId });
+  const loaded = readDraft(`mockly:bank-questions:v1:${bankId}`, emptyQuestionDraft(bankId),
+    (value): value is QuestionDraft => isQuestionDraft(value, bankId), getStorage);
   const pending = "pendingQuestionIds" in loaded.draft ? loaded.draft.pendingQuestionIds : null;
   const ids = new Set(loaded.draft.questions.map((question) => question.id));
   const validPending = Array.isArray(pending) && pending.length > 0 && pending.every((id) => isUuid(id) && ids.has(id)) && new Set(pending).size === pending.length;
-  const draft: BankQuestionDraft = { ...loaded.draft, pendingQuestionIds: validPending ? pending : null };
+  const { input, questions, problems, lastBatch } = loaded.draft;
+  const draft: BankQuestionDraft = { ...emptyQuestionDraft(bankId), input, questions, problems, lastBatch, pendingQuestionIds: validPending ? pending : null };
   return { draft, storageError: loaded.storageError ?? (pending !== null && !validPending ? unreadableDraft : null) };
 }
 
-export function saveBankQuestions(bankId: string, draft: StudioDraft | BankQuestionDraft, getStorage = browserStorage) {
-  return saveStudioDraft(draft, questionStorage(bankId, getStorage));
+export function saveBankQuestions(bankId: string, draft: QuestionDraft | BankQuestionDraft, getStorage = browserStorage) {
+  return writeDraft(`mockly:bank-questions:v1:${bankId}`, draft, getStorage);
 }
 
 export type BankFormDraft = { version: 1; id: string | null; title: string };

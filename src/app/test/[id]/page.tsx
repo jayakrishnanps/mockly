@@ -23,9 +23,7 @@ export default async function MockPage({ params }: PageProps<"/test/[id]">) {
   const user = await getRememberedUserFromCookies();
   const assigned = user && mock.forUsers.includes(user);
   const [stats, active] = assigned ? await Promise.all([attemptStore.getMockStats(id, user), attemptStore.getActiveAttempts(user)]) : [null, []];
-  const addQuestionsHref = mock.sourceBankId
-    ? user === "JK" ? `/u/JK/bank/${mock.sourceBankId}` : null
-    : `/studio?test=${mock.id}`;
+  const addQuestionsHref = mock.sourceBankId && user === "JK" ? `/u/JK/bank/${mock.sourceBankId}` : null;
   const previewDescription = mock.sourceBankId
     ? "New attempts draw from the question bank’s current pool, including questions added later. Attempts already started keep their saved questions. Preview shows the first 25 current bank questions."
     : mock.questionLimit === null

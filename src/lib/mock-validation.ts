@@ -13,18 +13,6 @@ export type MetadataErrors = Partial<Record<keyof MockMetadata, string>>;
 export type SavedMetadata = Pick<typeof tests.$inferSelect,
   "title" | "details" | "forUsers" | "durationMinutes" | "marksCorrect" | "marksWrong">;
 export type QuestionInput = Pick<typeof questions.$inferInsert, "questionText" | "options" | "correctIndex"> & { id: string };
-type SaveQuestions = {
-  testId: string;
-  questions: QuestionInput[];
-};
-export type SaveInput = SaveQuestions & (
-  | { mode: "create"; metadata: SavedMetadata }
-  | { mode: "append" }
-);
-type SaveValidation =
-  | { value: SaveInput }
-  | { value: null; error: string; fields?: MetadataErrors };
-
 export function defaultMetadata(): MockMetadata {
   return { title: "", details: "", forUsers: [], durationMinutes: "60", marksCorrect: "2", marksWrong: "0.5" };
 }
@@ -81,13 +69,10 @@ export function validateMetadata(input: unknown): { value: SavedMetadata | null;
   }, errors };
 }
 
-export function validateSaveInput(input: unknown): SaveValidation {
-  if (!isRecord(input) || (input.mode !== "create" && input.mode !== "append") || !isUuid(input.testId)) {
-    return { value: null, error: "This save request is invalid. Reload Studio and try again." };
-  }
-  if (!Array.isArray(input.questions) || !input.questions.length) return { value: null, error: "Add at least one valid question before saving." };
+export function validateQuestionBatch(input: unknown): { value: QuestionInput[] } | { value: null; error: string } {
+  if (!Array.isArray(input) || !input.length) return { value: null, error: "Add at least one valid question before saving." };
   const valid: QuestionInput[] = [];
-  for (const question of input.questions) {
+  for (const question of input) {
     if (!isRecord(question) || !isUuid(question.id) || typeof question.questionText !== "string" || !question.questionText.trim() ||
       !Array.isArray(question.options) || question.options.length !== 4 || !question.options.every((option) => typeof option === "string" && option.trim()) ||
       !Number.isInteger(question.correctIndex) || Number(question.correctIndex) < 0 || Number(question.correctIndex) > 3) {
@@ -95,11 +80,6 @@ export function validateSaveInput(input: unknown): SaveValidation {
     }
     valid.push({ id: question.id.toLowerCase(), questionText: question.questionText, options: question.options, correctIndex: Number(question.correctIndex) });
   }
-  if (new Set(valid.map((question) => question.id)).size !== valid.length) return { value: null, error: "Duplicate question IDs were found. Reload Studio and try again." };
-  const batch = { testId: input.testId.toLowerCase(), questions: valid };
-  if (input.mode === "append") return { value: { mode: "append", ...batch } };
-
-  const metadata = validateMetadata(input.metadata);
-  if (!metadata.value) return { value: null, error: "Check the mock information above.", fields: metadata.errors };
-  return { value: { mode: "create", ...batch, metadata: metadata.value } };
+  if (new Set(valid.map((question) => question.id)).size !== valid.length) return { value: null, error: "Duplicate question IDs were found. Reload the bank and try again." };
+  return { value: valid };
 }
