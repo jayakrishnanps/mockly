@@ -7,15 +7,21 @@ const rawTotals = () => ({
   totalPracticeSeconds: 240, firstCompletedAt: "2026-10-28T06:00:00Z", today: 1, week: 1, month: 1, year: 1,
 });
 
-test("practice XP rewards correct answers, penalises wrong answers and scales completion by coverage", () => {
+test("practice XP rewards correct answers, penalises wrong answers and leaves skips neutral", () => {
   assert.equal(practiceXp(30, 0, 0), 320);
   assert.equal(practiceXp(20, 10, 0), 120);
-  assert.equal(practiceXp(15, 5, 20), 110);
+  assert.equal(practiceXp(15, 5, 20), 120);
   assert.equal(practiceXp(0, 30, 0), -280);
-  assert.equal(practiceXp(0, 1, 29), -10);
+  assert.equal(practiceXp(0, 1, 29), 10);
   assert.equal(practiceXp(0, 0, 30), 0);
   assert.equal(practiceXp(0, 0, 0), 0);
-  assert.equal(practiceXp(1, 0, 2), 16);
+  assert.equal(practiceXp(1, 0, 2), 30);
+  for (const [correct, wrong] of [[0, 0], [1, 0], [0, 1], [20, 10], [5, 10], [0, 30], [200, 30]]) {
+    const expected = correct + wrong === 0 ? 0 : 10 * correct - 10 * wrong + 20;
+    for (const skipped of [0, 1, 29, 1000, Number.MAX_SAFE_INTEGER]) {
+      assert.equal(practiceXp(correct, wrong, skipped), expected, `${correct} correct, ${wrong} wrong, ${skipped} skipped`);
+    }
+  }
   for (const invalid of [-1, 0.5, NaN, Infinity, "3", null, undefined]) {
     assert.throws(() => practiceXp(invalid, 0, 0), /Invalid practice counts/);
     assert.throws(() => practiceXp(0, invalid, 0), /Invalid practice counts/);

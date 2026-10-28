@@ -8,7 +8,7 @@ const store = createJKProgressStore(db);
 const requestTime = cache(() => new Date());
 const getTotals = cache(() => store.getTotals(requestTime()));
 
-export const getJKLevel = cache(async () => levelProgress((await getTotals()).totalXp).level);
+export const getJKLevel = cache(async () => levelProgress(await store.getXpBalance(requestTime())).level);
 
 export const getJKProgress = cache(async () => {
   const [totals, activity] = await Promise.all([getTotals(), store.getActivity(requestTime())]);

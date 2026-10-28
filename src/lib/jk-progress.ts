@@ -36,9 +36,8 @@ function record(value: unknown): value is Record<string, unknown> {
 
 export function practiceXp(correct: number, wrong: number, skipped: number): number {
   if (![correct, wrong, skipped].every(nonnegativeInteger)) throw new Error("Invalid practice counts.");
-  const total = BigInt(correct) + BigInt(wrong) + BigInt(skipped);
-  if (total === BigInt(0)) return 0;
-  const xp = Number(BigInt(10) * (BigInt(correct) - BigInt(wrong)) + BigInt(20) * (BigInt(correct) + BigInt(wrong)) / total);
+  if (correct === 0 && wrong === 0) return 0;
+  const xp = Number(BigInt(10) * (BigInt(correct) - BigInt(wrong)) + BigInt(20));
   if (!Number.isSafeInteger(xp)) throw new Error("Practice XP exceeds the supported range.");
   return xp;
 }

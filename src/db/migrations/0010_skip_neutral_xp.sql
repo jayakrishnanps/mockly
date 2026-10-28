@@ -1,0 +1,2 @@
+ALTER TABLE "jk_practice_records" drop column "xp_delta";--> statement-breakpoint
+ALTER TABLE "jk_practice_records" ADD COLUMN "xp_delta" bigint GENERATED ALWAYS AS (10::bigint * (correct_count::bigint - wrong_count) + CASE WHEN correct_count::bigint + wrong_count > 0 THEN 20 ELSE 0 END) STORED;

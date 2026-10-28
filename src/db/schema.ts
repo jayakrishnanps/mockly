@@ -111,7 +111,7 @@ export const jkPracticeRecords = pgTable("jk_practice_records", {
 	skippedCount: integer("skipped_count").notNull(),
 	timeTakenSeconds: integer("time_taken_seconds").notNull(),
 	xp: bigint("xp", { mode: "number" }).generatedAlwaysAs(sql`10::bigint * correct_count + floor(20.0 * (correct_count::bigint + wrong_count) / (correct_count::bigint + wrong_count + skipped_count))::bigint`),
-	xpDelta: bigint("xp_delta", { mode: "number" }).generatedAlwaysAs(sql`10::bigint * (correct_count::bigint - wrong_count) + floor(20.0 * (correct_count::bigint + wrong_count) / (correct_count::bigint + wrong_count + skipped_count))::bigint`),
+	xpDelta: bigint("xp_delta", { mode: "number" }).generatedAlwaysAs(sql`10::bigint * (correct_count::bigint - wrong_count) + CASE WHEN correct_count::bigint + wrong_count > 0 THEN 20 ELSE 0 END`),
 }, (table) => [
 	index("jk_practice_records_completed_at_idx").on(table.completedAt),
 	check("jk_practice_records_counts_check", sql`${table.correctCount} >= 0 AND ${table.wrongCount} >= 0 AND ${table.skippedCount} >= 0 AND ${table.correctCount}::bigint + ${table.wrongCount} + ${table.skippedCount} > 0`),

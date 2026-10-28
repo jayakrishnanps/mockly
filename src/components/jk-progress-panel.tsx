@@ -34,7 +34,7 @@ export function JKProgressPanel({ progress }: { progress: JKProgress }) {
           <span>{number.format(progress.xpIntoLevel)} / {number.format(progress.xpForNextLevel)} XP</span>
           <span>{number.format(progress.xpForNextLevel - progress.xpIntoLevel)} to go</span>
         </div>
-        <p className={styles.rule}>+10 XP per correct answer, −10 per wrong answer, plus up to 20 XP for answering the mock. Your XP balance stops at zero.</p>
+        <p className={styles.rule}>+10 XP per correct answer, −10 per wrong answer, 0 for skips. A completed mock earns 20 XP if any question was answered. Your XP balance stops at zero.</p>
       </div>
     </section>
 

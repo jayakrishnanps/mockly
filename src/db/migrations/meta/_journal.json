@@ -71,6 +71,13 @@
       "when": 1793175216538,
       "tag": "0009_jk_xp_penalties",
       "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "7",
+      "when": 1793176660876,
+      "tag": "0010_skip_neutral_xp",
+      "breakpoints": true
     }
   ]
 }

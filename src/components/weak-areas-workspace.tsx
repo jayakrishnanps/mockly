@@ -16,7 +16,6 @@ const subscribe = () => () => {};
 const priorities = { High: 0, Medium: 1, Low: 2 };
 const priorityDots = { High: 3, Medium: 2, Low: 1 };
 const focuses: WeakAreaFocus[] = ["Accuracy", "Speed", "Both"];
-const subjects = ["All", "Math", "Reasoning", "GK", "English", "Other"] as const;
 const dateFormatter = new Intl.DateTimeFormat("en-IN", { day: "numeric", month: "short", year: "numeric", timeZone: "Asia/Kolkata" });
 const reportDateFormatter = new Intl.DateTimeFormat("en-IN", { day: "numeric", month: "short", year: "numeric", hour: "numeric", minute: "2-digit", timeZone: "Asia/Kolkata" });
 
@@ -48,7 +47,6 @@ function Workspace({ reports, mocks, heMocks }: { reports: SavedWeakAreaReport[]
   const [previewRequested, setPreviewRequested] = useState(() => draft.id !== null);
   const [sourceId, setSourceId] = useState("");
   const [reportId, setReportId] = useState("");
-  const [subject, setSubject] = useState<string>("All");
   const [focus, setFocus] = useState<WeakAreaFocus | "All">("All");
   const [pending, setPending] = useState<"save" | "delete" | "complete" | "subtask" | null>(null);
   const [subtaskTarget, setSubtaskTarget] = useState<string | null>(null);
@@ -77,10 +75,9 @@ function Workspace({ reports, mocks, heMocks }: { reports: SavedWeakAreaReport[]
     return displayedReport.areas.map((area, index) => ({ area, report: displayedReport, index }));
   });
   const rows = reportRows.filter(({ report, area }) => !completedAreas.has(areaKey(report.id, area)));
-  const subjectRows = rows.filter(({ area }) => subject === "All" || area.subject === subject);
-  const visibleRows = subjectRows.filter(({ area }) => focus === "All" || area.focus === focus)
+  const visibleRows = rows.filter(({ area }) => focus === "All" || area.focus === focus)
     .sort((a, b) => priorities[a.area.priority] - priorities[b.area.priority] || Date.parse(b.report.importedAt) - Date.parse(a.report.importedAt) || a.index - b.index);
-  const counts = focuses.map((item) => ({ focus: item, count: subjectRows.filter(({ area }) => area.focus === item).length }));
+  const counts = focuses.map((item) => ({ focus: item, count: rows.filter(({ area }) => area.focus === item).length }));
   const parsed = useMemo(() => previewRequested ? parseWeakAreaReport(draft.source) : null, [draft.source, previewRequested]);
   const previewMock = parsed?.ok ? mocks.find((mock) => mock.id === parsed.value.sourceTestId) : undefined;
   const savedDraftReport = draft.id ? reports.find((report) => report.id === draft.id) : undefined;
@@ -115,7 +112,6 @@ function Workspace({ reports, mocks, heMocks }: { reports: SavedWeakAreaReport[]
       setImportOpen(false);
       setSourceId(parsed.value.sourceTestId);
       setReportId(result.id);
-      setSubject("All");
       setFocus("All");
       setNotice("Report saved.");
       router.refresh();
@@ -264,7 +260,7 @@ function Workspace({ reports, mocks, heMocks }: { reports: SavedWeakAreaReport[]
           <option value="">All mocks</option>
           {[...latestByMock.values()].map((report) => <option key={report.sourceTestId} value={report.sourceTestId}>{report.sourceTitle}</option>)}
         </select></label>
-        <label><span>Subject</span><select value={subject} onChange={(event) => setSubject(event.target.value)}>{subjects.map((item) => <option key={item} value={item}>{item}</option>)}</select></label>
+        <label><span>Focus</span><select value={focus} onChange={(event) => setFocus(focuses.find((item) => item === event.target.value) ?? "All")}><option value="All">All</option>{focuses.map((item) => <option key={item} value={item}>{item}</option>)}</select></label>
         {selectedReport && <label><span>Assessment</span><select value={selectedReport.id} onChange={(event) => { setReportId(event.target.value); setConfirmDelete(false); }}>
           {sourceReports.map((report, index) => <option key={report.id} value={report.id}>{index === 0 ? "Latest · " : ""}{reportDateFormatter.format(new Date(report.importedAt))}</option>)}
         </select></label>}
@@ -276,7 +272,7 @@ function Workspace({ reports, mocks, heMocks }: { reports: SavedWeakAreaReport[]
       </div>
 
       <section className={styles.summary} aria-label="Reported focus areas">
-        <FocusRing counts={counts} total={subjectRows.length} />
+        <FocusRing counts={counts} total={rows.length} />
         <div className={styles.focusList}>
           {counts.map((item) => <button key={item.focus} type="button" className={styles.focusFilter} aria-pressed={focus === item.focus} onClick={() => setFocus(focus === item.focus ? "All" : item.focus)}>
             <strong>{item.count}</strong><span className={styles.focusName}><span className={`${styles.dot} ${styles[item.focus]}`} aria-hidden="true" />{item.focus}</span>

@@ -5,13 +5,24 @@ import { forestPeriodStarts } from "../lib/forest.ts";
 import { buildJKProgress, readJKProgressTotals } from "../lib/jk-progress.ts";
 
 export function createJKProgressStore(database: typeof db) {
+  function xpBalance(now: Date) {
+    return sql<number>`(select coalesce(sum(balance.xp), 0) - least(0, coalesce(min(balance.running_xp), 0))
+      from (select ${jkPracticeRecords.xpDelta} as xp,
+        sum(${jkPracticeRecords.xpDelta}) over (order by ${jkPracticeRecords.completedAt}, ${jkPracticeRecords.attemptId} rows between unbounded preceding and current row) as running_xp
+        from ${jkPracticeRecords} where ${jkPracticeRecords.completedAt} <= ${now.toISOString()}) as balance)`.mapWith(Number);
+  }
+
+  async function getXpBalance(now = new Date()) {
+    const [row] = await database.select({ totalXp: xpBalance(now) }).from(jkPracticeRecords).limit(1);
+    const totalXp = row?.totalXp ?? 0;
+    if (!Number.isSafeInteger(totalXp) || totalXp < 0) throw new Error("Invalid total XP.");
+    return totalXp;
+  }
+
   async function getTotals(now = new Date()) {
     const starts = forestPeriodStarts(now);
     const [totals] = await database.select({
-      totalXp: sql<number>`(select coalesce(sum(balance.xp), 0) - least(0, coalesce(min(balance.running_xp), 0))
-        from (select ${jkPracticeRecords.xpDelta} as xp,
-          sum(${jkPracticeRecords.xpDelta}) over (order by ${jkPracticeRecords.completedAt}, ${jkPracticeRecords.attemptId} rows between unbounded preceding and current row) as running_xp
-          from ${jkPracticeRecords} where ${jkPracticeRecords.completedAt} <= ${now.toISOString()}) as balance)`.mapWith(Number),
+      totalXp: xpBalance(now),
       completedMocks: count(),
       activeDays: sql<number>`count(distinct (${jkPracticeRecords.completedAt} at time zone 'Asia/Kolkata')::date)`.mapWith(Number),
       correctAnswers: sql<number>`coalesce(sum(${jkPracticeRecords.correctCount}), 0)`.mapWith(Number),
@@ -34,7 +45,7 @@ export function createJKProgressStore(database: typeof db) {
   }
 
   return {
-    getTotals, getActivity,
+    getTotals, getActivity, getXpBalance,
     async getProgress(now = new Date()) {
       const [totals, activity] = await Promise.all([getTotals(now), getActivity(now)]);
       return buildJKProgress(totals, activity, now);
