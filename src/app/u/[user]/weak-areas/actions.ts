@@ -5,8 +5,10 @@ import { isRecord, isUuid } from "@/lib/mock-validation";
 import { getRememberedUserFromCookies } from "@/lib/server-user";
 import { WeakAreaReportError } from "@/server/weak-area-report-store";
 import { weakAreaReportStore } from "@/server/weak-area-reports";
+import type { WeakArea } from "@/lib/weak-area-report";
 
 export type WeakAreaActionResult = { ok: true; id: string } | { ok: false; error: string; uncertain?: true };
+export type WeakAreaSubtaskResult = { ok: true; area: WeakArea } | { ok: false; error: string; uncertain?: true };
 
 function failure(error: unknown): WeakAreaActionResult {
   if (error instanceof WeakAreaReportError) return { ok: false, error: error.message };
@@ -41,4 +43,16 @@ export async function completeWeakArea(input: unknown): Promise<WeakAreaActionRe
   }
   revalidatePath("/u/JK/weak-areas");
   return { ok: true, id: input.reportId.toLowerCase() };
+}
+
+export async function setWeakAreaSubtask(input: unknown): Promise<WeakAreaSubtaskResult> {
+  if (await getRememberedUserFromCookies() !== "JK") return { ok: false, error: "Switch to JK to update a practice step." };
+  let area;
+  try { area = await weakAreaReportStore.setSubtask(input); }
+  catch (error) {
+    if (error instanceof WeakAreaReportError) return { ok: false, error: error.message };
+    return { ok: false, uncertain: true, error: "The step could not be confirmed. Please retry; your saved progress is kept." };
+  }
+  revalidatePath("/u/JK/weak-areas");
+  return { ok: true, area };
 }

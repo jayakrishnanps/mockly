@@ -2,7 +2,7 @@ import { and, arrayContains, desc, eq, isNull } from "drizzle-orm";
 import type { db } from "../db/index";
 import { tests, weakAreaReports } from "../db/schema.ts";
 import { isRecord, isUuid } from "../lib/mock-validation.ts";
-import { validateWeakAreaReportInput, type SavedWeakAreaReport, type WeakAreaReportInput } from "../lib/weak-area-report.ts";
+import { normalizeWeakAreaSubtaskText, validateSavedWeakAreaReportInput, validateWeakAreaReportInput, type SavedWeakAreaReport, type WeakArea, type WeakAreaReportInput, type WeakAreaSubject } from "../lib/weak-area-report.ts";
 
 export class WeakAreaReportError extends Error {
   code: "invalid" | "not-found" | "conflict";
@@ -13,7 +13,7 @@ export class WeakAreaReportError extends Error {
 }
 
 function readReport(row: typeof weakAreaReports.$inferSelect): SavedWeakAreaReport {
-  const checked = validateWeakAreaReportInput({ sourceTestId: row.sourceTestId, areas: row.areas });
+  const checked = validateSavedWeakAreaReportInput({ sourceTestId: row.sourceTestId, areas: row.areas });
   const timestamp = Date.parse(row.importedAt);
   if (!checked.ok || !isUuid(row.id) || typeof row.sourceTitle !== "string" ||
       !row.sourceTitle.trim() || row.sourceTitle.length > 200 || !Number.isFinite(timestamp)) {
@@ -28,10 +28,34 @@ function readReport(row: typeof weakAreaReports.$inferSelect): SavedWeakAreaRepo
 
 function matchSaved(row: typeof weakAreaReports.$inferSelect, input: WeakAreaReportInput) {
   const saved = readReport(row);
-  if (saved.sourceTestId !== input.sourceTestId || JSON.stringify(saved.areas) !== JSON.stringify(input.areas)) {
+  function definitions(areas: WeakArea[]) {
+    return JSON.stringify(areas.map((area) => ({
+      subject: area.subject, area: area.area, focus: area.focus, priority: area.priority,
+      subtasks: area.subtasks?.map((subtask) => subtask.text),
+    })));
+  }
+  if (saved.sourceTestId !== input.sourceTestId || definitions(saved.areas) !== definitions(input.areas)) {
     throw new WeakAreaReportError("conflict", "This save ID already belongs to a different report. Your draft has been kept.");
   }
   return { id: saved.id };
+}
+
+function readAreaTarget(input: unknown, extraKeys: readonly string[]): { reportId: string; subject: WeakAreaSubject; area: string } {
+  if (!isRecord(input) || !isUuid(input.reportId) ||
+      Object.keys(input).some((key) => !["reportId", "subject", "area", ...extraKeys].includes(key))) {
+    throw new WeakAreaReportError("invalid", "This weak area could not be identified. Reload the page and try again.");
+  }
+  const checked = validateWeakAreaReportInput({
+    sourceTestId: input.reportId,
+    areas: [{ subject: input.subject, area: input.area, focus: "Accuracy", priority: "Low" }],
+  });
+  if (!checked.ok) throw new WeakAreaReportError("invalid", checked.error);
+  const target = checked.value.areas[0];
+  return { reportId: input.reportId.toLowerCase(), subject: target.subject, area: target.area };
+}
+
+function matchesArea(area: WeakArea, target: { subject: WeakAreaSubject; area: string }): boolean {
+  return area.subject === target.subject && area.area.toLowerCase() === target.area.toLowerCase();
 }
 
 export function createWeakAreaReportStore(database: typeof db) {
@@ -74,27 +98,49 @@ export function createWeakAreaReportStore(database: typeof db) {
     },
 
     async removeArea(input: unknown): Promise<void> {
-      if (!isRecord(input) || !isUuid(input.reportId) ||
-          Object.keys(input).some((key) => !["reportId", "subject", "area"].includes(key))) {
-        throw new WeakAreaReportError("invalid", "This weak area could not be identified. Reload the page and try again.");
-      }
-      const checked = validateWeakAreaReportInput({
-        sourceTestId: input.reportId,
-        areas: [{ subject: input.subject, area: input.area, focus: "Accuracy", priority: "Low" }],
-      });
-      if (!checked.ok) throw new WeakAreaReportError("invalid", checked.error);
-      const target = checked.value.areas[0];
-      const reportId = input.reportId.toLowerCase();
+      const target = readAreaTarget(input, []);
 
       await database.transaction(async (tx) => {
         const [row] = await tx.select().from(weakAreaReports)
-          .where(eq(weakAreaReports.id, reportId)).for("update");
+          .where(eq(weakAreaReports.id, target.reportId)).for("update");
         if (!row) return;
         const saved = readReport(row);
-        const remaining = saved.areas.filter((area) =>
-          area.subject !== target.subject || area.area.toLowerCase() !== target.area.toLowerCase());
-        if (remaining.length === saved.areas.length) return;
-        await tx.update(weakAreaReports).set({ areas: remaining }).where(eq(weakAreaReports.id, reportId));
+        const selected = saved.areas.find((area) => matchesArea(area, target));
+        if (!selected) return;
+        if (selected.subtasks?.some((subtask) => !subtask.completed)) {
+          throw new WeakAreaReportError("conflict", "Complete every practice step before checking off this weak area.");
+        }
+        const remaining = saved.areas.filter((area) => !matchesArea(area, target));
+        await tx.update(weakAreaReports).set({ areas: remaining }).where(eq(weakAreaReports.id, target.reportId));
+      });
+    },
+
+    async setSubtask(input: unknown): Promise<WeakArea> {
+      const target = readAreaTarget(input, ["subtask", "completed"]);
+      if (!isRecord(input) || typeof input.completed !== "boolean") {
+        throw new WeakAreaReportError("invalid", "Choose whether this practice step is complete.");
+      }
+      const subtaskText = normalizeWeakAreaSubtaskText(input.subtask);
+      if (!subtaskText) throw new WeakAreaReportError("invalid", "This practice step could not be identified. Reload the page and try again.");
+      const completed = input.completed;
+
+      return database.transaction(async (tx) => {
+        const [row] = await tx.select().from(weakAreaReports)
+          .where(eq(weakAreaReports.id, target.reportId)).for("update");
+        if (!row) throw new WeakAreaReportError("not-found", "This report is no longer available. Reload the page.");
+        const saved = readReport(row);
+        const selected = saved.areas.find((area) => matchesArea(area, target));
+        if (!selected?.subtasks) throw new WeakAreaReportError("not-found", "This weak area's practice steps are no longer available. Reload the page.");
+        const selectedSubtask = selected.subtasks.find((subtask) => subtask.text.toLowerCase() === subtaskText.toLowerCase());
+        if (!selectedSubtask) throw new WeakAreaReportError("not-found", "This practice step is no longer available. Reload the page.");
+        if (selectedSubtask.completed === completed) return selected;
+        const updated: WeakArea = {
+          ...selected,
+          subtasks: selected.subtasks.map((subtask) => subtask === selectedSubtask ? { ...subtask, completed } : subtask),
+        };
+        const areas = saved.areas.map((area) => area === selected ? updated : area);
+        await tx.update(weakAreaReports).set({ areas }).where(eq(weakAreaReports.id, target.reportId));
+        return updated;
       });
     },
   };

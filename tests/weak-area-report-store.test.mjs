@@ -213,3 +213,103 @@ test("report lifecycle migration removes unavailable reports and can be reapplie
   await database.delete(tests).where(eq(tests.id, validId));
   assert.equal((await database.select().from(weakAreaReports)).length, 0);
 });
+
+test("JK practice steps persist independently and gate weak-area completion", async (t) => {
+  const { database, close } = await createLocalDatabase();
+  t.after(close);
+  const store = createWeakAreaReportStore(database);
+  const sourceTestId = randomUUID();
+  const reportId = randomUUID();
+  const heReportId = randomUUID();
+  const attemptId = randomUUID();
+  const plannedArea = {
+    ...areas[0],
+    subtasks: [
+      { text: "Solve 8 reverse-percentage questions with a 20% increase.", completed: false },
+      { text: "Solve 8 reverse-percentage questions with a 20% decrease.", completed: false },
+      { text: "Repeat those 16 questions and compare the time with your first pass.", completed: false },
+    ],
+  };
+  const siblingArea = { subject: "Reasoning", area: "Number series with alternating gaps", focus: "Accuracy", priority: "Low" };
+  await database.insert(tests).values({ id: sourceTestId, title: "Practice source", forUsers: ["JK", "HE"] });
+  await database.insert(heWeakReports).values({ id: heReportId, sourceTestId, sourceTitle: "HE source", title: "പരിശീലനം", explanation: "- വായിക്കൂ.", practice: "- വീണ്ടും ചെയ്യൂ." });
+  await database.insert(attempts).values({ id: attemptId, testId: sourceTestId, takenBy: "HE", submittedAt: "2026-10-28T10:00:00Z" });
+  await store.save({ id: reportId, sourceTestId, areas: [plannedArea, siblingArea] });
+  const original = (await store.list()).find((report) => report.id === reportId);
+  const target = { reportId, subject: plannedArea.subject, area: plannedArea.area };
+
+  await t.test("main completion cannot bypass unfinished steps", async () => {
+    await assert.rejects(store.removeArea(target), (error) => error.code === "conflict");
+    assert.deepEqual((await store.list()).find((report) => report.id === reportId), original);
+  });
+
+  await t.test("step updates use stable names, preserve other steps and allow unchecking", async () => {
+    const firstTarget = { reportId: reportId.toUpperCase(), subject: "math", area: " REVERSE percentages ", subtask: plannedArea.subtasks[0].text.toUpperCase(), completed: true };
+    const first = await store.setSubtask(firstTarget);
+    assert.deepEqual(first.subtasks.map((step) => step.completed), [true, false, false]);
+    assert.deepEqual(await store.setSubtask(firstTarget), first);
+    await store.setSubtask({ ...target, subtask: plannedArea.subtasks[1].text, completed: true });
+    await store.setSubtask({ ...target, subtask: plannedArea.subtasks[0].text, completed: false });
+    const third = await store.setSubtask({ ...target, subtask: plannedArea.subtasks[2].text, completed: true });
+    assert.deepEqual(third.subtasks.map((step) => step.completed), [false, true, true]);
+    await assert.rejects(store.removeArea(target), (error) => error.code === "conflict");
+    const saved = (await store.list()).find((report) => report.id === reportId);
+    assert.deepEqual(saved.areas[1], siblingArea);
+    assert.equal(saved.importedAt, original.importedAt);
+    assert.equal(saved.sourceTitle, original.sourceTitle);
+  });
+
+  await t.test("save retries compare the plan without resetting checked progress", async () => {
+    const before = (await store.list()).find((report) => report.id === reportId);
+    assert.deepEqual(await store.save({ id: reportId, sourceTestId, areas: [plannedArea, siblingArea] }), { id: reportId });
+    assert.deepEqual((await store.list()).find((report) => report.id === reportId), before);
+    const changedPlan = { ...plannedArea, subtasks: plannedArea.subtasks.map((step, index) => index ? step : { ...step, text: "Solve 5 different reverse-percentage questions." }) };
+    await assert.rejects(store.save({ id: reportId, sourceTestId, areas: [changedPlan, siblingArea] }), (error) => error.code === "conflict");
+    const completedImport = { ...plannedArea, subtasks: plannedArea.subtasks.map((step) => ({ ...step, completed: true })) };
+    await assert.rejects(store.save({ id: randomUUID(), sourceTestId, areas: [completedImport] }), (error) => error.code === "invalid");
+  });
+
+  await t.test("invalid targets cannot mutate progress and unavailable steps never recreate data", async () => {
+    const valid = { ...target, subtask: plannedArea.subtasks[0].text, completed: true };
+    const before = (await store.list()).find((report) => report.id === reportId);
+    for (const invalid of [null, [], {}, { ...valid, reportId: "bad" }, { ...valid, subject: "Science" },
+      { ...valid, area: "" }, { ...valid, subtask: "" }, { ...valid, subtask: "x".repeat(241) },
+      { ...valid, subtask: "**not plain text**" }, { ...valid, completed: "true" },
+      { ...valid, completed: 1 }, { ...valid, extra: true }, { ...valid, index: 0 }]) {
+      await assert.rejects(store.setSubtask(invalid), (error) => error.code === "invalid");
+    }
+    for (const missing of [{ ...valid, reportId: randomUUID() }, { ...valid, area: "A missing area" },
+      { ...valid, subject: siblingArea.subject, area: siblingArea.area }, { ...valid, subtask: "A missing practice step" }]) {
+      await assert.rejects(store.setSubtask(missing), (error) => error.code === "not-found");
+    }
+    assert.deepEqual((await store.list()).find((report) => report.id === reportId), before);
+  });
+
+  await t.test("all steps unlock removal without affecting HE, attempts, plants or sibling areas", async () => {
+    await store.setSubtask({ ...target, subtask: plannedArea.subtasks[0].text, completed: true });
+    const allChecked = (await store.list()).find((report) => report.id === reportId).areas[0];
+    assert.equal(allChecked.subtasks.every((step) => step.completed), true);
+    await store.removeArea(target);
+    await store.removeArea(target);
+    assert.deepEqual((await store.list()).find((report) => report.id === reportId).areas, [siblingArea]);
+    await assert.rejects(store.setSubtask({ ...target, subtask: plannedArea.subtasks[0].text, completed: true }), (error) => error.code === "not-found");
+    assert.equal((await database.select().from(heWeakReports).where(eq(heWeakReports.id, heReportId))).length, 1);
+    assert.equal((await database.select().from(tests).where(eq(tests.id, sourceTestId))).length, 1);
+    assert.equal((await database.select().from(attempts).where(eq(attempts.id, attemptId))).length, 1);
+    assert.equal((await database.select().from(forestPlants).where(eq(forestPlants.attemptId, attemptId))).length, 1);
+  });
+
+  await t.test("a final planned area leaves the empty latest assessment in place", async () => {
+    const latestId = randomUUID();
+    await store.save({ id: latestId, sourceTestId, areas: [plannedArea] });
+    await database.update(weakAreaReports).set({ importedAt: "2026-10-28T11:00:00Z" }).where(eq(weakAreaReports.id, reportId));
+    await database.update(weakAreaReports).set({ importedAt: "2026-10-28T12:00:00Z" }).where(eq(weakAreaReports.id, latestId));
+    const latestTarget = { ...target, reportId: latestId };
+    for (const step of plannedArea.subtasks) await store.setSubtask({ ...latestTarget, subtask: step.text, completed: true });
+    await store.removeArea(latestTarget);
+    const reports = (await store.list()).filter((report) => report.sourceTestId === sourceTestId);
+    assert.equal(reports[0].id, latestId);
+    assert.deepEqual(reports[0].areas, []);
+    assert.deepEqual(reports[1].areas, [siblingArea]);
+  });
+});
