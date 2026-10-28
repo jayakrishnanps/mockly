@@ -5,19 +5,22 @@
 .clear:hover { border-color: var(--accent); background: var(--accent-soft); }
 .notice { margin-bottom: .875rem; color: var(--muted); font-size: .8rem; }
 .notice:empty { display: none; }
-.posts { display: grid; gap: 1.25rem; min-width: 0; }
+.posts { display: grid; gap: 1.5rem; min-width: 0; }
 .posts > li { min-width: 0; }
-.post { position: relative; min-width: 0; border: 1px solid var(--line); border-radius: 1.5rem; padding: 1rem; background: linear-gradient(135deg, rgb(230 237 219 / 38%), transparent 48%), var(--he-paper, #fffcf5); box-shadow: 0 14px 35px -30px rgb(35 57 46 / 35%); }
-.meta { display: flex; align-items: flex-start; justify-content: space-between; gap: .75rem; padding-bottom: .875rem; border-bottom: 1px solid var(--line); }
+.post { position: relative; min-width: 0; border: 1px solid #d3d9c9; border-radius: 1.5rem; background: var(--he-paper, #fffcf5); box-shadow: 0 16px 36px -28px rgb(35 57 46 / 32%); }
+.noteHeader { position: relative; isolation: isolate; border-radius: 1.45rem 1.45rem 0 0; padding: 1rem 1.1rem 1.4rem; background: #234736; color: #fffdf4; }
+.noteHeader::before { position: absolute; z-index: -1; inset: 0; border-radius: inherit; background: linear-gradient(90deg, #234736 5%, rgb(35 71 54 / 90%) 38%, rgb(35 71 54 / 28%) 100%), url("/he-note-landscape.svg") right center / auto 100% no-repeat; content: ""; pointer-events: none; }
+.meta { display: flex; align-items: flex-start; justify-content: space-between; gap: .75rem; padding-bottom: .6rem; }
 .meta > div { display: grid; justify-items: start; min-width: 0; gap: .5rem; }
-.meta span { max-width: 100%; border: 1px solid rgb(71 101 71 / 12%); border-radius: .65rem; padding: .4rem .65rem; background: rgb(232 238 221 / 65%); color: var(--accent-strong); font-size: .75rem; font-weight: 600; line-height: 1.5; overflow-wrap: anywhere; }
-.meta time { padding-inline: .15rem; color: var(--muted); font-size: .7rem; }
-.remove { display: grid; flex-shrink: 0; place-items: center; min-width: 2.75rem; min-height: 2.75rem; border-radius: 50%; color: var(--muted); }
-.remove:hover { color: var(--foreground); background: var(--accent-soft); }
+.meta span { max-width: 100%; border: 1px solid rgb(235 240 218 / 22%); border-radius: 999px; padding: .4rem .75rem; background: rgb(255 253 244 / 8%); color: #f6f3df; font-size: .75rem; font-weight: 500; line-height: 1.5; overflow-wrap: anywhere; }
+.meta time { padding-inline: .15rem; color: #d2ddcb; font-size: .7rem; }
+.remove { display: grid; flex-shrink: 0; place-items: center; min-width: 2.75rem; min-height: 2.75rem; border-radius: 50%; color: #d2ddcb; }
+.remove:hover { color: #fffdf4; background: rgb(255 253 244 / 12%); }
+.remove:focus-visible { outline-color: #fffdf4; }
 .malayalam { min-width: 0; font-family: var(--font-malayalam, "Nirmala UI"), "Nirmala UI", Kartika, sans-serif; font-size: 1rem; line-height: 2; letter-spacing: normal; overflow-wrap: anywhere; }
-.title { max-width: 36ch; margin-top: 1.15rem; color: var(--accent-strong); font-family: inherit; font-size: clamp(1.2rem, 3.2vw, 1.5rem); font-weight: 600; line-height: 1.8; letter-spacing: normal; }
-.title::after { display: block; width: 2.5rem; height: 2px; margin-top: .875rem; border-radius: 999px; background: #94a583; content: ""; }
-.explanation { margin-top: .875rem; }
+.noteHeader .title { max-width: 36ch; margin-top: .8rem; color: #fffdf4; font-size: clamp(1.25rem, 3.2vw, 1.6rem); font-weight: 600; line-height: 1.85; }
+.reading { padding: 1.15rem 1.1rem 1.3rem; }
+.explanation { min-width: 0; }
 .malayalam :global(.question-content) { max-width: 100%; overflow-x: auto; padding-block: .15rem; font-family: inherit; font-size: inherit; line-height: inherit; letter-spacing: normal; }
 .malayalam :global(.question-content) > :is(p, ul, ol) + :is(p, ul, ol) { margin-top: .6rem; }
 .malayalam :global(.question-content) > ul { list-style: disc; padding-inline-start: 1.3rem; }
@@ -25,9 +28,9 @@
 .malayalam :global(.question-content) li { padding-inline-start: .25rem; margin-block: .65rem; }
 .malayalam :global(.question-content) li::marker { color: #6b8259; }
 .malayalam :global(.katex-display) { max-width: 100%; overflow-x: auto; overflow-y: hidden; padding-block: .3rem; }
-.practice { min-width: 0; margin-top: 1.2rem; border: 1px solid #d9e1ce; border-radius: 1.1rem; padding: 1rem; background: linear-gradient(145deg, #eff2e6, #e8edde); }
+.practice { position: relative; min-width: 0; margin-top: 1.2rem; border: 1px solid #d5dec8; border-radius: 1.1rem; padding: 1rem; background: #edf1e3; box-shadow: inset 3px 0 #9daf87; }
 .practice h3 { display: flex; align-items: center; gap: .65rem; margin-bottom: .55rem; color: var(--accent-strong); font-family: inherit; font-size: .95rem; font-weight: 600; line-height: 1.9; }
-.practice h3::before { width: .4rem; height: .4rem; flex-shrink: 0; border: 1px solid #7e936e; border-radius: 50%; background: #c3cfb4; content: ""; }
+.practice h3::before { width: .6rem; height: .35rem; flex-shrink: 0; margin: -.2rem .1rem 0; border-bottom: 2px solid #617c4c; border-left: 2px solid #617c4c; transform: rotate(-45deg); content: ""; }
 .practice :global(.question-content) li + li { border-top: 1px solid rgb(92 117 74 / 13%); padding-top: .65rem; }
 .empty { display: grid; justify-items: center; border: 1px solid var(--line); border-radius: 1.5rem; padding: 2rem 1rem; background: var(--he-paper, #fffcf5); text-align: center; }
 .emptySprig { width: 4.5rem; height: 4.5rem; margin-bottom: .5rem; background: url("/he-sprig.svg") no-repeat center / contain; }
@@ -46,14 +49,14 @@
 .error { color: #8a3b2d; }
 .workspace button:disabled { opacity: .5; }
 @media (min-width: 640px) {
-  .posts { gap: 1.5rem; }
-  .post { padding: 1.5rem 1.75rem; }
+  .posts { gap: 1.75rem; }
+  .noteHeader { padding: 1.4rem 1.75rem 1.7rem; }
+  .reading { padding: 1.4rem 1.75rem 1.65rem; }
   .meta > div { display: flex; flex-wrap: wrap; align-items: baseline; gap: .4rem 1rem; }
   .malayalam { font-size: 1.05rem; }
   .practice { padding: 1rem 1.25rem; }
 }
 @media (min-width: 900px) {
-  .post > .malayalam { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); align-items: start; column-gap: 2rem; }
-  .title { grid-column: 1 / -1; margin-bottom: 1rem; }
-  .explanation, .practice { margin-top: 0; }
+  .reading { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); align-items: start; column-gap: 1.75rem; }
+  .practice { margin-top: 0; }
 }

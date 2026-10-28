@@ -88,19 +88,21 @@ export function HEWeakPosts({ reports }: { reports: SavedHEWeakReport[] }) {
     </section> : <ol className={styles.posts} aria-label="Practice notes">
       {reports.map((report) => <li key={report.id}>
         <article className={styles.post} aria-labelledby={`${id}-${report.id}`}>
-          <div className={styles.meta}>
-            <div><span>{report.sourceTitle}</span><time dateTime={report.importedAt}>{dateFormatter.format(new Date(report.importedAt))}</time></div>
-            <button
-              type="button"
-              className={styles.remove}
-              disabled={pending}
-              aria-label={`Delete note: ${report.title}`}
-              title="Delete note"
-              onClick={(event) => ask({ type: "one", id: report.id, title: report.title }, event.currentTarget)}
-            ><svg aria-hidden="true" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M4 7h16M9 7V4h6v3M6 7l1 13h10l1-13M10 11v5m4-5v5" /></svg></button>
+          <div className={styles.noteHeader}>
+            <div className={styles.meta}>
+              <div><span>{report.sourceTitle}</span><time dateTime={report.importedAt}>{dateFormatter.format(new Date(report.importedAt))}</time></div>
+              <button
+                type="button"
+                className={styles.remove}
+                disabled={pending}
+                aria-label={`Delete note: ${report.title}`}
+                title="Delete note"
+                onClick={(event) => ask({ type: "one", id: report.id, title: report.title }, event.currentTarget)}
+              ><svg aria-hidden="true" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M4 7h16M9 7V4h6v3M6 7l1 13h10l1-13M10 11v5m4-5v5" /></svg></button>
+            </div>
+            <h2 lang="ml" data-static-label id={`${id}-${report.id}`} className={`${styles.malayalam} ${styles.title}`}>{report.title}</h2>
           </div>
-          <div lang="ml" className={styles.malayalam}>
-            <h2 data-static-label id={`${id}-${report.id}`} className={styles.title}>{report.title}</h2>
+          <div lang="ml" className={`${styles.malayalam} ${styles.reading}`}>
             <div className={styles.explanation}><QuestionContent text={report.explanation} /></div>
             <section className={styles.practice} aria-labelledby={`${id}-${report.id}-practice`}>
               <h3 id={`${id}-${report.id}-practice`}>പരിശീലിക്കാം</h3>
