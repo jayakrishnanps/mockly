@@ -449,8 +449,11 @@ input:focus-visible, textarea:focus-visible, select:focus-visible {
 
 :root[data-user-theme="HE"] .he-intro-note {
   margin-top: 0.8rem;
+  font-family: var(--font-malayalam, "Nirmala UI"), "Nirmala UI", Kartika, sans-serif;
   font-size: 1rem;
-  line-height: 1.6;
+  line-height: 1.9;
+  letter-spacing: normal;
+  overflow-wrap: anywhere;
   color: #465541;
 }
 
@@ -459,12 +462,8 @@ input:focus-visible, textarea:focus-visible, select:focus-visible {
   flex-wrap: wrap;
   align-items: center;
   gap: 1rem 1.25rem;
-  margin-top: 2rem;
+  margin-top: 1.25rem;
   font-size: 0.75rem;
-}
-
-:root[data-user-theme="HE"] .he-intro-links > span {
-  font-variant-numeric: tabular-nums;
 }
 
 :root[data-user-theme="HE"] .he-intro-links a {

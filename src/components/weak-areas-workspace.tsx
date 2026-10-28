@@ -260,7 +260,6 @@ function Workspace({ reports, mocks, heMocks }: { reports: SavedWeakAreaReport[]
           <option value="">All mocks</option>
           {[...latestByMock.values()].map((report) => <option key={report.sourceTestId} value={report.sourceTestId}>{report.sourceTitle}</option>)}
         </select></label>
-        <label><span>Focus</span><select value={focus} onChange={(event) => setFocus(focuses.find((item) => item === event.target.value) ?? "All")}><option value="All">All</option>{focuses.map((item) => <option key={item} value={item}>{item}</option>)}</select></label>
         {selectedReport && <label><span>Assessment</span><select value={selectedReport.id} onChange={(event) => { setReportId(event.target.value); setConfirmDelete(false); }}>
           {sourceReports.map((report, index) => <option key={report.id} value={report.id}>{index === 0 ? "Latest · " : ""}{reportDateFormatter.format(new Date(report.importedAt))}</option>)}
         </select></label>}
@@ -272,7 +271,7 @@ function Workspace({ reports, mocks, heMocks }: { reports: SavedWeakAreaReport[]
       </div>
 
       <section className={styles.summary} aria-label="Reported focus areas">
-        <FocusRing counts={counts} total={rows.length} />
+        <FocusRing counts={counts} total={rows.length} active={focus === "All"} onSelect={() => setFocus("All")} />
         <div className={styles.focusList}>
           {counts.map((item) => <button key={item.focus} type="button" className={styles.focusFilter} aria-pressed={focus === item.focus} onClick={() => setFocus(focus === item.focus ? "All" : item.focus)}>
             <strong>{item.count}</strong><span className={styles.focusName}><span className={`${styles.dot} ${styles[item.focus]}`} aria-hidden="true" />{item.focus}</span>
@@ -345,10 +344,15 @@ function AreaSteps({ subtasks, disabled, saving, error, onChange }: {
   </section>;
 }
 
-function FocusRing({ counts, total }: { counts: { focus: WeakAreaFocus; count: number }[]; total: number }) {
+function FocusRing({ counts, total, active, onSelect }: {
+  counts: { focus: WeakAreaFocus; count: number }[];
+  total: number;
+  active: boolean;
+  onSelect: () => void;
+}) {
   const circumference = 2 * Math.PI * 48;
-  return <div className={styles.ring}>
-    <svg viewBox="0 0 128 128" role="img" aria-label={`${total} reported areas`}>
+  return <button type="button" className={styles.ring} aria-label={`Show all reported weak areas (${total})`} aria-pressed={active} onClick={onSelect}>
+    <svg viewBox="0 0 128 128" aria-hidden="true" focusable="false">
       <circle cx="64" cy="64" r="48" fill="none" stroke="#000" strokeWidth="1" />
       {counts.map((item, index) => {
         const length = total ? item.count / total * circumference : 0;
@@ -357,6 +361,6 @@ function FocusRing({ counts, total }: { counts: { focus: WeakAreaFocus; count: n
         return <circle key={item.focus} className={styles[item.focus]} cx="64" cy="64" r="48" fill="none" stroke="currentColor" strokeWidth="10" strokeDasharray={`${length} ${circumference - length}`} strokeDashoffset={-start} transform="rotate(-90 64 64)" />;
       })}
     </svg>
-    <div aria-hidden="true"><strong>{total}</strong><span>Areas</span></div>
-  </div>;
+    <span aria-hidden="true"><strong>{total}</strong><span>Areas</span></span>
+  </button>;
 }

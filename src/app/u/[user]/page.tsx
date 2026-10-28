@@ -8,6 +8,7 @@ import { mockCreatedDate } from "@/lib/mock-filter";
 import { db } from "@/db";
 import { tests } from "@/db/schema";
 import { isUser } from "@/lib/users";
+import { heDailyQuote } from "@/lib/he-daily-quote";
 
 const dateFormatter = new Intl.DateTimeFormat("en-IN", {
   day: "numeric",
@@ -40,10 +41,9 @@ export default async function MocksPage({ params }: PageProps<"/u/[user]">) {
         <div className={user === "HE" ? "he-intro-copy" : undefined}>
           <h1 className={user === "JK" ? "page-title text-4xl sm:text-5xl" : "page-title text-3xl"}>Your mocks</h1>
           {user === "HE" && <>
-            <p className="he-intro-note">One question at a time.</p>
+            <p className="he-intro-note" lang="ml">{heDailyQuote()}</p>
             <div className="he-intro-links">
-              <span>{mocks.length} {mocks.length === 1 ? "mock" : "mocks"} available</span>
-              <Link href="/u/HE/history">View history <span aria-hidden="true">↗</span></Link>
+              <Link href="/u/HE/forest">View forest <span aria-hidden="true">↗</span></Link>
             </div>
           </>}
         </div>
