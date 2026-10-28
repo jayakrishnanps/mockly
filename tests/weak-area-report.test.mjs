@@ -118,6 +118,87 @@ test("v2 accepts empty reports, complete fences, case-normalised categories and 
   });
 });
 
+test("pasted v2 reports accept plain practice bullets and Markdown metadata line breaks", () => {
+  const sourceTestId = "8cbd445a-c88d-4f1e-87ca-fe790f21abe4";
+  const areas = [
+    {
+      subject: "Math", area: "Subtracting decimal numbers", focus: "Both", priority: "High",
+      subtasks: [
+        "Solve 14.2 − 6.85 and 9.03 − 2.6 three times each. Check all 6 answers and record every mistake.",
+        "Solve 5.0 − 0.67, 7.8 − 2.35 and 9.06 − 1.7 twice each in mixed order. Check all 6 answers and record the time for each.",
+        "Time one fresh attempt each of 14.2 − 6.85, 5.0 − 0.67 and 9.03 − 2.6. Compare with the recorded 30, 28 and 42 seconds. Check all 3 answers.",
+      ].map((text) => ({ text, completed: false })),
+    },
+    {
+      subject: "Math", area: "Adding and subtracting several decimals", focus: "Both", priority: "High",
+      subtasks: [
+        "Solve 2.75 + 3.4 − 1.08 three times. Check each answer and record any errors.",
+        "Solve 8.24 − 3.95 + 0.67 and 9.0 − 2.86 − 1.7 twice each. Check all 4 answers and record any skipped questions.",
+        "Solve 4.6 + 2.05 − 1.3 and 5.25 + 0.7 − 2.4 twice each. Record accuracy and time. Compare with the recorded 34 and 74 seconds.",
+      ].map((text) => ({ text, completed: false })),
+    },
+    {
+      subject: "Math", area: "Subtracting two-digit whole numbers", focus: "Speed", priority: "Medium",
+      subtasks: [
+        "Solve 76 − 38 and 72 − 38 twice each. Check all 4 answers and record the time taken.",
+        "Solve 91 − 56, 81 − 39 and 70 − 36 twice each in mixed order. Check all 6 answers and record their times.",
+        "Compare your new times for 76 − 38, 72 − 38 and 70 − 36 with the recorded 58, 51 and 11 seconds. Record whether each became faster without losing accuracy.",
+      ].map((text) => ({ text, completed: false })),
+    },
+    {
+      subject: "Math", area: "Finding missing numbers in equations", focus: "Speed", priority: "Medium",
+      subtasks: [
+        "Solve 84 ÷ x = 12, 63 ÷ x = 7 and x ÷ 5 = 9 twice each. Check all 6 answers and record any mistakes.",
+        "Solve x + 28 = 50, 45 − x = 19 and x − 4 = 7 twice each. Record accuracy and time for all 6 attempts.",
+        "Solve 4 × x − 3 = 29, 3 × x + 5 = 26 and (x + 5) × 2 = 24 twice each. Check all answers and compare the time for 4 × x − 3 = 29 with its recorded 65 seconds.",
+      ].map((text) => ({ text, completed: false })),
+    },
+    {
+      subject: "Math", area: "Adding two-digit whole numbers", focus: "Accuracy", priority: "Medium",
+      subtasks: [
+        "Solve 37 + 49 and 66 + 29 three times each in mixed order. Check all 6 answers and record every incorrect total.",
+        "Solve 72 + 19 and 87 + 15 twice each. Check all 4 answers for accuracy.",
+        "Solve 37 + 49 and 66 + 29 once each without looking at previous answers. Check both answers and compare your times with the recorded 29 and 20 seconds.",
+      ].map((text) => ({ text, completed: false })),
+    },
+    {
+      subject: "Math", area: "Calculating with brackets and mixed operations", focus: "Speed", priority: "Low",
+      subtasks: [
+        "Solve 18 ÷ 3 + 2 × 4 and (10 − 2) × 3 ÷ 4 twice each. Check all 4 answers and record their times.",
+        "Solve (15 − 2) × 5 and (7 + 5) × (6 − 4) twice each. Check all 4 answers and record their times.",
+        "Solve 20 − (4 × 3), 18 ÷ 3 + 2 × 4 and (10 − 2) × 3 ÷ 4 once each. Compare with the recorded 22, 38 and 39 seconds and check all 3 answers.",
+      ].map((text) => ({ text, completed: false })),
+    },
+  ];
+  const report = `Mockly Weak Areas v2\n\nMock: ${sourceTestId}\n\n${areas.map((value) =>
+    `## ${value.area}\n\nSubject: ${value.subject}\\\nFocus: ${value.focus}\\\nPriority: ${value.priority}\n\n${value.subtasks.map((task) => `- ${task.text}`).join("\n")}`,
+  ).join("\n\n")}`;
+  assert.deepEqual(parseWeakAreaReport(report), { ok: true, value: { sourceTestId, areas } });
+});
+
+test("v2 accepts mixed plain and unchecked bullets without importing completed checkboxes", () => {
+  const report = `${taskHeader}\n${taskBlock()}`;
+  assert.deepEqual(parseWeakAreaReport(report.replace("- [ ] Find", "- Find")), {
+    ok: true, value: { sourceTestId: mockId, areas: [taskArea()] },
+  });
+  const plainReport = report.replaceAll("- [ ] ", "- ");
+  for (const marker of ["[x] ", "[X] ", "[✓] ", "[] ", "[ ]"]) {
+    assert.equal(parseWeakAreaReport(plainReport.replace("- Find", `- ${marker}Find`)).ok, false, marker);
+  }
+  for (const value of [
+    report.replace("Subject: Math", "Subject: Math\\\\"),
+    report.replace("- [ ] Find", "- [ ] \\frac{1}{2} Find"),
+    report.replace("- [ ] Find", "- [ ] Find\\"),
+    report.replace("Subject: Math", "Subject: Ma\\th"),
+  ]) assert.equal(parseWeakAreaReport(value).ok, false, value);
+  const structuralBreaks = [
+    "# Mockly Weak Areas v2\\", `Mock: ${mockId}\\`, "## Reverse percentages\\",
+    "Subject: Math\\", "Focus: Accuracy\\", "Priority: High\\",
+    ...subtasks().map((task) => `- ${task.text}`),
+  ].join("\n");
+  assert.deepEqual(parseWeakAreaReport(structuralBreaks), { ok: true, value: { sourceTestId: mockId, areas: [taskArea()] } });
+});
+
 test("v2 requires exactly the area metadata and 3 to 10 unchecked steps", () => {
   const valid = `${taskHeader}\n${taskBlock()}`;
   for (const report of [

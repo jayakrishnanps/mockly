@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { completeWeakArea, deleteWeakAreaReport, saveWeakAreaReport, setWeakAreaSubtask } from "@/app/u/[user]/weak-areas/actions";
 import { parseWeakAreaReport, type SavedWeakAreaReport, type WeakArea, type WeakAreaFocus } from "@/lib/weak-area-report";
 import { emptyWeakAreaReportDraft, loadWeakAreaReportDraft, saveWeakAreaReportDraft, type WeakAreaReportDraft } from "@/lib/weak-area-report-draft";
+import { summarizeWeakAreaReports, weakAreaKey as areaKey } from "@/lib/weak-area-report-summary";
 import styles from "./weak-areas-workspace.module.css";
 import { HEWeakImport } from "@/components/he-weak-import";
 
@@ -18,10 +19,6 @@ const focuses: WeakAreaFocus[] = ["Accuracy", "Speed", "Both"];
 const subjects = ["All", "Math", "Reasoning", "GK", "English", "Other"] as const;
 const dateFormatter = new Intl.DateTimeFormat("en-IN", { day: "numeric", month: "short", year: "numeric", timeZone: "Asia/Kolkata" });
 const reportDateFormatter = new Intl.DateTimeFormat("en-IN", { day: "numeric", month: "short", year: "numeric", hour: "numeric", minute: "2-digit", timeZone: "Asia/Kolkata" });
-
-function areaKey(reportId: string, area: WeakArea): string {
-  return JSON.stringify([reportId, area.subject, area.area.toLowerCase()]);
-}
 
 function applySubtaskChange(reports: SavedWeakAreaReport[], change: SubtaskChange): SavedWeakAreaReport[] {
   return reports.map((report) => report.id !== change.reportId ? report : {
@@ -68,17 +65,10 @@ function Workspace({ reports, mocks, heMocks }: { reports: SavedWeakAreaReport[]
   const cardList = useRef<HTMLUListElement>(null);
   const summaryTitle = useRef<HTMLHeadingElement>(null);
 
-  const orderedReports = useMemo(() => [...displayedReports].sort((a, b) => Date.parse(b.importedAt) - Date.parse(a.importedAt) || b.id.localeCompare(a.id)), [displayedReports]);
-  const latestByMock = useMemo(() => {
-    const latest = new Map<string, SavedWeakAreaReport>();
-    for (const report of orderedReports) if (!latest.has(report.sourceTestId)) latest.set(report.sourceTestId, report);
-    return latest;
-  }, [orderedReports]);
-  const reportCounts = useMemo(() => {
-    const counts = new Map<string, number>();
-    for (const report of orderedReports) counts.set(report.sourceTestId, (counts.get(report.sourceTestId) ?? 0) + 1);
-    return counts;
-  }, [orderedReports]);
+  const { orderedReports, latestByMock, reportCounts, activeMockCount } = useMemo(
+    () => summarizeWeakAreaReports(displayedReports, completedAreas),
+    [displayedReports, completedAreas],
+  );
   const sourceReports = sourceId ? orderedReports.filter((report) => report.sourceTestId === sourceId) : [];
   const selectedReport = sourceId ? sourceReports.find((report) => report.id === reportId) ?? sourceReports[0] : undefined;
   const selectedReports = selectedReport ? [selectedReport] : sourceId ? [] : [...latestByMock.values()];
@@ -221,7 +211,7 @@ function Workspace({ reports, mocks, heMocks }: { reports: SavedWeakAreaReport[]
 
   return <div className={styles.workspace}>
     <div className={styles.importBar}>
-      <span data-static-label className={styles.caption}>{latestByMock.size} {latestByMock.size === 1 ? "mock" : "mocks"}</span>
+      <span data-static-label className={styles.caption}>{activeMockCount} active {activeMockCount === 1 ? "mock" : "mocks"}</span>
       <div className={styles.actions}>
         <button type="button" className={styles.control} aria-expanded={heOpen} aria-controls={`${id}-he-import`} onClick={() => setHEOpen(!heOpen)}>HE</button>
         <button type="button" className={styles.primary} aria-expanded={importOpen} aria-controls={`${id}-import`} onClick={() => setImportOpen(!importOpen)}>Import report <span aria-hidden="true">{importOpen ? "−" : "+"}</span></button>
@@ -282,7 +272,7 @@ function Workspace({ reports, mocks, heMocks }: { reports: SavedWeakAreaReport[]
 
       <div className={styles.scopeBar}>
         <h2 data-static-label ref={summaryTitle} tabIndex={-1}>{selectedReport ? selectedReport.id === sourceReports[0]?.id ? "Latest assessment" : "Earlier assessment" : "Latest reports"}</h2>
-        <span>{selectedReport ? `${sourceReports.length} saved ${sourceReports.length === 1 ? "report" : "reports"}` : `${latestByMock.size} ${latestByMock.size === 1 ? "mock" : "mocks"}`}</span>
+        <span>{selectedReport ? `${sourceReports.length} saved ${sourceReports.length === 1 ? "report" : "reports"}` : `${activeMockCount} active ${activeMockCount === 1 ? "mock" : "mocks"}`}</span>
       </div>
 
       <section className={styles.summary} aria-label="Reported focus areas">

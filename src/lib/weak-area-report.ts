@@ -110,6 +110,10 @@ function cellsOf(line: string): string[] | null {
   return line.slice(1, -1).split("|").map((cell) => cell.trim());
 }
 
+function structuralLine(line: string | undefined): string {
+  return (line ?? "").replace(/(?<!\\)\\$/, "").trimEnd();
+}
+
 export function parseWeakAreaReport(source: string): WeakAreaReportValidation {
   if (typeof source !== "string" || source.length > MAX_WEAK_REPORT_LENGTH) {
     return { ok: false, error: "Paste a report no longer than 20,000 characters." };
@@ -121,12 +125,14 @@ export function parseWeakAreaReport(source: string): WeakAreaReportValidation {
     text = fenced[1].trim();
   }
   const lines = text.split("\n").map((line) => line.trim()).filter(Boolean);
-  if (lines[0] !== "# Mockly Weak Areas v1" && lines[0] !== "# Mockly Weak Areas v2") {
+  const header = structuralLine(lines[0]);
+  const isSubtaskReport = header === "# Mockly Weak Areas v2" || header === "Mockly Weak Areas v2";
+  if (header !== "# Mockly Weak Areas v1" && !isSubtaskReport) {
     return { ok: false, error: "Use the # Mockly Weak Areas v2 report header, or a saved v1 report." };
   }
-  const mock = lines[1]?.match(/^Mock:[ \t]*(\S+)$/);
+  const mock = structuralLine(lines[1]).match(/^Mock:[ \t]*(\S+)$/);
   if (!mock || !isUuid(mock[1])) return { ok: false, error: "Keep the Mock ID line from the copied prompt." };
-  if (lines[0] === "# Mockly Weak Areas v2") return parseSubtaskReport(lines, mock[1]);
+  if (isSubtaskReport) return parseSubtaskReport(lines, mock[1]);
   const headings = cellsOf(lines[2] ?? "");
   const separator = cellsOf(lines[3] ?? "");
   if (!headings || headings.join("|") !== "Subject|Area|Focus|Priority" || !separator ||
@@ -148,17 +154,18 @@ function parseSubtaskReport(lines: string[], sourceTestId: string): WeakAreaRepo
   const areas = [];
   let cursor = 2;
   while (cursor < lines.length) {
-    const area = lines[cursor++]?.match(/^##[ \t]+(.+)$/)?.[1];
-    const subject = lines[cursor++]?.match(/^Subject:[ \t]*(.+)$/)?.[1];
-    const focus = lines[cursor++]?.match(/^Focus:[ \t]*(.+)$/)?.[1];
-    const priority = lines[cursor++]?.match(/^Priority:[ \t]*(.+)$/)?.[1];
+    const area = structuralLine(lines[cursor++]).match(/^##[ \t]+(.+)$/)?.[1];
+    const subject = structuralLine(lines[cursor++]).match(/^Subject:[ \t]*(.+)$/)?.[1];
+    const focus = structuralLine(lines[cursor++]).match(/^Focus:[ \t]*(.+)$/)?.[1];
+    const priority = structuralLine(lines[cursor++]).match(/^Priority:[ \t]*(.+)$/)?.[1];
     if (!area || !subject || !focus || !priority) {
       return { ok: false, error: "Each area needs ## its name, then Subject:, Focus: and Priority: lines." };
     }
     const subtasks = [];
     while (cursor < lines.length && !/^##[ \t]+/.test(lines[cursor])) {
-      const task = lines[cursor++]?.match(/^-\s+\[ \][ \t]+(.+)$/)?.[1];
-      if (!task) return { ok: false, error: "Use one unchecked - [ ] practice step per line, with no extra headings or descriptions." };
+      const bullet = lines[cursor++].match(/^-[ \t]+(.+)$/)?.[1].trim();
+      const task = bullet?.startsWith("[") ? bullet.match(/^\[ \][ \t]+(.+)$/)?.[1] : bullet;
+      if (!task) return { ok: false, error: "Use one - practice step or unchecked - [ ] step per line, with no extra headings or descriptions." };
       subtasks.push({ text: task, completed: false });
     }
     areas.push({ subject, area, focus, priority, subtasks });
