@@ -1,0 +1,1 @@
+ALTER TABLE "jk_practice_records" ADD COLUMN IF NOT EXISTS "xp_delta" bigint GENERATED ALWAYS AS (10::bigint * (correct_count::bigint - wrong_count) + floor(20.0 * (correct_count::bigint + wrong_count) / (correct_count::bigint + wrong_count + skipped_count))::bigint) STORED;

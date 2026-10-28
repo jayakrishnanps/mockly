@@ -1,19 +1,16 @@
 "use client";
 
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 import { useEffect } from "react";
 import { Brand } from "@/components/brand";
-import { getRememberedUser, rememberUser, USERS } from "@/lib/users";
+import { getRememberedUser, navigateAsUser, USERS } from "@/lib/users";
 import styles from "./page.module.css";
 
 export default function Home() {
-  const router = useRouter();
-
   useEffect(() => {
     const user = getRememberedUser();
-    if (user) router.replace(`/u/${user}`);
-  }, [router]);
+    if (user) navigateAsUser(user);
+  }, []);
 
   return (
     <div className={styles.page}>
@@ -30,7 +27,8 @@ export default function Home() {
             <Link
               key={user}
               href={`/u/${user}`}
-              onClick={() => rememberUser(user)}
+              prefetch={false}
+              onClick={(event) => { event.preventDefault(); navigateAsUser(user); }}
               aria-label={`Continue as ${user}`}
               data-picker-user={user}
               className={`${styles.card} ${user === "JK" ? styles.jk : styles.he}`}

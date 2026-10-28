@@ -34,7 +34,8 @@ test("JK completion awards are atomic, exactly once and separate from HE", async
   await database.update(attempts).set({ submittedAt: now.toISOString() }).where(eq(attempts.id, attemptId));
   const original = (await database.select().from(jkPracticeRecords))[0];
   assert.equal(original.attemptId, attemptId);
-  assert.equal(original.xp, practiceXp(2, 1, 1));
+  assert.equal(original.xp, 35);
+  assert.equal(original.xpDelta, practiceXp(2, 1, 1));
   await database.update(attempts).set({ submittedAt: "2026-10-28T12:00:00Z", correctCount: 0 }).where(eq(attempts.id, attemptId));
   await database.update(attempts).set({ submittedAt: now.toISOString() }).where(eq(attempts.id, attemptId));
   assert.deepEqual(await database.select().from(jkPracticeRecords), [original]);
@@ -53,7 +54,8 @@ test("JK completion awards are atomic, exactly once and separate from HE", async
   const rows = await database.select().from(jkPracticeRecords);
   assert.equal(rows.length, 3);
   assert.equal(rows.find((row) => row.skippedCount === 30).xp, 0);
-  assert.equal((await createJKProgressStore(database).getTotals(now)).totalXp, 70);
+  assert.equal(rows.find((row) => row.skippedCount === 30).xpDelta, 0);
+  assert.equal((await createJKProgressStore(database).getTotals(now)).totalXp, 50);
 });
 
 test("JK lifetime totals use India periods and survive history, personal mock and bank deletion", async (t) => {
@@ -73,13 +75,14 @@ test("JK lifetime totals use India periods and survive history, personal mock an
   const original = await store.getProgress(now);
   assert.equal(original.totalXp, 9 * practiceXp(2, 1, 1));
   assert.equal(original.completedMocks, 9);
+  assert.equal(original.activeDays, 7);
   assert.equal(original.correctAnswers, 18);
   assert.equal(original.wrongAnswers, 9);
   assert.equal(original.skippedAnswers, 9);
   assert.equal(original.totalPracticeSeconds, 360);
   assert.equal(new Date(original.firstCompletedAt).toISOString(), "2025-12-31T18:29:59.999Z");
   assert.deepEqual(original.counts, { today: 2, week: 4, month: 6, year: 8, allTime: 9 });
-  assert.deepEqual((await store.getActivity(now)).at(-1), { date: "2026-10-27", count: 2, xp: 70 });
+  assert.deepEqual((await store.getActivity(now)).at(-1), { date: "2026-10-27", count: 2, xp: 50 });
   assert.equal(original.activity.at(-1).date, "2026-10-27");
   await createAttemptStore(database).clearUserHistory("JK");
   assert.deepEqual(await store.getProgress(now), original);
@@ -105,10 +108,48 @@ test("JK lifetime totals use India periods and survive history, personal mock an
   ]);
   const withBank = await store.getProgress(now);
   assert.equal(withBank.completedMocks, 10);
+  assert.equal(withBank.activeDays, 7);
   await createBankStore(database).remove(bankId);
   for (const table of [tests, attempts, questionBanks, bankQuestions]) assert.equal((await database.select().from(table)).length, 0);
   assert.deepEqual(await store.getProgress(now), withBank);
   assert.equal((await database.select().from(jkPracticeRecords).where(eq(jkPracticeRecords.attemptId, jkAttemptId))).length, 1);
+});
+
+test("wrong-answer penalties reduce retained XP without creating debt below zero", async (t) => {
+  const { database, close } = await createLocalDatabase();
+  t.after(close);
+  const mockId = randomUUID();
+  await database.insert(tests).values({ id: mockId, title: "XP penalty fixture", forUsers: ["JK", "HE"] });
+  const results = [
+    { correctCount: 0, wrongCount: 30, expected: 0 },
+    { correctCount: 30, wrongCount: 0, expected: 320 },
+    { correctCount: 20, wrongCount: 10, expected: 440 },
+    { correctCount: 0, wrongCount: 30, expected: 160 },
+    { correctCount: 0, wrongCount: 30, expected: 0 },
+    { correctCount: 3, wrongCount: 0, expected: 50 },
+  ];
+  const rows = results.map((result, index) => ({
+    id: randomUUID(), testId: mockId, takenBy: "JK", submittedAt: `2026-10-27T0${index}:00:00Z`,
+    correctCount: result.correctCount, wrongCount: result.wrongCount, skippedCount: 0, timeTakenSeconds: 60,
+  }));
+  await database.insert(attempts).values([...rows].reverse());
+  const store = createJKProgressStore(database);
+  for (const [index, row] of rows.entries()) {
+    const totals = await store.getTotals(new Date(row.submittedAt));
+    assert.equal(totals.totalXp, results[index].expected);
+    assert.equal(totals.completedMocks, index + 1);
+  }
+  const progress = await store.getProgress(now);
+  const ledger = await database.select().from(jkPracticeRecords);
+  assert.equal(ledger.find((row) => row.wrongCount === 30).xp, 20);
+  assert.equal(ledger.find((row) => row.wrongCount === 30).xpDelta, -280);
+  assert.equal(progress.totalXp, 50);
+  assert.equal(progress.level, 1);
+  assert.equal(progress.activeDays, 1);
+  assert.deepEqual((await store.getActivity(now)).at(-1), { date: "2026-10-27", count: 6, xp: -350 });
+  assert.equal(progress.activity.at(-1).xp, -350);
+  await createAttemptStore(database).clearUserHistory("JK");
+  assert.deepEqual(await store.getProgress(now), progress);
 });
 
 test("JK progress migration backfills valid historical completions once without reviving deleted history", async (t) => {
@@ -134,8 +175,34 @@ test("JK progress migration backfills valid historical completions once without 
   assert.equal(rows.length, 1);
   assert.equal(rows[0].attemptId, id);
   assert.equal(new Date(rows[0].completedAt).toISOString(), "2026-09-10T12:00:00.000Z");
-  assert.equal(rows[0].xp, practiceXp(2, 1, 1));
+  assert.equal(rows[0].xp, 35);
+  assert.equal(rows[0].xpDelta, practiceXp(2, 1, 1));
   await database.delete(attempts).where(and(eq(attempts.testId, mockId), eq(attempts.takenBy, "JK")));
   await database.$client.exec(migration);
   assert.deepEqual(await createJKProgressStore(database).getProgress(now), original);
+});
+
+test("the penalty migration recalculates saved practice even after its source history was deleted", async (t) => {
+  const { database, close } = await createLocalDatabase();
+  t.after(close);
+  const mockId = randomUUID();
+  const attemptId = randomUUID();
+  await database.insert(tests).values({ id: mockId, title: "Existing XP fixture", forUsers: ["JK"] });
+  await database.insert(attempts).values({ id: attemptId, testId: mockId, takenBy: "JK", submittedAt: now.toISOString(), ...outcome });
+  await database.delete(tests).where(eq(tests.id, mockId));
+  const [before] = await database.select().from(jkPracticeRecords);
+  assert.equal(before.xp, 35);
+  await database.execute(sql`ALTER TABLE public.jk_practice_records DROP COLUMN xp_delta`);
+  const [legacy] = await database.select({ xp: jkPracticeRecords.xp }).from(jkPracticeRecords);
+  assert.equal(legacy.xp, 35);
+  const migration = await readFile(new URL("../src/db/migrations/0009_jk_xp_penalties.sql", import.meta.url), "utf8");
+  await database.$client.exec(migration);
+  const [after] = await database.select().from(jkPracticeRecords);
+  assert.deepEqual(after, { ...before, xp: 35, xpDelta: 25 });
+  const progress = await createJKProgressStore(database).getProgress(now);
+  assert.equal(progress.totalXp, 25);
+  assert.equal(progress.completedMocks, 1);
+  assert.equal(progress.activeDays, 1);
+  assert.equal((await database.select().from(attempts)).length, 0);
+  assert.equal((await database.select().from(tests)).length, 0);
 });

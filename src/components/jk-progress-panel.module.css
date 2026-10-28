@@ -1,7 +1,5 @@
 .page { display: grid; min-width: 0; gap: 32px; color: #000; }
-.heading { display: grid; justify-items: start; gap: 21px; }
-.back { display: inline-flex; min-height: 44px; align-items: center; gap: 9px; font-size: 13px; font-weight: 500; }
-.back:hover { text-decoration: underline; text-underline-offset: 4px; }
+.heading { min-width: 0; }
 .levelPanel { display: grid; grid-template-columns: auto minmax(0, 1fr); align-items: center; gap: 26px; border: 1px solid #000; border-radius: 12px; padding: 26px; }
 .levelNumber { display: grid; justify-items: center; gap: 4px; min-width: 74px; }
 .eyebrow { font-size: 10px; font-weight: 600; letter-spacing: .15em; }
@@ -19,7 +17,7 @@
 .sectionHeading { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 8px 16px; margin-bottom: 18px; }
 .sectionHeading h2 { font-size: 16px; font-weight: 600; letter-spacing: -.025em; }
 .sectionHeading > span { font-size: 11px; }
-.periods { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); border-block: 1px solid #000; }
+.periods { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 0 12px; border-block: 1px solid #000; }
 .periods > div { min-width: 0; padding-block: 18px; }
 .periods dt, .totals dt, .streaks dt { font-size: 11px; line-height: 1.6; }
 .periods dd { margin-top: 7px; font-size: 28px; font-weight: 600; font-variant-numeric: tabular-nums; line-height: 1.2; letter-spacing: -.06em; overflow-wrap: anywhere; }
@@ -63,7 +61,11 @@
   .periods { grid-template-columns: repeat(3, minmax(0, 1fr)); }
   .periods > div { padding-block: 15px; }
   .periods > div:nth-child(n+4) { border-top: 1px solid #000; }
-  .periods > div:nth-child(5) { grid-column: span 2; }
   .activityPanel { padding: 20px 15px; }
   .totals { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+
+@media (max-width: 359px) {
+  .periods { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .periods > div:nth-child(3) { border-top: 1px solid #000; }
 }

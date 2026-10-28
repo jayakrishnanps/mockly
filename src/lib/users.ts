@@ -37,3 +37,9 @@ export function forgetUser(): void {
     // Storage may be disabled in this browser.
   }
 }
+
+export function navigateAsUser(user: User | null): void {
+  if (user) rememberUser(user);
+  else forgetUser();
+  window.location.replace(user ? `/u/${user}` : "/");
+}

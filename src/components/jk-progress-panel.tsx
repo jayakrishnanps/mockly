@@ -1,4 +1,3 @@
-import Link from "next/link";
 import type { JKProgress } from "@/lib/jk-progress";
 import { JKProgressActivity } from "./jk-progress-activity";
 import styles from "./jk-progress-panel.module.css";
@@ -12,11 +11,11 @@ export function JKProgressPanel({ progress }: { progress: JKProgress }) {
     ["This month", progress.counts.month],
     ["This year", progress.counts.year],
     ["All time", progress.counts.allTime],
+    ["Active days", progress.activeDays],
   ] as const;
 
   return <div className={styles.page}>
     <div className={styles.heading}>
-      <Link href="/u/JK" className={styles.back}><span aria-hidden="true">←</span> Back to mocks</Link>
       <h1 className="page-title">Your progress</h1>
     </div>
 
@@ -35,7 +34,7 @@ export function JKProgressPanel({ progress }: { progress: JKProgress }) {
           <span>{number.format(progress.xpIntoLevel)} / {number.format(progress.xpForNextLevel)} XP</span>
           <span>{number.format(progress.xpForNextLevel - progress.xpIntoLevel)} to go</span>
         </div>
-        <p className={styles.rule}>10 XP per correct answer, plus up to 20 XP for answering the mock. Each level takes a little more practice.</p>
+        <p className={styles.rule}>+10 XP per correct answer, −10 per wrong answer, plus up to 20 XP for answering the mock. Your XP balance stops at zero.</p>
       </div>
     </section>
 
@@ -55,8 +54,8 @@ export function JKProgressPanel({ progress }: { progress: JKProgress }) {
       </div>
       <JKProgressActivity days={progress.activity} />
       <dl className={styles.streaks}>
-        <div><dt>Current streak</dt><dd>{number.format(progress.currentStreak)} <span>days</span></dd></div>
-        <div><dt>Longest streak</dt><dd>{number.format(progress.longestStreak)} <span>days</span></dd></div>
+        <div><dt>Current streak</dt><dd>{number.format(progress.currentStreak)} <span>{progress.currentStreak === 1 ? "day" : "days"}</span></dd></div>
+        <div><dt>Longest streak</dt><dd>{number.format(progress.longestStreak)} <span>{progress.longestStreak === 1 ? "day" : "days"}</span></dd></div>
       </dl>
     </section>
 

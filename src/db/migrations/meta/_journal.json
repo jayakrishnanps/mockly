@@ -64,6 +64,13 @@
       "when": 1793172500825,
       "tag": "0008_jk_progress",
       "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "7",
+      "when": 1793175216538,
+      "tag": "0009_jk_xp_penalties",
+      "breakpoints": true
     }
   ]
 }

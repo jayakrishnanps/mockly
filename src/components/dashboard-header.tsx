@@ -1,23 +1,21 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname, useRouter } from "next/navigation";
+import { usePathname } from "next/navigation";
 import { useEffect } from "react";
 import { Brand } from "@/components/brand";
-import { forgetUser, rememberUser, type User } from "@/lib/users";
+import { navigateAsUser, rememberUser, type User } from "@/lib/users";
 import styles from "./dashboard-header.module.css";
 
-export function DashboardHeader({ user, jkLevel = 1 }: { user: User; jkLevel?: number }) {
+export function DashboardHeader({ user, jkLevel }: { user: User; jkLevel?: number }) {
   const pathname = usePathname();
-  const router = useRouter();
 
   useEffect(() => {
     rememberUser(user);
   }, [user]);
 
   function switchUser() {
-    forgetUser();
-    router.replace("/");
+    navigateAsUser(null);
   }
 
   const links = [
@@ -35,8 +33,8 @@ export function DashboardHeader({ user, jkLevel = 1 }: { user: User; jkLevel?: n
           <Brand user={user} />
           <div className="flex items-center gap-2 sm:gap-4">
             <div className="flex items-center gap-2 sm:gap-3">
-              {user === "JK" ? <Link href="/u/JK/progress" className={styles.profileLink} aria-label={`JK progress, level ${jkLevel}`} aria-current={pathname === "/u/JK/progress" ? "page" : undefined}>
-                <span>JK</span><span className={styles.level} aria-hidden="true">{jkLevel}</span>
+              {user === "JK" ? <Link href="/u/JK/progress" className={styles.profileLink} aria-label={jkLevel === undefined ? "JK progress" : `JK progress, level ${jkLevel}`} aria-current={pathname === "/u/JK/progress" ? "page" : undefined}>
+                <span>JK</span>{jkLevel !== undefined && <span className={styles.level} aria-hidden="true">{jkLevel}</span>}
               </Link> : <span className="identity-initials border-r border-accent/20 pr-3 text-lg leading-none text-accent sm:pr-4" aria-label="Current user: HE">HE</span>}
               <button type="button" onClick={switchUser} className="min-h-11 rounded-md px-1 text-xs font-medium text-muted transition-colors hover:text-foreground">
                 Switch user
