@@ -4,6 +4,7 @@ import { useRef, useState, useSyncExternalStore } from "react";
 import { useRouter } from "next/navigation";
 import { appendBankQuestions } from "@/app/u/[user]/bank/actions";
 import { FormattingPrompt } from "@/components/formatting-prompt";
+import { PracticeQuestionPrompt } from "@/components/practice-question-prompt";
 import { QuestionPreview } from "@/components/question-preview";
 import { loadBankQuestions, retryBankBatch, saveBankQuestions, type BankQuestionDraft } from "@/lib/bank-draft";
 import { parseQuestions } from "@/lib/parser";
@@ -106,6 +107,7 @@ function BankEditor({ bankId }: { bankId: string }) {
       {storageError && <p role="alert" className="mt-2 text-amber-900">{storageError}</p>}
     </div>
     <FormattingPrompt />
+    <PracticeQuestionPrompt />
     <section aria-labelledby="bank-paste-title" className="min-w-0">
       <h2 id="bank-paste-title" className="text-lg font-semibold">Add questions</h2>
       <p id="bank-paste-help" className="mt-2 text-sm leading-6 text-muted">Paste questions using Q1., four A–D options, and an Ans: line. Use $...$ for inline maths and $$...$$ for equations.</p>
