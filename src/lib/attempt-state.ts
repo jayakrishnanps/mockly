@@ -13,6 +13,12 @@ export function remainingSeconds(expiresAt: number, now: number): number {
   return Math.max(0, Math.ceil((expiresAt - now) / 1000));
 }
 
+export function submissionTimestamp(value: unknown, startedAt: number, receivedAt: number, expiresAt: number, savedTimeMs: number): number | null {
+  if (value === undefined) return Math.min(receivedAt, expiresAt);
+  if (typeof value !== "number" || !Number.isSafeInteger(value) || value < startedAt || value > receivedAt || value < startedAt + savedTimeMs) return null;
+  return Math.min(value, expiresAt);
+}
+
 /** Reject malformed, duplicate and foreign answers; never drop questions silently. */
 export function validateAnswers(value: unknown, questionIds?: string[]): AnswerRecord[] | null {
   if (!Array.isArray(value)) return null;

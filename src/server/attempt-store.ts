@@ -3,7 +3,7 @@ import { and, asc, desc, eq, isNotNull, isNull, sql } from "drizzle-orm";
 import { attempts, bankQuestions, questions, tests } from "../db/schema.ts";
 import type { db as DbType } from "../db/index";
 import { scoreAttempt, type AnswerRecord } from "../lib/scoring.ts";
-import { validateAnswers } from "../lib/attempt-state.ts";
+import { submissionTimestamp, validateAnswers } from "../lib/attempt-state.ts";
 import { isRecord, isUuid } from "../lib/mock-validation.ts";
 import { isUser, type User } from "../lib/users.ts";
 import { resolveQuestionCount, selectBankQuestions, selectQuestions, shuffleQuestionOptions } from "../lib/question-selection.ts";
@@ -91,13 +91,15 @@ export function createAttemptStore(database: Database, now: () => number = Date.
   }
 
   async function finish(tx: Transaction, attempt: Attempt, snapshot: AttemptSnapshot, timestamp: number) {
-    const elapsedMs = Math.max(0, Math.min(timestamp - Date.parse(attempt.startedAt), snapshot.durationMinutes * 60000));
+    const startedAt = Date.parse(attempt.startedAt);
+    const completedAt = Math.max(startedAt, Math.min(timestamp, startedAt + snapshot.durationMinutes * 60000));
+    const elapsedMs = completedAt - startedAt;
     const result = scoreAttempt({
       marksCorrect: Number(snapshot.marksCorrect), marksWrong: Number(snapshot.marksWrong),
       correctIndexes: new Map(snapshot.questions.map((q) => [q.id, q.correctIndex])), answers: snapshot.answers,
     });
     await tx.update(attempts).set({
-      submittedAt: new Date(timestamp).toISOString(), timeTakenSeconds: Math.round(elapsedMs / 1000),
+      submittedAt: new Date(completedAt).toISOString(), timeTakenSeconds: Math.round(elapsedMs / 1000),
       score: result.score.toFixed(2), correctCount: result.correctCount, wrongCount: result.wrongCount,
       skippedCount: result.skippedCount, answers: { ...snapshot, revision: snapshot.revision + 1 },
     }).where(eq(attempts.id, attempt.id));
@@ -186,7 +188,7 @@ export function createAttemptStore(database: Database, now: () => number = Date.
       });
     },
 
-    async submitAttempt(attemptId: string, user: User, answers?: unknown, revision?: number) {
+    async submitAttempt(attemptId: string, user: User, answers?: unknown, revision?: number, submittedAt?: unknown) {
       return database.transaction(async (tx) => {
         const { attempt, mock } = await owned(tx, attemptId, user);
         if (attempt.submittedAt) return { attemptId, testId: attempt.testId };
@@ -194,13 +196,17 @@ export function createAttemptStore(database: Database, now: () => number = Date.
         if (!mock.forUsers.includes(user)) throw new AttemptError("forbidden", "This mock is not assigned to you.");
         const snapshot = await readSnapshot(tx, attempt, mock);
         const timestamp = now();
-        const elapsedMs = Math.max(0, timestamp - Date.parse(attempt.startedAt));
+        const startedAt = Date.parse(attempt.startedAt);
+        const expiresAt = startedAt + snapshot.durationMinutes * 60000;
+        const completedAt = submissionTimestamp(submittedAt, startedAt, timestamp, expiresAt, snapshot.answers.reduce((sum, answer) => sum + answer.timeSpentMs, 0));
+        if (completedAt === null) throw new AttemptError("invalid", "Invalid submission time. Your progress is kept; please retry.");
+        const elapsedMs = Math.max(0, timestamp - startedAt);
         // At the deadline, only progress already accepted by the server can be scored.
         if (elapsedMs < snapshot.durationMinutes * 60000 && answers !== undefined) {
           if (revision !== snapshot.revision) throw new AttemptError("stale", "This attempt changed in another tab. Reload before submitting.");
-          snapshot.answers = mergeAnswers(snapshot, answers, elapsedMs);
+          snapshot.answers = mergeAnswers(snapshot, answers, completedAt - startedAt);
         }
-        await finish(tx, attempt, snapshot, timestamp);
+        await finish(tx, attempt, snapshot, completedAt);
         return { attemptId, testId: attempt.testId };
       });
     },

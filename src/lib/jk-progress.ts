@@ -65,7 +65,12 @@ function xpBeforeLevel(level: number): bigint {
     { start: 200, end: 500, base: 4525, increment: 3 },
     { start: 500, end: last, base: 5425, increment: 4 },
   ];
-  for (const band of bands) {
+  const difficultyBands = [
+    { start: 39, end: 100, base: 0, increment: 15 },
+    { start: 100, end: 500, base: 915, increment: 8 },
+    { start: 500, end: last, base: 4115, increment: 15 },
+  ];
+  for (const band of [...bands, ...difficultyBands]) {
     const count = BigInt(Math.max(0, Math.min(last, band.end) - band.start));
     total += BigInt(band.base) * count + BigInt(band.increment) * count * (count + BigInt(1)) / BigInt(2);
   }

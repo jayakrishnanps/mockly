@@ -30,6 +30,7 @@ export function useExam(props: ExamProgress) {
   const visible = useRef(true);
   const busy = useRef(false);
   const finished = useRef(false);
+  const submittedAt = useRef<number | null>(null);
   const pending = useRef<Promise<void> | null>(null);
   const dirty = useRef(true);
   const [timeLeft, setTimeLeft] = useState(() => remainingSeconds(deadline, serverNow));
@@ -47,7 +48,7 @@ export function useExam(props: ExamProgress) {
   }, [key, attemptId, user]);
 
   const flushTime = useCallback(() => {
-    const timestamp = now();
+    const timestamp = submittedAt.current ?? now();
     const next = { ...model.current, answers: visible.current ? addQuestionTime(model.current.answers, model.current.current, enteredAt.current, timestamp, deadline) : model.current.answers };
     enteredAt.current = timestamp;
     commit(next);
@@ -56,6 +57,7 @@ export function useExam(props: ExamProgress) {
 
   const complete = useCallback(() => {
     finished.current = true;
+    setSubmitting(true);
     try { localStorage.removeItem(key); } catch { /* A completed attempt cannot reopen. */ }
     router.replace(`/result/${attemptId}`);
   }, [key, router, attemptId]);
@@ -83,17 +85,30 @@ export function useExam(props: ExamProgress) {
   const handleSubmit = useCallback(async () => {
     if (busy.current || finished.current) return;
     busy.current = true;
+    const timestamp = Math.min(deadline, Math.floor(now()));
+    submittedAt.current = timestamp;
+    setTimeLeft(remainingSeconds(deadline, timestamp));
     setSubmitting(true);
+    flushTime();
     try {
       await pending.current;
       if (finished.current) return;
-      const latest = flushTime();
-      const result = await submitExam(attemptId, user, latest.answers, latest.revision);
+      const latest = model.current;
+      const result = await submitExam(attemptId, user, latest.answers, latest.revision, timestamp);
       if (result.ok) complete();
       else setSaveError(result.error);
     } catch { setSaveError("Could not submit. Your progress is kept. Please retry; expired attempts retry automatically."); }
-    finally { busy.current = false; setSubmitting(false); }
-  }, [attemptId, user, flushTime, complete]);
+    finally {
+      if (!finished.current) {
+        submittedAt.current = null;
+        enteredAt.current = now();
+        dirty.current = true;
+        busy.current = false;
+        setTimeLeft(remainingSeconds(deadline, enteredAt.current));
+        setSubmitting(false);
+      }
+    }
+  }, [attemptId, user, deadline, now, flushTime, complete]);
 
   const change = useCallback((patch: Partial<AnswerRecord>, nextIndex?: number) => {
     if (busy.current || finished.current || now() >= deadline) return;
@@ -109,6 +124,7 @@ export function useExam(props: ExamProgress) {
     let lastSave = now();
     let lastSubmit = -Infinity;
     const timer = setInterval(() => {
+      if (busy.current || finished.current) return;
       const timestamp = now();
       setTimeLeft(remainingSeconds(deadline, timestamp));
       if (timestamp >= deadline) {
@@ -119,6 +135,7 @@ export function useExam(props: ExamProgress) {
       }
     }, 1000);
     const visibility = () => {
+      if (finished.current) return;
       if (document.hidden) { flushTime(); visible.current = false; void save(); }
       else { visible.current = true; enteredAt.current = now(); }
     };

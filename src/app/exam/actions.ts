@@ -34,10 +34,10 @@ export async function saveExamProgress(attemptId: unknown, user: unknown, answer
   }
 }
 
-export async function submitExam(attemptId: unknown, user: unknown, answers: unknown, revision: number): Promise<{ ok: true; attemptId: string } | { ok: false; error: string }> {
+export async function submitExam(attemptId: unknown, user: unknown, answers: unknown, revision: number, submittedAt?: unknown): Promise<{ ok: true; attemptId: string } | { ok: false; error: string }> {
   if (!isUuid(attemptId) || !isUser(user) || !validateAnswers(answers) || !Number.isSafeInteger(revision) || revision < 0 || await getRememberedUserFromCookies() !== user) return { ok: false, error: "Invalid request or changed user. Reload before continuing." };
   try {
-    const result = await attemptStore.submitAttempt(attemptId, user, answers, revision);
+    const result = await attemptStore.submitAttempt(attemptId, user, answers, revision, submittedAt);
     revalidatePath(`/u/${user}/history`);
     revalidatePath(`/test/${result.testId}`);
     return { ok: true, attemptId: result.attemptId };

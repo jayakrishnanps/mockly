@@ -3,7 +3,7 @@ import { randomUUID } from "node:crypto";
 import { readFile } from "node:fs/promises";
 import { test } from "node:test";
 import { and, eq, sql } from "drizzle-orm";
-import { attempts, forestPlants, heWeakReports, questionBanks, tests, weakAreaReports } from "../src/db/schema.ts";
+import { attempts, forestPlants, heWeakReports, jkPracticeRecords, questionBanks, tests, weakAreaReports } from "../src/db/schema.ts";
 import { createAttemptStore } from "../src/server/attempt-store.ts";
 import { createMockStore } from "../src/server/mock-store.ts";
 import { createBankStore } from "../src/server/bank-store.ts";
@@ -11,6 +11,49 @@ import { createWeakAreaReportStore } from "../src/server/weak-area-report-store.
 import { createLocalDatabase } from "./helpers/local-database.mjs";
 
 const areas = [{ subject: "Math", area: "Reverse percentages", focus: "Accuracy", priority: "High" }];
+
+test("clearing JK weak areas removes all assessments and steps while preserving other records", async (t) => {
+  const { database, close } = await createLocalDatabase();
+  t.after(close);
+  const store = createWeakAreaReportStore(database);
+  const bankId = randomUUID();
+  const sourceTestId = randomUUID();
+  await database.insert(questionBanks).values({ id: bankId, title: "Practice bank" });
+  await database.insert(tests).values({ id: sourceTestId, title: "Shared practice", forUsers: ["JK", "HE"], sourceBankId: bankId });
+  await database.insert(attempts).values(["JK", "HE"].map((takenBy) => ({
+    id: randomUUID(), testId: sourceTestId, takenBy, submittedAt: "2026-11-02T10:00:00Z",
+    correctCount: 1, wrongCount: 0, skippedCount: 0, timeTakenSeconds: 6, score: "2",
+  })));
+  await database.insert(heWeakReports).values({
+    id: randomUUID(), sourceTestId, sourceTitle: "Shared practice", title: "പരിശീലനം",
+    explanation: "- പതുക്കെ വായിക്കൂ.", practice: "- വീണ്ടും ചെയ്യൂ.",
+  });
+  const planned = { ...areas[0], subtasks: [
+    { text: "Practise 10 reverse percentages with whole numbers.", completed: false },
+    { text: "Check the answers to all 10 questions.", completed: false },
+    { text: "Repeat the incorrect questions once.", completed: false },
+  ] };
+  const plannedReportId = randomUUID();
+  await store.save({ id: randomUUID(), sourceTestId, areas });
+  await store.save({ id: plannedReportId, sourceTestId, areas: [planned] });
+  await store.save({ id: randomUUID(), sourceTestId, areas: [] });
+  await store.setSubtask({ reportId: plannedReportId, subject: planned.subject, area: planned.area, subtask: planned.subtasks[0].text, completed: true });
+  const unrelated = () => Promise.all([
+    database.select().from(questionBanks), database.select().from(tests),
+    database.select().from(attempts).orderBy(attempts.id), database.select().from(heWeakReports),
+    database.select().from(forestPlants), database.select().from(jkPracticeRecords),
+  ]);
+  const before = await unrelated();
+  assert.equal(before[4].length, 1);
+  assert.equal(before[5].length, 1);
+  assert.equal((await store.list()).length, 3);
+  await store.clearAll();
+  await store.clearAll();
+  assert.deepEqual(await store.list(), []);
+  assert.deepEqual(await unrelated(), before);
+  await store.save({ id: randomUUID(), sourceTestId, areas: [planned] });
+  assert.equal((await store.list()).length, 1);
+});
 
 test("weak-area reports validate sources, keep retry IDs, and follow JK's mock lifecycle", async (t) => {
   const { database, close } = await createLocalDatabase();

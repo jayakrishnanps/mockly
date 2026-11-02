@@ -97,6 +97,10 @@ export function createWeakAreaReportStore(database: typeof db) {
       await database.delete(weakAreaReports).where(eq(weakAreaReports.id, id.toLowerCase()));
     },
 
+    async clearAll(): Promise<void> {
+      await database.delete(weakAreaReports);
+    },
+
     async removeArea(input: unknown): Promise<void> {
       const target = readAreaTarget(input, []);
 

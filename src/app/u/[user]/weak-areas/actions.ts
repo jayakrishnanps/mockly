@@ -9,6 +9,7 @@ import type { WeakArea } from "@/lib/weak-area-report";
 
 export type WeakAreaActionResult = { ok: true; id: string } | { ok: false; error: string; uncertain?: true };
 export type WeakAreaSubtaskResult = { ok: true; area: WeakArea } | { ok: false; error: string; uncertain?: true };
+export type WeakAreaClearResult = { ok: true } | { ok: false; error: string; uncertain?: true };
 
 function failure(error: unknown): WeakAreaActionResult {
   if (error instanceof WeakAreaReportError) return { ok: false, error: error.message };
@@ -31,6 +32,16 @@ export async function deleteWeakAreaReport(id: unknown): Promise<WeakAreaActionR
   catch (error) { return failure(error); }
   revalidatePath("/u/JK/weak-areas");
   return { ok: true, id };
+}
+
+export async function clearWeakAreaReports(): Promise<WeakAreaClearResult> {
+  if (await getRememberedUserFromCookies() !== "JK") return { ok: false, error: "Switch to JK to clear weak areas." };
+  try { await weakAreaReportStore.clearAll(); }
+  catch {
+    return { ok: false, uncertain: true, error: "Clearing could not be confirmed. Please retry." };
+  }
+  revalidatePath("/u/JK/weak-areas");
+  return { ok: true };
 }
 
 export async function completeWeakArea(input: unknown): Promise<WeakAreaActionResult> {

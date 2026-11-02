@@ -20,6 +20,12 @@
 .confirm h3 { font-size: .95rem; font-weight: 650; }
 .confirm p { margin-top: .5rem; font-size: .8rem; line-height: 1.6; }
 .confirm .actions { margin-top: 1rem; }
+.dialog { width: min(28rem, calc(100% - 2rem)); max-height: calc(100dvh - 2rem); margin: auto; border: 1px solid #000; border-radius: .75rem; padding: 0; background: #fff; color: #000; overflow-y: auto; }
+.dialog::backdrop { background: rgb(0 0 0 / .4); }
+.dialogContent { display: grid; gap: 1rem; padding: 1.25rem; }
+.dialogContent h2 { font-size: 1.1rem; font-weight: 650; letter-spacing: -.025em; }
+.dialogContent > p { font-size: .85rem; line-height: 1.7; }
+.dialogContent .actions { justify-content: flex-end; }
 .preview { margin-top: 1.25rem; padding-top: 1rem; border-top: 1px solid #000; }
 .previewHeading { margin-bottom: .875rem; }
 .previewHeading h3 { min-width: 0; overflow-wrap: anywhere; font-size: .95rem; font-weight: 650; }

@@ -1,27 +1,28 @@
 .page { display: grid; min-width: 0; gap: 32px; color: #000; }
 .heading { min-width: 0; }
-.levelPanel { display: grid; grid-template-columns: auto minmax(0, 1fr); align-items: center; gap: 26px; border: 1px solid #000; border-radius: 12px; padding: 26px; }
-.levelNumber { display: grid; justify-items: center; gap: 4px; min-width: 74px; }
+.levelPanel { display: grid; grid-template-columns: auto minmax(0, 1fr); align-items: center; gap: 36px; border: 1px solid #000; border-radius: 20px; background: #000; color: #fff; padding: 34px; }
+.levelNumber { display: grid; align-content: center; justify-items: center; gap: 6px; min-width: 128px; min-height: 128px; border: 1px solid #fff; border-radius: 50%; outline: 1px solid #fff; outline-offset: 6px; padding: 20px; }
 .eyebrow { font-size: 10px; font-weight: 600; letter-spacing: .15em; }
-.levelNumber > strong { max-width: 100%; font-size: clamp(44px, 8vw, 68px); font-weight: 600; font-variant-numeric: tabular-nums; line-height: 1; letter-spacing: -.07em; }
+.levelNumber > strong { max-width: 100%; font-size: clamp(44px, 6vw, 64px); font-weight: 600; font-variant-numeric: tabular-nums; line-height: 1; letter-spacing: -.07em; }
 .levelDetails { min-width: 0; }
 .xpHeading, .xpRemaining { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 7px 16px; font-size: 12px; font-variant-numeric: tabular-nums; }
-.xpHeading { align-items: baseline; }
-.xpHeading strong { font-size: 20px; font-weight: 600; letter-spacing: -.04em; }
-.xpBar { display: block; width: 100%; height: 8px; margin-block: 14px 9px; overflow: hidden; appearance: none; border: 1px solid #000; border-radius: 99px; background: #fff; color: #000; }
-.xpBar::-webkit-progress-bar { border-radius: inherit; background: #fff; }
-.xpBar::-webkit-progress-value { border-radius: inherit; background: #000; }
-.xpBar::-moz-progress-bar { border-radius: inherit; background: #000; }
+.xpHeading { align-items: center; }
+.xpHeading strong { font-size: clamp(24px, 3vw, 32px); font-weight: 600; letter-spacing: -.04em; }
+.nextLevel { display: inline-flex; align-items: center; min-height: 32px; border: 1px solid #fff; border-radius: 99px; padding: 5px 11px; white-space: nowrap; }
+.xpBar { display: block; width: 100%; height: 12px; margin-block: 18px 11px; overflow: hidden; appearance: none; border: 1px solid #fff; border-radius: 99px; background: #000; color: #fff; }
+.xpBar::-webkit-progress-bar { border-radius: inherit; background: #000; }
+.xpBar::-webkit-progress-value { border-radius: inherit; background: #fff; }
+.xpBar::-moz-progress-bar { border-radius: inherit; background: #fff; }
 .xpRemaining { font-size: 11px; }
-.rule { max-width: 48ch; margin-top: 16px; font-size: 12px; line-height: 1.7; }
 .sectionHeading { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 8px 16px; margin-bottom: 18px; }
 .sectionHeading h2 { font-size: 16px; font-weight: 600; letter-spacing: -.025em; }
 .sectionHeading > span { font-size: 11px; }
-.periods { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 0 12px; border-block: 1px solid #000; }
-.periods > div { min-width: 0; padding-block: 18px; }
-.periods dt, .totals dt, .streaks dt { font-size: 11px; line-height: 1.6; }
+.periods { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 10px; }
+.periods > div { min-width: 0; border: 1px solid #000; border-radius: 12px; padding: 16px 14px; }
+.periods > div:nth-child(5) { background: #000; color: #fff; }
+.periods dt, .streaks dt { font-size: 11px; line-height: 1.6; }
 .periods dd { margin-top: 7px; font-size: 28px; font-weight: 600; font-variant-numeric: tabular-nums; line-height: 1.2; letter-spacing: -.06em; overflow-wrap: anywhere; }
-.activityPanel { min-width: 0; border: 1px solid #000; border-radius: 12px; padding: 24px; }
+.activityPanel { min-width: 0; border: 1px solid #000; border-radius: 20px; padding: 24px; }
 .activityScroll { overflow-x: auto; overscroll-behavior-x: contain; padding: 5px 3px 9px; scrollbar-width: thin; scrollbar-color: #000 #fff; }
 .calendar { width: max-content; min-width: 100%; }
 .months { display: grid; grid-template-columns: repeat(53, minmax(11px, 1fr)); column-gap: 3px; margin-bottom: 7px; font-size: 9px; }
@@ -48,24 +49,22 @@
 .streaks { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 20px; margin-top: 23px; border-top: 1px solid #000; padding-top: 18px; }
 .streaks dd { margin-top: 5px; font-size: 24px; font-weight: 600; font-variant-numeric: tabular-nums; line-height: 1.2; letter-spacing: -.04em; }
 .streaks dd span { font-size: 11px; font-weight: 400; letter-spacing: 0; }
-.totals { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 24px 18px; }
-.totals dd { margin-top: 7px; font-size: 24px; font-weight: 600; font-variant-numeric: tabular-nums; line-height: 1.2; letter-spacing: -.045em; overflow-wrap: anywhere; }
-.totals dd span { font-size: 12px; font-weight: 400; letter-spacing: 0; }
-.savedNote { border-top: 1px solid #000; padding-top: 17px; font-size: 11px; line-height: 1.7; }
+
+@media (max-width: 799px) {
+  .periods { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+}
 
 @media (max-width: 539px) {
   .page { gap: 28px; }
-  .levelPanel { grid-template-columns: 1fr; gap: 22px; padding: 22px 20px; }
-  .levelNumber { justify-items: start; }
-  .levelNumber > strong { font-size: 60px; }
-  .periods { grid-template-columns: repeat(3, minmax(0, 1fr)); }
-  .periods > div { padding-block: 15px; }
-  .periods > div:nth-child(n+4) { border-top: 1px solid #000; }
+  .levelPanel { grid-template-columns: 1fr; justify-items: center; gap: 30px; padding: 28px 20px 23px; }
+  .levelNumber { min-width: 116px; min-height: 116px; padding: 18px; }
+  .levelNumber > strong { font-size: 52px; }
+  .levelDetails { width: 100%; }
+  .xpHeading { gap: 10px; }
+  .periods > div { padding: 14px 12px; }
   .activityPanel { padding: 20px 15px; }
-  .totals { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }
 
 @media (max-width: 359px) {
   .periods { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-  .periods > div:nth-child(3) { border-top: 1px solid #000; }
 }

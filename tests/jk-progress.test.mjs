@@ -7,6 +7,13 @@ const rawTotals = () => ({
   totalPracticeSeconds: 240, firstCompletedAt: "2026-10-28T06:00:00Z", today: 1, week: 1, month: 1, year: 1,
 });
 
+function originalLevelCost(level) {
+  const early = 100 + 25 * (level - 1) + Math.floor((level - 1) ** 2 / 4);
+  return level <= 34 ? early : level <= 50 ? early + 25 * (level - 34)
+    : level <= 100 ? 2325 + 40 * (level - 50) : level <= 200 ? 4325 + 2 * (level - 100)
+    : level <= 500 ? 4525 + 3 * (level - 200) : 5425 + 4 * (level - 500);
+}
+
 test("practice XP rewards correct answers, penalises wrong answers and leaves skips neutral", () => {
   assert.equal(practiceXp(30, 0, 0), 320);
   assert.equal(practiceXp(20, 10, 0), 120);
@@ -34,14 +41,13 @@ test("practice XP rewards correct answers, penalises wrong answers and leaves sk
 test("levels have increasing costs, exact boundaries and no level-1000 cap", () => {
   assert.deepEqual(levelProgress(0), { level: 1, xpIntoLevel: 0, xpForNextLevel: 100, progressPercent: 0 });
   assert.deepEqual(levelProgress(99), { level: 1, xpIntoLevel: 99, xpForNextLevel: 100, progressPercent: 99 });
-  const checkpoints = new Set([2, 3, 10, 20, 34, 35, 36, 40, 45, 50, 51, 80, 100, 101, 200, 201, 500, 501, 600, 1000, 1001]);
+  const checkpoints = new Set([2, 3, 10, 20, 34, 35, 36, 39, 40, 41, 45, 50, 51, 80, 100, 101, 200, 201, 500, 501, 600, 1000, 1001]);
   let threshold = 0;
   let previousCost = 0;
   for (let level = 1; level <= 1001; level++) {
-    const earlyCost = 100 + 25 * (level - 1) + Math.floor((level - 1) ** 2 / 4);
-    const cost = level <= 34 ? earlyCost : level <= 50 ? earlyCost + 25 * (level - 34)
-      : level <= 100 ? 2325 + 40 * (level - 50) : level <= 200 ? 4325 + 2 * (level - 100)
-      : level <= 500 ? 4525 + 3 * (level - 200) : 5425 + 4 * (level - 500);
+    const extra = level < 40 ? 0 : level <= 100 ? 15 * (level - 39)
+      : level <= 500 ? 915 + 8 * (level - 100) : 4115 + 15 * (level - 500);
+    const cost = originalLevelCost(level) + extra;
     assert.ok(cost > previousCost);
     if (checkpoints.has(level)) {
       assert.equal(levelProgress(threshold).level, level);
@@ -56,9 +62,9 @@ test("levels have increasing costs, exact boundaries and no level-1000 cap", () 
     previousCost = cost;
   }
   for (const [level, xp, cost] of [
-    [35, 20553, 1264], [40, 27550, 1605], [45, 36278, 1959], [50, 46800, 2325],
-    [51, 49125, 2365], [100, 212050, 4325], [101, 216375, 4327], [200, 654450, 4525],
-    [201, 658975, 4528], [500, 2146500, 5425], [501, 2151925, 5429], [1000, 5358000, 7425],
+    [35, 20553, 1264], [40, 27550, 1620], [41, 29170, 1705], [45, 36503, 2049], [50, 47625, 2490],
+    [51, 50115, 2545], [100, 239500, 5240], [101, 244740, 5250], [200, 813000, 6240],
+    [201, 819240, 6251], [500, 3178350, 9540], [501, 3187890, 9559], [1000, 10318600, 19040],
   ]) assert.deepEqual(levelProgress(xp), { level, xpIntoLevel: 0, xpForNextLevel: cost, progressPercent: 0 });
   const highest = levelProgress(Number.MAX_SAFE_INTEGER);
   assert.ok(highest.level > 1000);
@@ -67,6 +73,26 @@ test("levels have increasing costs, exact boundaries and no level-1000 cap", () 
   assert.ok(highest.progressPercent >= 0 && highest.progressPercent < 100);
   for (const value of [-1, NaN, Infinity, 0.5, "0", null, Number.MAX_SAFE_INTEGER + 1]) {
     assert.throws(() => levelProgress(value), /Invalid total XP/);
+  }
+});
+
+test("harder levels preserve early thresholds and progressively increase later milestones", () => {
+  let originalThreshold = 0;
+  for (let level = 1; level <= 40; level++) {
+    assert.equal(levelProgress(originalThreshold).level, level);
+    assert.equal(levelProgress(originalThreshold).xpIntoLevel, 0);
+    if (level > 1) assert.equal(levelProgress(originalThreshold - 1).level, level - 1);
+    originalThreshold += originalLevelCost(level);
+  }
+  for (const [level, originalXp, currentXp, minimumIncrease, maximumIncrease] of [
+    [100, 212050, 239500, 0.10, 0.20],
+    [500, 2146500, 3178350, 0.35, 0.55],
+    [1000, 5358000, 10318600, 0.70, 1.00],
+  ]) {
+    const increase = currentXp / originalXp - 1;
+    assert.ok(increase > minimumIncrease && increase < maximumIncrease);
+    assert.equal(levelProgress(currentXp).level, level);
+    assert.ok(levelProgress(originalXp).level < level);
   }
 });
 

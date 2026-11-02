@@ -1,8 +1,8 @@
 "use client";
 
-import { useId, useMemo, useOptimistic, useRef, useState, useSyncExternalStore, useTransition } from "react";
+import { useEffect, useId, useMemo, useOptimistic, useRef, useState, useSyncExternalStore, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { completeWeakArea, deleteWeakAreaReport, saveWeakAreaReport, setWeakAreaSubtask } from "@/app/u/[user]/weak-areas/actions";
+import { clearWeakAreaReports, completeWeakArea, deleteWeakAreaReport, saveWeakAreaReport, setWeakAreaSubtask } from "@/app/u/[user]/weak-areas/actions";
 import { parseWeakAreaReport, type SavedWeakAreaReport, type WeakArea, type WeakAreaFocus } from "@/lib/weak-area-report";
 import { emptyWeakAreaReportDraft, loadWeakAreaReportDraft, saveWeakAreaReportDraft, type WeakAreaReportDraft } from "@/lib/weak-area-report-draft";
 import { summarizeWeakAreaReports, weakAreaKey as areaKey } from "@/lib/weak-area-report-summary";
@@ -48,7 +48,7 @@ function Workspace({ reports, mocks, heMocks }: { reports: SavedWeakAreaReport[]
   const [sourceId, setSourceId] = useState("");
   const [reportId, setReportId] = useState("");
   const [focus, setFocus] = useState<WeakAreaFocus | "All">("All");
-  const [pending, setPending] = useState<"save" | "delete" | "complete" | "subtask" | null>(null);
+  const [pending, setPending] = useState<"save" | "delete" | "complete" | "subtask" | "clear" | null>(null);
   const [subtaskTarget, setSubtaskTarget] = useState<string | null>(null);
   const [subtaskError, setSubtaskError] = useState<{ key: string; message: string } | null>(null);
   const [completion, setCompletion] = useState<{ key: string; row: AreaRow; leaving: boolean } | null>(null);
@@ -57,11 +57,26 @@ function Workspace({ reports, mocks, heMocks }: { reports: SavedWeakAreaReport[]
   const [notice, setNotice] = useState("");
   const [confirmReset, setConfirmReset] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(false);
+  const [confirmClear, setConfirmClear] = useState(false);
+  const [clearError, setClearError] = useState("");
   const busy = useRef(false);
+  const clearDialog = useRef<HTMLDialogElement>(null);
+  const clearButton = useRef<HTMLButtonElement>(null);
+  const importButton = useRef<HTMLButtonElement>(null);
+  const keepAreasButton = useRef<HTMLButtonElement>(null);
   const resetButton = useRef<HTMLButtonElement>(null);
   const deleteButton = useRef<HTMLButtonElement>(null);
   const cardList = useRef<HTMLUListElement>(null);
   const summaryTitle = useRef<HTMLHeadingElement>(null);
+
+  useEffect(() => {
+    if (confirmClear && !clearDialog.current?.open) {
+      clearDialog.current?.showModal();
+      keepAreasButton.current?.focus();
+    } else if (!confirmClear && clearDialog.current?.open) {
+      clearDialog.current.close();
+    }
+  }, [confirmClear]);
 
   const { orderedReports, latestByMock, reportCounts, activeMockCount } = useMemo(
     () => summarizeWeakAreaReports(displayedReports, completedAreas),
@@ -145,6 +160,37 @@ function Workspace({ reports, mocks, heMocks }: { reports: SavedWeakAreaReport[]
     }
   }
 
+  async function clearReports() {
+    if (!confirmClear || busy.current) return;
+    busy.current = true;
+    setPending("clear");
+    setClearError("");
+    setError("");
+    setNotice("");
+    try {
+      const result = await clearWeakAreaReports();
+      if (!result.ok) { setClearError(result.error); return; }
+      setConfirmClear(false);
+      setConfirmDelete(false);
+      setSourceId("");
+      setReportId("");
+      setFocus("All");
+      setCompletedAreas(new Set());
+      setSubtaskError(null);
+      setNotice("All weak areas cleared.");
+      router.refresh();
+    } catch {
+      setClearError("Clearing could not be confirmed. Please retry.");
+    } finally {
+      busy.current = false;
+      setPending(null);
+    }
+  }
+
+  function cancelClear() {
+    if (!busy.current) setConfirmClear(false);
+  }
+
   async function checkArea(row: AreaRow, button: HTMLButtonElement) {
     if (busy.current || row.area.subtasks?.some((subtask) => !subtask.completed)) return;
     const hadFocus = document.activeElement === button;
@@ -209,8 +255,9 @@ function Workspace({ reports, mocks, heMocks }: { reports: SavedWeakAreaReport[]
     <div className={styles.importBar}>
       <span data-static-label className={styles.caption}>{activeMockCount} active {activeMockCount === 1 ? "mock" : "mocks"}</span>
       <div className={styles.actions}>
+        {reports.length > 0 && <button ref={clearButton} type="button" className={styles.control} disabled={pending !== null} onClick={() => { setClearError(""); setConfirmClear(true); }}>Clear all</button>}
         <button type="button" className={styles.control} aria-expanded={heOpen} aria-controls={`${id}-he-import`} onClick={() => setHEOpen(!heOpen)}>HE</button>
-        <button type="button" className={styles.primary} aria-expanded={importOpen} aria-controls={`${id}-import`} onClick={() => setImportOpen(!importOpen)}>Import report <span aria-hidden="true">{importOpen ? "−" : "+"}</span></button>
+        <button ref={importButton} type="button" className={styles.primary} aria-expanded={importOpen} aria-controls={`${id}-import`} onClick={() => setImportOpen(!importOpen)}>Import report <span aria-hidden="true">{importOpen ? "−" : "+"}</span></button>
       </div>
     </div>
 
@@ -315,6 +362,26 @@ function Workspace({ reports, mocks, heMocks }: { reports: SavedWeakAreaReport[]
         })}
       </ul>}
     </>}
+    <dialog
+      ref={clearDialog}
+      className={styles.dialog}
+      aria-labelledby={`${id}-clear-title`}
+      aria-describedby={`${id}-clear-description`}
+      aria-busy={pending === "clear"}
+      onCancel={(event) => { event.preventDefault(); cancelClear(); }}
+      onClose={() => { setConfirmClear(false); (clearButton.current ?? importButton.current)?.focus(); }}
+      onClick={(event) => { if (event.target === event.currentTarget) cancelClear(); }}
+    >
+      <div className={styles.dialogContent}>
+        <h2 id={`${id}-clear-title`}>Clear all weak areas?</h2>
+        <p id={`${id}-clear-description`}>This deletes all of JK’s saved weak-area reports and practice steps, including earlier assessments. This cannot be undone.</p>
+        {clearError && <p role="alert" className={styles.feedback}>{clearError}</p>}
+        <div className={styles.actions}>
+          <button ref={keepAreasButton} type="button" className={styles.control} disabled={pending === "clear"} onClick={cancelClear}>Keep areas</button>
+          <button type="button" className={styles.primary} disabled={pending === "clear"} onClick={() => void clearReports()}>{pending === "clear" ? "Clearing…" : "Clear all"}</button>
+        </div>
+      </div>
+    </dialog>
   </div>;
 }
 

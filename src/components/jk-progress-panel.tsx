@@ -27,14 +27,13 @@ export function JKProgressPanel({ progress }: { progress: JKProgress }) {
       <div className={styles.levelDetails}>
         <div className={styles.xpHeading}>
           <span><strong>{number.format(progress.totalXp)}</strong> XP earned</span>
-          <span>Level {number.format(progress.level + 1)}</span>
+          <span className={styles.nextLevel}>Level {number.format(progress.level + 1)}</span>
         </div>
         <progress className={styles.xpBar} value={progress.xpIntoLevel} max={progress.xpForNextLevel} aria-label={`Progress towards level ${progress.level + 1}`} />
         <div className={styles.xpRemaining}>
           <span>{number.format(progress.xpIntoLevel)} / {number.format(progress.xpForNextLevel)} XP</span>
           <span>{number.format(progress.xpForNextLevel - progress.xpIntoLevel)} to go</span>
         </div>
-        <p className={styles.rule}>+10 XP per correct answer, −10 per wrong answer, 0 for skips. A completed mock earns 20 XP if any question was answered. Your XP balance stops at zero.</p>
       </div>
     </section>
 
@@ -59,15 +58,5 @@ export function JKProgressPanel({ progress }: { progress: JKProgress }) {
       </dl>
     </section>
 
-    <section aria-labelledby="practice-totals-title">
-      <div className={styles.sectionHeading}><h2 id="practice-totals-title">Practice totals</h2></div>
-      <dl className={styles.totals}>
-        <div><dt>Correct answers</dt><dd>{number.format(progress.correctAnswers)}</dd></div>
-        <div><dt>Answered questions</dt><dd>{number.format(progress.answeredQuestions)}</dd></div>
-        <div><dt>Accuracy</dt><dd>{progress.accuracyPercent === null ? "—" : `${progress.accuracyPercent.toFixed(1)}%`}</dd></div>
-        <div><dt>Practice time</dt><dd>{number.format(Math.floor(progress.totalPracticeSeconds / 60))}<span> min</span></dd></div>
-      </dl>
-    </section>
-    <p className={styles.savedNote}>Your progress stays saved when mocks, banks or history are deleted.</p>
   </div>;
 }
