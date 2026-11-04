@@ -1,7 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import { useMemo, useState } from "react";
+import { useMemo, useRef, useState } from "react";
+import { BankDeleteButton } from "@/components/bank-delete-button";
 import { EmptyState } from "@/components/empty-state";
 import { BANK_PAGE_SIZE } from "@/lib/bank-validation";
 import { matchesMockFilter } from "@/lib/mock-filter";
@@ -19,18 +20,29 @@ export function BankList({ banks }: { banks: BankListItem[] }) {
   const [title, setTitle] = useState("");
   const [date, setDate] = useState("");
   const [page, setPage] = useState(1);
+  const list = useRef<HTMLUListElement>(null);
+  const search = useRef<HTMLInputElement>(null);
   const filtered = useMemo(() => banks.filter((bank) => matchesMockFilter(bank, title, date)), [banks, title, date]);
   const hasFilters = !!title || !!date;
   const pageCount = Math.max(1, Math.ceil(filtered.length / BANK_PAGE_SIZE));
   const currentPage = Math.min(page, pageCount);
   const visibleBanks = filtered.slice((currentPage - 1) * BANK_PAGE_SIZE, currentPage * BANK_PAGE_SIZE);
 
+  function focusAfterDelete(index: number) {
+    requestAnimationFrame(() => {
+      const links = list.current?.querySelectorAll<HTMLAnchorElement>("a");
+      const next = links?.[Math.min(index, links.length - 1)];
+      const fallback = search.current ?? document.getElementById("bank-name");
+      (next ?? fallback)?.focus({ preventScroll: true });
+    });
+  }
+
   return <>
     <div role="search" aria-label="Find a question bank" className="mb-8 bg-white sm:mb-10">
       <div className="grid grid-cols-[minmax(0,1fr)_auto] items-end gap-3 sm:grid-cols-[minmax(0,1fr)_12rem_auto]">
         <div className="col-span-2 min-w-0 sm:col-span-1">
           <label htmlFor="bank-search" className="block text-xs font-medium text-muted">Search by title</label>
-          <input id="bank-search" type="search" value={title} onChange={(event) => { setTitle(event.target.value); setPage(1); }} placeholder="Bank name" className="mt-2 min-h-11 w-full min-w-0 rounded-lg border border-line bg-white px-3 py-2.5 text-base sm:text-sm" />
+          <input ref={search} id="bank-search" type="search" value={title} onChange={(event) => { setTitle(event.target.value); setPage(1); }} placeholder="Bank name" className="mt-2 min-h-11 w-full min-w-0 rounded-lg border border-line bg-white px-3 py-2.5 text-base sm:text-sm" />
         </div>
         <div className="min-w-0">
           <label htmlFor="bank-created-date" className="block text-xs font-medium text-muted">Created on (IST)</label>
@@ -41,9 +53,9 @@ export function BankList({ banks }: { banks: BankListItem[] }) {
       <p role="status" aria-live="polite" aria-atomic="true" className="mt-3 text-xs text-muted">{hasFilters ? `${filtered.length} of ${banks.length}` : banks.length} {banks.length === 1 ? "question bank" : "question banks"}</p>
     </div>
     {filtered.length === 0 ? <EmptyState title="No matching question banks.">Try another title or creation date, or clear the filters.</EmptyState> :
-      <ul className="practice-list divide-y divide-black border-y border-black bg-white">
-        {visibleBanks.map((bank) => <li key={bank.id} className="min-w-0">
-          <Link href={`/u/JK/bank/${bank.id}`} className="practice-list-row group flex items-center justify-between gap-4 py-5 sm:gap-6 sm:py-6">
+      <ul ref={list} className="practice-list divide-y divide-black border-y border-black bg-white">
+        {visibleBanks.map((bank, index) => <li key={bank.id} className="flex min-w-0 items-center gap-3 sm:gap-4">
+          <Link href={`/u/JK/bank/${bank.id}`} className="practice-list-row group flex min-w-0 flex-1 items-center justify-between gap-4 py-5 sm:gap-6 sm:py-6">
             <div className="min-w-0 flex-1">
               <h2 className="break-words text-lg font-semibold leading-7 tracking-tight underline-offset-4 group-hover:underline sm:text-xl">{bank.title}</h2>
               <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-1.5 text-xs text-muted">
@@ -53,6 +65,7 @@ export function BankList({ banks }: { banks: BankListItem[] }) {
             </div>
             <span aria-hidden="true" className="flex size-10 shrink-0 items-center justify-center rounded-md border border-black bg-white text-lg text-black transition-colors group-hover:bg-black group-hover:text-white">→</span>
           </Link>
+          <BankDeleteButton bankId={bank.id} bankTitle={bank.title} variant="list" onDeleted={() => focusAfterDelete(index)} />
         </li>)}
       </ul>}
     {pageCount > 1 && <nav aria-label="Question bank pages" className="mt-4 flex flex-wrap items-center justify-between gap-3 text-sm">
