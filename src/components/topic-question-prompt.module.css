@@ -1,0 +1,19 @@
+.panel { min-width: 0; border: 1px solid #000; border-radius: .75rem; padding: 1.25rem; background: #000; color: #fff; }
+.row { display: grid; grid-template-columns: 2.5rem minmax(0, 1fr); align-items: center; gap: .875rem; }
+.icon { display: grid; place-items: center; width: 2.5rem; height: 3rem; border: 1px solid #fff; border-radius: .35rem; }
+.copy { min-width: 0; }
+.copy h2 { font-size: 1rem; font-weight: 600; letter-spacing: -.025em; }
+.copy p { margin-top: .35rem; font-size: .8rem; line-height: 1.65; }
+.button { display: flex; grid-column: 1 / -1; justify-content: space-between; align-items: center; gap: 1rem; min-height: 2.75rem; border: 1px solid #fff; border-radius: .4rem; padding: .65rem .875rem; background: #fff; color: #000; font-size: .8rem; font-weight: 600; }
+.button:hover { background: #000; color: #fff; }
+.button:focus-visible { outline: 2px solid #fff; outline-offset: 4px; }
+.button:disabled { opacity: .5; }
+.status { margin-top: .75rem; font-size: .75rem; line-height: 1.6; }
+.status:empty { display: none; }
+.manual { margin-top: 1rem; }
+.manual textarea { display: block; width: 100%; min-width: 0; border: 1px solid #fff; border-radius: .4rem; padding: .875rem; background: #fff; color: #000; font-size: 1rem; line-height: 1.7; }
+@media (min-width: 640px) {
+  .row { grid-template-columns: 2.5rem minmax(0, 1fr) auto; gap: 1rem; }
+  .button { grid-column: auto; }
+  .manual textarea { font-size: .875rem; }
+}

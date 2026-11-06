@@ -1,10 +1,11 @@
 "use client";
 
-import { useRef, useState, useSyncExternalStore } from "react";
+import { useLayoutEffect, useRef, useState, useSyncExternalStore } from "react";
 import { useRouter } from "next/navigation";
 import { appendBankQuestions } from "@/app/u/[user]/bank/actions";
 import { FormattingPrompt } from "@/components/formatting-prompt";
 import { PracticeQuestionPrompt } from "@/components/practice-question-prompt";
+import { TopicQuestionPrompt } from "@/components/topic-question-prompt";
 import { QuestionPreview } from "@/components/question-preview";
 import { loadBankQuestions, retryBankBatch, saveBankQuestions, type BankQuestionDraft } from "@/lib/bank-draft";
 import { parseQuestions } from "@/lib/parser";
@@ -35,8 +36,17 @@ function BankEditor({ bankId }: { bankId: string }) {
   const [confirmClear, setConfirmClear] = useState(false);
   const [saving, setSaving] = useState(false);
   const [visibleQuestions, setVisibleQuestions] = useState(20);
+  const [showQuestions, setShowQuestions] = useState(false);
   const clearButton = useRef<HTMLButtonElement>(null);
+  const importScroll = useRef<{ x: number; y: number } | null>(null);
   const busy = useRef(false);
+
+  useLayoutEffect(() => {
+    const position = importScroll.current;
+    if (!position) return;
+    importScroll.current = null;
+    window.scrollTo({ left: position.x, top: position.y, behavior: "instant" });
+  }, [draft.questions, draft.problems]);
 
   function commit(next: BankQuestionDraft) {
     const storageError = saveBankQuestions(bankId, next);
@@ -46,6 +56,11 @@ function BankEditor({ bankId }: { bankId: string }) {
   function importQuestions(source: string, problemId?: string) {
     if (!source.trim()) return;
     const result = parseQuestions(source);
+    if (!problemId) {
+      importScroll.current = { x: window.scrollX, y: window.scrollY };
+      setShowQuestions(false);
+      setVisibleQuestions(20);
+    }
     commit({ ...appendParsedBatch(draft, result, () => crypto.randomUUID(), problemId), pendingQuestionIds: null });
     setNotice(`${result.valid.length} question(s) added to the draft. ${result.invalid.length} block(s) need attention.`);
     setError("");
@@ -108,6 +123,7 @@ function BankEditor({ bankId }: { bankId: string }) {
     </div>
     <FormattingPrompt />
     <PracticeQuestionPrompt />
+    <TopicQuestionPrompt />
     <section aria-labelledby="bank-paste-title" className="min-w-0">
       <h2 id="bank-paste-title" className="text-lg font-semibold">Add questions</h2>
       <p id="bank-paste-help" className="mt-2 text-sm leading-6 text-muted">Paste questions using Q1., four A–D options, and an Ans: line. Use $...$ for inline maths and $$...$$ for equations.</p>
@@ -142,7 +158,10 @@ function BankEditor({ bankId }: { bankId: string }) {
     <section aria-labelledby="bank-draft-title">
       <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
         <h2 id="bank-draft-title" className="text-lg font-semibold">Question draft ({draft.questions.length})</h2>
-        <button ref={clearButton} type="button" disabled={!!draft.pendingQuestionIds || (!draft.questions.length && !draft.problems.length)} onClick={() => setConfirmClear(true)} className={quietButton}>Clear draft</button>
+        <div className="flex flex-wrap gap-3">
+          {draft.questions.length > 0 && <button type="button" aria-expanded={showQuestions} aria-controls="bank-draft-questions" onClick={() => setShowQuestions(!showQuestions)} className={quietButton}>{showQuestions ? "Hide questions" : "Review questions"}</button>}
+          <button ref={clearButton} type="button" disabled={!!draft.pendingQuestionIds || (!draft.questions.length && !draft.problems.length)} onClick={() => setConfirmClear(true)} className={quietButton}>Clear draft</button>
+        </div>
       </div>
       {confirmClear && !draft.pendingQuestionIds && <div role="group" aria-labelledby="bank-clear-title" className="mb-5 rounded-md border border-amber-200 bg-amber-50 p-4" onKeyDown={(event) => { if (event.key === "Escape") cancelClear(); }}>
         <h3 id="bank-clear-title" className="text-sm font-semibold text-amber-950">Clear this browser draft?</h3>
@@ -152,7 +171,8 @@ function BankEditor({ bankId }: { bankId: string }) {
           <button type="button" onClick={clearDraft} className="min-h-11 rounded-md bg-red-800 px-4 py-2 text-sm font-medium text-white hover:bg-red-900">Yes, clear draft</button>
         </div>
       </div>}
-      {draft.questions.length === 0 ? <p className="border-y border-line py-6 text-sm text-muted">No draft questions yet. Paste a batch above to get started.</p> : <>
+      <div id="bank-draft-questions" hidden={!showQuestions}>
+      {showQuestions && (draft.questions.length === 0 ? <p className="border-y border-line py-6 text-sm text-muted">No draft questions yet. Paste a batch above to get started.</p> : <>
         <ol className="divide-y divide-line border-y border-line" aria-label="Draft questions">
           {draft.questions.slice(0, visibleQuestions).map((question, index) => <li key={question.id} className="min-w-0 py-6">
             <div className="mb-4 flex items-center justify-between gap-3">
@@ -167,7 +187,8 @@ function BankEditor({ bankId }: { bankId: string }) {
           </li>)}
         </ol>
         {visibleQuestions < draft.questions.length && <button type="button" onClick={() => setVisibleQuestions((count) => count + 20)} className={`${quietButton} mt-4`}>Show more questions ({draft.questions.length - visibleQuestions} remaining)</button>}
-      </>}
+      </>)}
+      </div>
     </section>
   </fieldset>;
 }

@@ -13,6 +13,8 @@ const subtasks = () => [
 ];
 const taskArea = () => ({ ...area(), subtasks: subtasks() });
 const taskHeader = `# Mockly Weak Areas v2\nMock: ${mockId}`;
+const pointHeader = `# Mockly Weak Areas v3\nMock: ${mockId}`;
+const point = (value = area()) => `- ${value.subject} | ${value.area} | ${value.focus} | ${value.priority}`;
 const taskBlock = (value = taskArea()) => `## ${value.area}\nSubject: ${value.subject}\nFocus: ${value.focus}\nPriority: ${value.priority}\n${value.subtasks.map((task) => `- [${task.completed ? "x" : " "}] ${task.text}`).join("\n")}`;
 
 test("weak-area reports preserve ranked rows and canonicalise permitted values", () => {
@@ -38,7 +40,7 @@ test("complete outer Markdown fences, CRLF, spacing and aligned separators are a
 test("unrelated prose, changed report versions and malformed table rows are rejected", () => {
   const invalid = [
     `Here are your weaknesses.\n${header}\n${row}`,
-    header.replace("v1", "v3"),
+    header.replace("v1", "v99"),
     header.replace(mockId, "unknown"),
     header.replace("Subject | Area", "Topic | Area"),
     header.replace("| --- | --- | --- | --- |", "| --- | --- | --- |"),
@@ -47,6 +49,51 @@ test("unrelated prose, changed report versions and malformed table rows are reje
     `${header}\n| Math | Percentages\nand ratios | Both | High |`,
   ];
   for (const report of invalid) assert.equal(parseWeakAreaReport(report).ok, false, report);
+});
+
+test("v3 weakness points preserve specific findings without practice tasks", () => {
+  const findings = [
+    { subject: "Math", area: "Confusing 7 × 8 = 56 with 63", focus: "Accuracy", priority: "High" },
+    { subject: "Math", area: "Slow recall of 9 × 7 despite correct answers", focus: "Speed", priority: "Medium" },
+    { subject: "Reasoning", area: "Missing changes between alternating number-series terms", focus: "Both", priority: "Medium" },
+  ];
+  assert.deepEqual(parseWeakAreaReport(`${pointHeader}\n\n${findings.map(point).join("\n")}`), {
+    ok: true, value: { sourceTestId: mockId, areas: findings },
+  });
+  assert.deepEqual(parseWeakAreaReport(pointHeader), { ok: true, value: { sourceTestId: mockId, areas: [] } });
+  assert.ok(findings.every((finding) => !("subtasks" in finding)));
+});
+
+test("v3 point reports accept copied code fences and mobile bullet formatting", () => {
+  const expected = { ok: true, value: { sourceTestId: mockId, areas: [area()] } };
+  for (const language of ["", "markdown", "md", "text"]) {
+    const copied = `\`\`\`${language}\r\n${pointHeader.replace(mockId, mockId.toUpperCase())}\r\n${point()}\r\n\`\`\``;
+    assert.deepEqual(parseWeakAreaReport(copied), expected);
+  }
+  for (const marker of ["- ", "• ", "* ", ""]) {
+    const copied = `Mockly Weak Areas v3\\\nMock: ${mockId}\\\n${point().replace("- ", marker)}\\`;
+    assert.deepEqual(parseWeakAreaReport(copied), expected);
+  }
+  assert.deepEqual(parseWeakAreaReport(`${pointHeader}\n- math | Reverse percentages | accuracy | high`), expected);
+});
+
+test("v3 rejects malformed findings, checkboxes and extra descriptions without dropping rows", () => {
+  const valid = `${pointHeader}\n${point()}`;
+  for (const source of [
+    `${valid}\nStudy every day.`,
+    valid.replace("- Math", "- [ ] Math"),
+    valid.replace("- Math", "- [x] Math"),
+    valid.replace("| Accuracy | High", "| Accuracy"),
+    valid.replace("| Accuracy | High", "| Accuracy | High | Extra"),
+    valid.replace("- Math", "- Science"),
+    valid.replace("Reverse percentages", "**Reverse percentages**"),
+    valid.replace("Reverse percentages", "x".repeat(101)),
+    `${valid}\n${point()}`,
+    `${pointHeader}\n## Reverse percentages\nSubject: Math\nFocus: Accuracy\nPriority: High`,
+  ]) assert.equal(parseWeakAreaReport(source).ok, false, source);
+  const twelve = Array.from({ length: 12 }, (_, index) => point({ ...area(), area: `Specific pattern ${index + 1}` }));
+  assert.equal(parseWeakAreaReport(`${pointHeader}\n${twelve.join("\n")}`).ok, true);
+  assert.equal(parseWeakAreaReport(`${pointHeader}\n${twelve.join("\n")}\n${point()}`).ok, false);
 });
 
 test("unknown categories, rich content, long areas and duplicate names are rejected", () => {
@@ -83,21 +130,28 @@ test("server validation enforces shape and bounds without mutating supplied inpu
 test("the separate follow-up prompt binds its report to the mock and keeps the format compact", () => {
   const prompt = buildWeakAreaReportPrompt(mockId.toUpperCase(), 'A title\nwith "quotes"');
   assert.ok(prompt.includes(`Mock: ${mockId}`));
-  assert.ok(prompt.includes("# Mockly Weak Areas v2"));
-  assert.ok(prompt.includes("- [ ]"));
-  assert.ok(prompt.includes("80/20 rule as a focus heuristic"));
-  assert.ok(prompt.includes("3–10"));
-  assert.ok(prompt.includes("finite completion condition"));
-  assert.ok(prompt.includes('"Study addition"'));
-  assert.ok(prompt.includes("Completing steps records practice, not proof of mastery"));
+  assert.ok(prompt.includes("# Mockly Weak Areas v3"));
+  assert.ok(prompt.includes("Subject | Specific weakness | Focus | Priority"));
+  assert.ok(!prompt.includes("- [ ]"));
+  assert.ok(prompt.includes("one short factual point per distinct difficulty"));
+  assert.ok(prompt.includes("at most 100 characters"));
+  assert.ok(prompt.includes("at most 12 points"));
+  assert.ok(prompt.includes("up to 12 most important points"));
+  assert.ok(prompt.includes("instead of merging them into broad chapter labels"));
+  assert.ok(prompt.includes("Avoid question/attempt codes, paragraphs, advice, exercises, practice tasks, checkboxes"));
+  assert.ok(prompt.includes("Recent consistent success can resolve an old accuracy problem"));
   assert.ok(prompt.includes(JSON.stringify('A title with "quotes"')));
-  assert.ok(prompt.includes("fractions and decimals"));
-  assert.ok(prompt.includes("do not infer causes"));
-  assert.ok(prompt.includes('"Multiplying 9 by 7"'));
-  assert.ok(prompt.includes("never invent a narrower issue"));
+  assert.ok(prompt.includes("infer causes such as guessing or carelessness"));
+  assert.ok(prompt.includes('"Confusing 7 × 8 = 56 with 63"'));
+  assert.ok(prompt.includes("never findings to invent"));
   assert.ok(prompt.includes("one fenced markdown code block, with nothing outside it"));
   assert.ok(prompt.includes("Preserve every # marker and line break"));
-  assert.ok(prompt.split(/\s+/).length < 700);
+  assert.ok(prompt.split(/\s+/).length < 500);
+  const example = prompt.slice(prompt.lastIndexOf("# Mockly Weak Areas v3"));
+  assert.deepEqual(parseWeakAreaReport(example), {
+    ok: true,
+    value: { sourceTestId: mockId, areas: [{ subject: "Math", area: "Specific current weak point", focus: "Accuracy", priority: "High" }] },
+  });
   assert.throws(() => buildWeakAreaReportPrompt("invalid", "Mock"), /valid mock ID/);
 });
 
