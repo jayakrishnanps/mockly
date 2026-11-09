@@ -76,7 +76,7 @@ function MockForm({ bankId, title, questionCount }: Props) {
       <div>
         <label htmlFor="bank-question-limit" className="text-sm font-medium">Questions per attempt</label>
         <input id="bank-question-limit" type="number" min={1} max={questionCount} step={1} value={draft.questionLimit} onChange={(event) => { commit({ ...draft, questionLimit: event.target.value }); setCountError(""); }} aria-invalid={!!countError} aria-describedby={countError ? "bank-limit-error bank-limit-help" : "bank-limit-help"} className="mt-2 block min-h-11 w-full rounded-lg border border-line bg-white px-3 py-2.5 text-base sm:max-w-48 sm:text-sm" />
-        <p id="bank-limit-help" className="mt-2 max-w-xl text-xs leading-5 text-muted">Up to {questionCount} questions. This count is fixed for every attempt; the questions are randomly selected each time.</p>
+        <p id="bank-limit-help" className="mt-2 max-w-xl text-xs leading-5 text-muted">Up to {questionCount} questions. New attempts draw this many questions from the bank.</p>
         {countError && <p id="bank-limit-error" className="mt-2 text-sm text-red-800">{countError}</p>}
       </div>
       </fieldset>

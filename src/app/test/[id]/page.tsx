@@ -8,6 +8,7 @@ import { DeleteMock } from "@/components/delete-mock";
 import { QuestionContent } from "@/components/question-content";
 import { isUuid } from "@/lib/mock-validation";
 import { mockStore } from "@/server/mocks";
+import { QuestionCountEditor } from "./question-count-editor";
 import { StartButton } from "./start-button";
 import { UserStats } from "./user-stats";
 
@@ -24,6 +25,11 @@ export default async function MockPage({ params }: PageProps<"/test/[id]">) {
   const assigned = user && mock.forUsers.includes(user);
   const [stats, active] = assigned ? await Promise.all([attemptStore.getMockStats(id, user), attemptStore.getActiveAttempts(user)]) : [null, []];
   const addQuestionsHref = mock.sourceBankId && user === "JK" ? `/u/JK/bank/${mock.sourceBankId}` : null;
+  const count = Math.min(mock.questionLimit ?? mock.questionCount, mock.questionCount);
+  const canEditCount = assigned && user === "JK" && mock.forUsers.length === 1 && mock.questionLimit !== null && mock.questionCount > 0;
+  const countDisplay = canEditCount
+    ? <QuestionCountEditor testId={mock.id} count={count} available={mock.questionCount} />
+    : mock.questionLimit === null ? String(count) : `${count} of ${mock.questionCount}`;
   const previewDescription = mock.sourceBankId
     ? "New attempts draw from the question bank’s current pool, including questions added later. Attempts already started keep their saved questions. Preview shows the first 25 current bank questions."
     : mock.questionLimit === null
@@ -47,14 +53,14 @@ export default async function MockPage({ params }: PageProps<"/test/[id]">) {
 
         {mock.details && <p className="mt-4 max-w-3xl whitespace-pre-wrap break-words text-sm leading-7 text-muted">{mock.details}</p>}
         <dl className="mt-6 grid grid-cols-2 gap-x-5 gap-y-5 border-t border-line pt-5 sm:grid-cols-3 sm:gap-y-6 sm:pt-6">
-          {[
+          {([
             ["Assigned to", mock.forUsers.join(" & ")],
-            [mock.questionLimit === null ? "Questions" : "Questions per attempt", mock.questionLimit === null ? String(mock.questionCount) : `${Math.min(mock.questionLimit, mock.questionCount)} of ${mock.questionCount}`],
+            [mock.questionLimit === null ? "Questions" : "Questions per attempt", countDisplay],
             ["Duration", `${mock.durationMinutes} minutes`],
             ["Correct answer", `+${Number(mock.marksCorrect)}`],
             ["Wrong answer", Number(mock.marksWrong) === 0 ? "0" : `−${Number(mock.marksWrong)}`],
             ["Created", dateFormatter.format(new Date(mock.createdAt))],
-          ].map(([label, value]) => <div key={label} className="min-w-0">
+          ] as const).map(([label, value]) => <div key={label} className="min-w-0">
             <dt className="text-xs leading-5 text-muted">{label}</dt><dd className="mt-1 break-words text-sm font-semibold tabular-nums">{value}</dd>
           </div>)}
         </dl>

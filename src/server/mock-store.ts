@@ -1,6 +1,7 @@
-import { and, asc, eq, isNull, sql } from "drizzle-orm";
+import { and, asc, count, eq, isNull, sql } from "drizzle-orm";
 import { attempts, bankQuestions, questions, tests } from "../db/schema.ts";
 import type { db } from "../db/index";
+import type { QuestionCountResult } from "../lib/question-selection";
 import type { User } from "../lib/users";
 
 export function createMockStore(database: typeof db) {
@@ -26,6 +27,34 @@ export function createMockStore(database: typeof db) {
       }
       const items = await database.select().from(questions).where(eq(questions.testId, testId)).orderBy(asc(questions.position));
       return { ...mock, questionCount: items.length, questions: items };
+    },
+
+    async updateQuestionLimit(testId: string, questionLimit: unknown): Promise<QuestionCountResult> {
+      if (typeof questionLimit !== "number" || !Number.isSafeInteger(questionLimit) || questionLimit < 1 || questionLimit > 2147483647) {
+        return { ok: false, error: "Enter a positive whole number of questions." };
+      }
+      return database.transaction(async (tx): Promise<QuestionCountResult> => {
+        const [mock] = await tx.select({
+          forUsers: tests.forUsers, questionLimit: tests.questionLimit, sourceBankId: tests.sourceBankId,
+          marksCorrect: tests.marksCorrect, marksWrong: tests.marksWrong,
+        }).from(tests).where(and(eq(tests.id, testId), isNull(tests.deletedAt))).for("update");
+        if (!mock) return { ok: false, error: "This mock no longer exists." };
+        if (mock.forUsers.length !== 1 || mock.forUsers[0] !== "JK" || mock.questionLimit === null) {
+          return { ok: false, error: "The question count can only be edited on JK’s own sampled mocks." };
+        }
+        const [{ available }] = mock.sourceBankId
+          ? await tx.select({ available: count() }).from(bankQuestions).where(eq(bankQuestions.bankId, mock.sourceBankId))
+          : await tx.select({ available: count() }).from(questions).where(eq(questions.testId, testId));
+        if (available === 0) return { ok: false, error: "This mock has no questions yet." };
+        if (questionLimit > available) return { ok: false, error: `Choose between 1 and ${available} questions.` };
+        if (questionLimit * Math.max(Number(mock.marksCorrect), Number(mock.marksWrong)) > 9999.99) {
+          return { ok: false, error: "Choose fewer questions so the total stays within 9,999.99 marks." };
+        }
+        if (questionLimit !== mock.questionLimit) {
+          await tx.update(tests).set({ questionLimit }).where(eq(tests.id, testId));
+        }
+        return { ok: true, count: questionLimit };
+      });
     },
 
     async remove(testId: string, user: User) {
